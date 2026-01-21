@@ -9,22 +9,24 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         [v-cloak] { display: none; }
-        .odoo-sidebar { background-color: #714B67; width: 240px; }
         .odoo-active { background-color: rgba(255,255,255,0.12); border-left: 4px solid #00A09D; }
         .card-shadow { box-shadow: 0 2px 6px rgba(0,0,0,0.06); }
         .status-pill { padding: 4px 10px; border-radius: 999px; font-size: 10px; font-weight: 700; text-transform: uppercase; }
         .scrollbar-hide::-webkit-scrollbar { display: none; }
-        .role-card { width: 140px; height: 140px; border-radius: 14px; display:flex; align-items:center; justify-content:center; cursor:pointer; transition: transform .12s; }
+        .role-card { width: 120px; height: 120px; border-radius: 12px; display:flex; align-items:center; justify-content:center; cursor:pointer; transition: transform .12s; }
         .role-card:hover { transform: translateY(-6px); }
         .logo-ldi { font-weight: 900; font-size: 26px; letter-spacing: 2px; color: #714B67; }
+        /* smooth sidebar transition */
+        .sidebar-transition { transition: transform .18s ease-in-out, opacity .18s ease-in-out; }
     </style>
 </head>
 <body class="bg-gray-100 font-sans text-gray-800">
-<div id="app" v-cloak>
+<div id="app" v-cloak class="min-h-screen">
+
     <!-- Landing / Role selector (only shown when not logged in) -->
     <div v-if="!session" class="min-h-screen flex items-center justify-center p-6">
-        <div class="w-full max-w-4xl bg-white rounded-2xl shadow-lg p-8 grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="flex flex-col justify-center items-start gap-6 p-6">
+        <div class="w-full max-w-3xl bg-white rounded-2xl shadow-lg p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="flex flex-col justify-center items-start gap-6 p-4">
                 <div class="flex items-center gap-3">
                     <div class="w-14 h-14 rounded-lg bg-[#00A09D] flex items-center justify-center text-white font-black text-xl">LDI</div>
                     <div>
@@ -33,9 +35,9 @@
                     </div>
                 </div>
 
-                <p class="text-gray-600">Select your role to sign in. Each role opens a dedicated login form — use the username and password assigned to the user.</p>
+                <p class="text-gray-600">Select your role to sign in. After choosing a role, enter the username and password assigned to that role.</p>
 
-                <div class="flex gap-4 mt-4">
+                <div class="flex flex-wrap gap-4 mt-4">
                     <div @click="openRoleLogin('Admin')" class="role-card bg-[#FFF3F8] border border-[#FFDDEE]">
                         <div class="text-center">
                             <i class="fas fa-user-shield text-4xl text-[#714B67]"></i>
@@ -58,31 +60,32 @@
                     </div>
                 </div>
 
-                <div class="mt-6 text-sm text-gray-500">
-                    <p>Tip: You can create user accounts (Admin role only) with dedicated username and password that the user will use to login.</p>
+                <div class="mt-4 text-sm text-gray-500">
+                    <p>Note: Demo credentials (for this mock):</p>
+                    <ul class="list-disc pl-5 mt-2 text-xs text-gray-600">
+                        <li>Admin — username: <span class="font-mono">admin123</span> password: <span class="font-mono">1234</span></li>
+                        <li>Sales — username: <span class="font-mono">sale123</span> password: <span class="font-mono">1234</span></li>
+                        <li>Store — username: <span class="font-mono">store123</span> password: <span class="font-mono">1234</span></li>
+                    </ul>
                 </div>
             </div>
 
+            <!-- Right side: brief help / branding -->
             <div class="p-6 bg-gray-50 rounded-xl flex flex-col">
-                <div class="mb-4">
-                    <h3 class="text-lg font-black uppercase text-[#714B67]">Quick Users</h3>
-                    <p class="text-xs text-gray-500">Pre-created accounts for demo — you can add more via User Management.</p>
+                <div>
+                    <h3 class="text-lg font-black uppercase text-[#714B67]">Welcome</h3>
+                    <p class="text-xs text-gray-500 mt-1">Use the role tiles to start. For security, this mock stores demo passwords only for UX testing; in production use secure authentication.</p>
                 </div>
 
-                <div class="space-y-3">
-                    <div v-for="u in users" class="flex items-center justify-between p-3 bg-white rounded border">
-                        <div>
-                            <div class="font-bold">{{ u.fullname }}</div>
-                            <div class="text-xs text-gray-500">role: <span class="font-bold">{{ u.role }}</span> — username: <span class="font-mono text-sm">{{ u.username }}</span></div>
-                        </div>
-                        <div>
-                            <button @click="prefillLogin(u)" class="text-white bg-[#00A09D] px-3 py-1 rounded text-sm font-bold">Use</button>
-                        </div>
+                <div class="mt-6 flex-1 flex items-center justify-center">
+                    <div class="text-center text-gray-400">
+                        <i class="fas fa-building fa-3x"></i>
+                        <p class="text-sm mt-3">Ladu Investment ERP</p>
                     </div>
                 </div>
 
                 <div class="mt-auto text-xs text-gray-400">
-                    <p>Demo credentials are stored locally in this mock. For real systems, never store plaintext passwords and use secure auth.</p>
+                    <p>To continue, click a role tile and sign in with the demo credentials above.</p>
                 </div>
             </div>
         </div>
@@ -95,7 +98,7 @@
                         <div class="w-10 h-10 rounded bg-white/10 flex items-center justify-center text-lg font-black">LDI</div>
                         <div>
                             <div class="font-black uppercase text-sm">Sign in as {{ roleLogin.role }}</div>
-                            <div class="text-xs opacity-80">Use your assigned username & password</div>
+                            <div class="text-xs opacity-80">Enter username & password</div>
                         </div>
                     </div>
                     <button @click="closeRoleLogin" class="text-white text-xl">&times;</button>
@@ -124,7 +127,8 @@
 
     <!-- Main app (shown when logged in) -->
     <div v-else class="flex h-screen overflow-hidden">
-        <aside class="odoo-sidebar text-white flex flex-col shrink-0">
+        <!-- Sidebar -->
+        <aside :class="['odoo-sidebar text-white flex flex-col shrink-0 sidebar-transition', sidebarOpen ? 'translate-x-0 opacity-100' : '-translate-x-full opacity-0 md:translate-x-0 md:opacity-100']" style="width:240px;">
             <div class="p-6 text-xl font-bold border-b border-white/10 flex items-center gap-3">
                 <div class="w-10 h-10 rounded bg-white/10 flex items-center justify-center text-white font-black">LDI</div>
                 <div class="leading-none">
@@ -157,9 +161,16 @@
         </aside>
 
         <div class="flex-1 flex flex-col overflow-hidden">
-            <header class="h-14 bg-white border-b px-8 flex items-center justify-between">
-                <h2 class="text-lg font-bold text-gray-700 capitalize">{{ view }}</h2>
-                <div class="flex items-center gap-6">
+            <header class="h-14 bg-white border-b px-4 md:px-8 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <!-- Mobile menu toggle -->
+                    <button @click="sidebarOpen = !sidebarOpen" class="p-2 md:hidden bg-white/0 rounded-md border md:border-0">
+                        <i class="fas fa-bars text-gray-600"></i>
+                    </button>
+                    <h2 class="text-lg font-bold text-gray-700 capitalize">{{ view }}</h2>
+                </div>
+
+                <div class="flex items-center gap-4">
                     <div class="relative group cursor-pointer" @click="showNotifs = !showNotifs">
                         <i class="fas fa-bell text-gray-400 text-lg"></i>
                         <span v-if="notifs.length > 0" class="absolute -top-2 -right-2 bg-red-600 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold">{{ notifs.length }}</span>
@@ -167,15 +178,16 @@
                     <div class="cursor-pointer" @click="showChat = !showChat">
                         <i class="fas fa-comment-alt text-gray-400 text-lg"></i>
                     </div>
-                    <button v-if="['sales','inventory','users'].includes(view)" @click="openActionModal" class="bg-[#00A09D] hover:bg-[#008a87] text-white px-5 py-1.5 rounded font-bold text-sm shadow-sm">
+                    <button v-if="['sales','inventory','users'].includes(view)" @click="openActionModal" class="bg-[#00A09D] hover:bg-[#008a87] text-white px-4 md:px-5 py-1.5 rounded font-bold text-sm shadow-sm">
                         <i class="fas fa-plus mr-2"></i> Create
                     </button>
                 </div>
             </header>
 
-            <main class="flex-1 overflow-y-auto p-6 scrollbar-hide">
+            <main class="flex-1 overflow-y-auto p-4 md:p-6 scrollbar-hide">
+                <!-- Dashboard -->
                 <div v-if="view === 'dashboard'">
-                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                         <div v-if="session.role === 'Admin'" class="bg-white p-4 rounded-lg border card-shadow">
                             <p class="text-[10px] font-bold text-gray-400 uppercase">Valuation</p>
                             <p class="text-lg font-black text-gray-700">₦{{ formatMoney(18500000) }}</p>
@@ -208,6 +220,7 @@
                     </div>
                 </div>
 
+                <!-- Inventory -->
                 <div v-if="view === 'inventory'" class="bg-white rounded-lg border card-shadow overflow-hidden">
                     <table class="w-full text-left">
                         <thead class="bg-gray-50 text-[10px] font-bold uppercase text-gray-400 border-b">
@@ -230,6 +243,7 @@
                     </table>
                 </div>
 
+                <!-- Sales -->
                 <div v-if="view === 'sales'" class="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div v-for="st in ['quotation','confirmed','delivered']" class="bg-gray-200/40 p-4 rounded-xl">
                         <h4 class="text-[10px] font-black uppercase text-gray-500 mb-4 px-2">{{ st }}</h4>
@@ -250,6 +264,7 @@
                     </div>
                 </div>
 
+                <!-- Users -->
                 <div v-if="view === 'users'" class="bg-white rounded-lg border card-shadow">
                     <table class="w-full text-left">
                         <thead class="bg-gray-50 text-[10px] font-bold border-b">
@@ -268,9 +283,10 @@
                     </table>
                 </div>
 
+                <!-- Reports -->
                 <div v-if="view === 'reports'" class="space-y-6">
                     <div class="bg-white p-6 rounded-lg border card-shadow flex flex-wrap gap-4 items-end">
-                        <div class="w-56">
+                        <div class="w-full sm:w-56">
                             <label class="text-[10px] font-bold uppercase text-gray-400">Product</label>
                             <select v-model="report.product" class="w-full border p-2 rounded text-sm bg-gray-50">
                                 <option value="__all__">All Products</option>
@@ -278,12 +294,12 @@
                             </select>
                         </div>
 
-                        <div class="w-48">
+                        <div class="w-full sm:w-48">
                             <label class="text-[10px] font-bold uppercase text-gray-400">Date From</label>
                             <input type="date" v-model="report.date_from" class="w-full border p-2 rounded text-sm bg-gray-50">
                         </div>
 
-                        <div class="w-48">
+                        <div class="w-full sm:w-48">
                             <label class="text-[10px] font-bold uppercase text-gray-400">Date To</label>
                             <input type="date" v-model="report.date_to" class="w-full border p-2 rounded text-sm bg-gray-50">
                         </div>
@@ -345,7 +361,7 @@
     </div>
 
     <!-- Notifications -->
-    <div v-if="showNotifs" class="fixed right-20 top-16 w-80 bg-white shadow-2xl rounded-lg border z-[300] overflow-hidden">
+    <div v-if="showNotifs" class="fixed right-4 md:right-20 top-16 w-80 bg-white shadow-2xl rounded-lg border z-[300] overflow-hidden">
         <div class="p-3 bg-gray-50 border-b font-bold text-xs uppercase text-gray-500">Notifications</div>
         <div class="max-h-64 overflow-y-auto">
             <div v-for="n in notifs" class="p-4 border-b hover:bg-gray-50 text-xs">
@@ -357,7 +373,7 @@
     </div>
 
     <!-- Chat -->
-    <div v-if="showChat" class="fixed right-8 bottom-8 w-80 bg-white shadow-2xl rounded-t-xl border z-[300] overflow-hidden flex flex-col">
+    <div v-if="showChat" class="fixed right-4 md:right-8 bottom-4 md:bottom-8 w-80 bg-white shadow-2xl rounded-t-xl border z-[300] overflow-hidden flex flex-col">
         <div class="p-4 bg-[#714B67] text-white flex justify-between items-center">
             <span class="font-bold text-sm">Internal Communication</span>
             <button @click="showChat = false">&times;</button>
@@ -451,17 +467,18 @@
             return {
                 session: null,
                 view: 'dashboard',
+                sidebarOpen: false, // controls sidebar visibility on small screens
                 showNotifs: false, showChat: false,
                 modal: { show: false, isEdit: false, activeIndex: null, userError: '' },
                 newMessage: '',
                 form: { customer: '', total: 0, status: 'quotation', pName: '', stock: 0, price: 0, uFullname: '', uUsername: '', uPassword: '', uRole: 'Sales' },
                 roleLogin: { show: false, role: null, username: '', password: '', error: '' },
 
-                // Users now include username & password + fullname
+                // demo users per your request
                 users: [
-                    { fullname: 'Engr. Ladu', username: 'ladu.admin', password: 'admin123', role: 'Admin' },
-                    { fullname: 'Kemi Adebayo', username: 'kemi.sales', password: 'sales123', role: 'Sales' },
-                    { fullname: 'Musa Ibrahim', username: 'musa.store', password: 'store123', role: 'Store' }
+                    { fullname: 'Administrator', username: 'admin123', password: '1234', role: 'Admin' },
+                    { fullname: 'Sales User', username: 'sale123', password: '1234', role: 'Sales' },
+                    { fullname: 'Store User', username: 'store123', password: '1234', role: 'Store' }
                 ],
 
                 notifs: [
@@ -479,7 +496,6 @@
                     { name: 'River Sand (per ton)', category: 'Aggregates', stock: 65, unit: 'tons', price: 18000 }
                 ],
 
-                // Orders now include items with product reference and created_at for reports
                 orders: [
                     { id: 'SO001', customer: 'Julius Berger', items: [{name:'Dangote Cement (50kg)', qty:150, amount:1275000}], total: 1275000, status: 'confirmed', created_at: '2026-01-18' },
                     { id: 'SO002', customer: 'Alhaji Gafar', items: [{name:'10mm Steel Rod', qty:2, amount:1900000}], total: 1900000, status: 'quotation', created_at: '2026-01-20' },
@@ -493,7 +509,6 @@
         computed: {
             lowStockProducts() { return this.products.filter(p => p.stock < 20); },
             todaySales() {
-                // naive sum of orders created today
                 const today = new Date().toISOString().slice(0,10);
                 return this.orders.filter(o => o.created_at === today).reduce((s,o)=>s+o.total,0);
             }
@@ -511,11 +526,6 @@
                 this.roleLogin.role = null;
                 this.roleLogin.error = '';
             },
-            prefillLogin(user) {
-                this.openRoleLogin(user.role);
-                this.roleLogin.username = user.username;
-                this.roleLogin.password = user.password;
-            },
             attemptRoleLogin() {
                 this.roleLogin.error = '';
                 const u = this.users.find(x => x.username === this.roleLogin.username && x.password === this.roleLogin.password && x.role === this.roleLogin.role);
@@ -527,9 +537,10 @@
                 this.session = { username: u.username, role: u.role, fullname: u.fullname };
                 this.roleLogin.show = false;
                 this.view = 'dashboard';
+                this.sidebarOpen = false; // close on mobile after sign-in
                 this.checkStockAlerts();
             },
-            logout() { this.session = null; this.view = 'dashboard'; },
+            logout() { this.session = null; this.view = 'dashboard'; this.sidebarOpen = false; },
 
             formatMoney(val) { if (!val && val !== 0) return '0'; return Number(val).toLocaleString(); },
             formatDate(d) { if(!d) return ''; return new Date(d).toLocaleDateString(); },
@@ -577,7 +588,6 @@
             },
 
             exportReport(type) {
-                // In a real system you'd generate the selected report and stream it for download.
                 const summary = `Exporting ${type} for ${this.report.product === '__all__' ? 'All Products' : this.report.product} from ${this.report.date_from || 'start'} to ${this.report.date_to || 'end'} — Total: ₦${this.formatMoney(this.reportResults.totalAmount)}`;
                 alert(summary);
             },
@@ -586,7 +596,6 @@
                 if (this.view === 'sales') {
                     const id = 'SO' + Math.floor(100 + Math.random() * 900);
                     const created = new Date().toISOString().slice(0,10);
-                    // for demo, create single-item order using form.customer and amount
                     const itemName = this.form.itemName || (this.products[0] && this.products[0].name) || 'Misc';
                     const item = { name: itemName, qty: 1, amount: this.form.total };
                     this.orders.unshift({ id, customer: this.form.customer, items: [item], total: this.form.total, status: this.form.status, created_at: created });
@@ -598,7 +607,6 @@
                         this.products.unshift({ name: this.form.pName, category: 'General', stock: this.form.stock, unit: 'units', price: this.form.price });
                     }
                 } else if (this.view === 'users') {
-                    // validate
                     this.modal.userError = '';
                     if(!this.form.uFullname || !this.form.uUsername || !this.form.uPassword) {
                         this.modal.userError = 'Fullname, username and password are required.';
@@ -615,11 +623,9 @@
             },
 
             generateReport() {
-                // prepare date range
                 const from = this.report.date_from ? new Date(this.report.date_from) : null;
                 const to = this.report.date_to ? new Date(this.report.date_to) : null;
 
-                // aggregate items from orders filtered by date and by product selection
                 const aggr = {};
                 let totalQty = 0, totalAmount = 0;
                 this.orders.forEach(o => {
