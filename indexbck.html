@@ -22,6 +22,12 @@
             to { opacity: 1; transform: translateY(0); }
         }
         .animate-fade-in-up { animation: fadeInUp 0.2s ease-out; }
+
+        @media print {
+            body * { visibility: hidden; }
+            #printReceipt, #printReceipt * { visibility: visible; }
+            #printReceipt { position: absolute; left: 0; top: 0; width: 100%; }
+        }
     </style>
 </head>
 <body style="height: auto; min-height: 100%;">
@@ -147,6 +153,10 @@
                 <a v-if="['Admin','Store'].includes(session.role)" href="#" @click.prevent="view = 'inventory'; sidebarOpen = false" :class="['flex items-center px-3 py-3 rounded-lg text-sm font-medium transition-colors', view === 'inventory' ? 'bg-[#00A09D] text-white shadow-lg shadow-teal-900/20' : 'text-gray-300 hover:bg-white/5 hover:text-white']">
                     <i class="fas fa-boxes w-8 text-center"></i> Inventory
                 </a>
+
+                <a v-if="session.role === 'Admin'" href="#" @click.prevent="view = 'expenses'; sidebarOpen = false" :class="['flex items-center px-3 py-3 rounded-lg text-sm font-medium transition-colors', view === 'expenses' ? 'bg-[#00A09D] text-white shadow-lg shadow-teal-900/20' : 'text-gray-300 hover:bg-white/5 hover:text-white']">
+                    <i class="fas fa-receipt w-8 text-center"></i> Expenses
+                </a>
                 
                 <a v-if="session.role === 'Admin'" href="#" @click.prevent="view = 'users'; sidebarOpen = false" :class="['flex items-center px-3 py-3 rounded-lg text-sm font-medium transition-colors', view === 'users' ? 'bg-[#00A09D] text-white shadow-lg shadow-teal-900/20' : 'text-gray-300 hover:bg-white/5 hover:text-white']">
                     <i class="fas fa-users-cog w-8 text-center"></i> User Management
@@ -209,7 +219,7 @@
                         <span v-if="messages.length > 0" class="absolute top-1 right-1 w-2 h-2 bg-green-500 rounded-full"></span>
                     </button>
 
-                    <button v-if="['sales','inventory','users'].includes(view)" @click="openActionModal" class="bg-[#714B67] hover:bg-[#5a3c52] text-white px-4 py-2 rounded-lg text-sm font-bold shadow-md shadow-purple-900/10 transition flex items-center gap-2">
+                    <button v-if="['sales','inventory','users','expenses'].includes(view)" @click="openActionModal" class="bg-[#714B67] hover:bg-[#5a3c52] text-white px-4 py-2 rounded-lg text-sm font-bold shadow-md shadow-purple-900/10 transition flex items-center gap-2">
                         <i class="fas fa-plus"></i> <span class="hidden sm:inline">Create New</span>
                     </button>
                 </div>
@@ -365,6 +375,74 @@
                     </div>
                 </div>
 
+                <div v-if="view === 'expenses'" class="space-y-6">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div class="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
+                            <div class="flex justify-between items-start mb-4">
+                                <div class="p-2 bg-red-50 rounded-lg text-red-500"><i class="fas fa-money-bill-wave"></i></div>
+                                <span class="text-[10px] font-bold uppercase text-gray-400 bg-gray-50 px-2 py-1 rounded">Total</span>
+                            </div>
+                            <h3 class="text-2xl font-black text-gray-800">₦{{ formatMoney(totalExpenses) }}</h3>
+                            <p class="text-xs text-gray-500 mt-1">All recorded expenses</p>
+                        </div>
+
+                        <div class="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
+                            <div class="flex justify-between items-start mb-4">
+                                <div class="p-2 bg-orange-50 rounded-lg text-orange-500"><i class="fas fa-calendar-day"></i></div>
+                                <span class="text-[10px] font-bold uppercase text-gray-400 bg-gray-50 px-2 py-1 rounded">Today</span>
+                            </div>
+                            <h3 class="text-2xl font-black text-gray-800">₦{{ formatMoney(todayExpenses) }}</h3>
+                            <p class="text-xs text-gray-500 mt-1">Expenses recorded today</p>
+                        </div>
+
+                        <div class="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
+                            <div class="flex justify-between items-start mb-4">
+                                <div class="p-2 bg-purple-50 rounded-lg text-purple-500"><i class="fas fa-list"></i></div>
+                                <span class="text-[10px] font-bold uppercase text-gray-400 bg-gray-50 px-2 py-1 rounded">Count</span>
+                            </div>
+                            <h3 class="text-2xl font-black text-gray-800">{{ expenses.length }}</h3>
+                            <p class="text-xs text-gray-500 mt-1">Total expense records</p>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+                        <div class="p-5 border-b border-gray-100 bg-gray-50/50">
+                            <h3 class="font-bold text-gray-700">Expense Records</h3>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left">
+                                <thead class="bg-gray-50 text-xs font-bold uppercase text-gray-400">
+                                    <tr>
+                                        <th class="p-4">Date</th>
+                                        <th class="p-4">Category</th>
+                                        <th class="p-4">Description</th>
+                                        <th class="p-4 text-right">Amount</th>
+                                        <th class="p-4 text-center">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="text-sm divide-y divide-gray-100">
+                                    <tr v-if="expenses.length === 0">
+                                        <td colspan="5" class="p-8 text-center text-gray-400 italic">No expenses recorded yet</td>
+                                    </tr>
+                                    <tr v-for="(e, idx) in expenses" :key="idx" class="hover:bg-gray-50 transition">
+                                        <td class="p-4 text-gray-600 text-xs">{{ formatDate(e.date) }}</td>
+                                        <td class="p-4">
+                                            <span class="px-2 py-1 bg-orange-100 text-orange-700 rounded text-xs font-bold uppercase">{{ e.category }}</span>
+                                        </td>
+                                        <td class="p-4 font-medium text-gray-700">{{ e.description }}</td>
+                                        <td class="p-4 text-right font-mono font-bold text-red-600">₦{{ formatMoney(e.amount) }}</td>
+                                        <td class="p-4 text-center">
+                                            <button @click="deleteExpense(idx)" class="p-2 text-red-500 hover:bg-red-50 rounded transition" title="Delete">
+                                                <i class="fas fa-trash-alt"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
                 <div v-if="view === 'users'" class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
                     <div class="p-5 border-b border-gray-100 bg-gray-50/50">
                         <h3 class="font-bold text-gray-700">System Users</h3>
@@ -407,7 +485,7 @@
 
                 <div v-if="view === 'reports'" class="space-y-6">
                     <div class="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
-                        <h3 class="font-bold text-gray-700 mb-4 border-b pb-2">Generate Report</h3>
+                        <h3 class="font-bold text-gray-700 mb-4 border-b pb-2">Generate Sales Report</h3>
                         <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
                             <div>
                                 <label class="block text-[10px] font-bold uppercase text-gray-400 mb-1">Product</label>
@@ -477,6 +555,85 @@
                             </div>
                         </div>
                     </div>
+
+                    <div class="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
+                        <h3 class="font-bold text-gray-700 mb-4 border-b pb-2">Generate Expenses Report</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                            <div>
+                                <label class="block text-[10px] font-bold uppercase text-gray-400 mb-1">Category</label>
+                                <select v-model="expenseReport.category" class="w-full border border-gray-200 p-2.5 rounded-lg text-sm bg-gray-50 focus:ring-2 focus:ring-[#00A09D] outline-none">
+                                    <option value="__all__">All Categories</option>
+                                    <option value="Transport">Transport</option>
+                                    <option value="Utilities">Utilities</option>
+                                    <option value="Salaries">Salaries</option>
+                                    <option value="Maintenance">Maintenance</option>
+                                    <option value="Office">Office</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold uppercase text-gray-400 mb-1">Date From</label>
+                                <input type="date" v-model="expenseReport.date_from" class="w-full border border-gray-200 p-2.5 rounded-lg text-sm bg-gray-50 focus:ring-2 focus:ring-[#00A09D] outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold uppercase text-gray-400 mb-1">Date To</label>
+                                <input type="date" v-model="expenseReport.date_to" class="w-full border border-gray-200 p-2.5 rounded-lg text-sm bg-gray-50 focus:ring-2 focus:ring-[#00A09D] outline-none">
+                            </div>
+                            <button @click="generateExpenseReport" class="bg-[#714B67] hover:bg-purple-800 text-white p-2.5 rounded-lg font-bold text-sm transition shadow-md shadow-purple-900/10">
+                                <i class="fas fa-filter mr-2"></i> Generate Report
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-8 rounded-xl border border-gray-100 shadow-sm min-h-[400px]">
+                        <div class="flex justify-between items-start border-b-2 border-gray-800 pb-6 mb-8">
+                            <div>
+                                <h1 class="text-3xl font-black uppercase text-[#714B67] tracking-tighter">Ladu Investment</h1>
+                                <p class="text-sm text-gray-500 font-medium tracking-wide">Construction Materials & Equipment ERP</p>
+                            </div>
+                            <div class="text-right text-xs text-gray-500">
+                                <p>Generated: {{ formatDate(new Date().toISOString()) }}</p>
+                                <p>Ref: #EXP-{{ Math.floor(1000 + Math.random()*9000) }}</p>
+                            </div>
+                        </div>
+
+                        <h2 class="text-center font-bold uppercase text-lg mb-8 tracking-widest underline decoration-2 decoration-red-500 underline-offset-4">Expenses Report</h2>
+
+                        <div v-if="expenseReportResults.items.length === 0" class="text-center py-12 bg-gray-50 rounded-lg border border-dashed border-gray-300">
+                            <i class="fas fa-search text-4xl text-gray-300 mb-3"></i>
+                            <p class="text-gray-500 font-medium">No expense data found for the selected criteria.</p>
+                        </div>
+
+                        <div v-else>
+                            <table class="w-full text-sm border border-gray-200">
+                                <thead class="bg-gray-100 text-gray-700">
+                                    <tr>
+                                        <th class="p-3 border border-gray-200 text-left">Date</th>
+                                        <th class="p-3 border border-gray-200 text-left">Category</th>
+                                        <th class="p-3 border border-gray-200 text-left">Description</th>
+                                        <th class="p-3 border border-gray-200 text-right">Amount</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="e in expenseReportResults.items" :key="e.id">
+                                        <td class="p-3 border border-gray-200">{{ formatDate(e.date) }}</td>
+                                        <td class="p-3 border border-gray-200 font-medium">{{ e.category }}</td>
+                                        <td class="p-3 border border-gray-200">{{ e.description }}</td>
+                                        <td class="p-3 border border-gray-200 text-right font-mono text-red-600">₦{{ formatMoney(e.amount) }}</td>
+                                    </tr>
+                                    <tr class="bg-gray-50 font-bold text-gray-800">
+                                        <td colspan="3" class="p-3 border border-gray-200 text-right uppercase text-xs tracking-wider">Total Expenses</td>
+                                        <td class="p-3 border border-gray-200 text-right font-mono text-lg text-red-600">₦{{ formatMoney(expenseReportResults.total) }}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            
+                            <div class="mt-8 flex justify-end gap-3 print:hidden">
+                                <button @click="exportExpenseReport('PDF')" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded font-bold text-xs uppercase tracking-wide shadow-md"><i class="fas fa-file-pdf mr-2"></i> Download PDF</button>
+                                <button @click="exportExpenseReport('Excel')" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded font-bold text-xs uppercase tracking-wide shadow-md"><i class="fas fa-file-excel mr-2"></i> Export Excel</button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
             </div>
@@ -509,7 +666,7 @@
         <div class="bg-white w-full max-w-lg rounded-xl shadow-2xl overflow-hidden animate-fade-in-up">
             <div class="p-5 bg-[#714B67] text-white flex justify-between items-center">
                 <h3 class="font-bold uppercase tracking-widest text-sm flex items-center gap-2">
-                    <i class="fas fa-edit"></i> {{ modal.isEdit ? 'Update' : 'Create New' }} {{ view === 'users' ? 'User' : view.slice(0,1).toUpperCase() + view.slice(1) }}
+                    <i class="fas fa-edit"></i> {{ modal.isEdit ? 'Update' : 'Create New' }} {{ view === 'users' ? 'User' : view === 'expenses' ? 'Expense' : view.slice(0,1).toUpperCase() + view.slice(1) }}
                 </h3>
                 <button @click="modal.show = false" class="text-white/70 hover:text-white transition"><i class="fas fa-times text-lg"></i></button>
             </div>
@@ -561,6 +718,35 @@
                     </div>
                 </div>
 
+                <div v-if="view === 'expenses'" class="space-y-4">
+                    <div>
+                        <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Expense Category</label>
+                        <select v-model="form.expCategory" class="w-full border border-gray-300 p-3 rounded-lg bg-gray-50 focus:ring-2 focus:ring-[#00A09D] outline-none text-sm">
+                            <option value="" disabled>Select category</option>
+                            <option value="Transport">Transport</option>
+                            <option value="Utilities">Utilities</option>
+                            <option value="Salaries">Salaries</option>
+                            <option value="Maintenance">Maintenance</option>
+                            <option value="Office">Office</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Description</label>
+                        <textarea v-model="form.expDescription" rows="3" class="w-full border border-gray-300 p-3 rounded-lg bg-gray-50 focus:ring-2 focus:ring-[#00A09D] outline-none text-sm resize-none" placeholder="Describe the expense..."></textarea>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Amount (₦)</label>
+                            <input v-model.number="form.expAmount" type="number" class="w-full border border-gray-300 p-3 rounded-lg bg-gray-50 focus:ring-2 focus:ring-[#00A09D] outline-none text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Date</label>
+                            <input v-model="form.expDate" type="date" class="w-full border border-gray-300 p-3 rounded-lg bg-gray-50 focus:ring-2 focus:ring-[#00A09D] outline-none text-sm">
+                        </div>
+                    </div>
+                </div>
+
                 <div v-if="view === 'users'" class="space-y-4">
                     <div>
                         <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Full Name</label>
@@ -594,6 +780,9 @@
         </div>
     </div>
 
+    <!-- RECEIPT PRINT AREA (HIDDEN) -->
+    <div id="printReceipt" style="display: none;"></div>
+
 </div>
 
 <script>
@@ -608,7 +797,12 @@
                 showChat: false,
                 modal: { show: false, isEdit: false, activeIndex: null, userError: '' },
                 newMessage: '',
-                form: { customer: '', total: 0, status: 'quotation', itemName: '', pName: '', stock: 0, price: 0, uFullname: '', uUsername: '', uPassword: '', uRole: 'Sales' },
+                form: { 
+                    customer: '', total: 0, status: 'quotation', itemName: '', 
+                    pName: '', stock: 0, price: 0, 
+                    uFullname: '', uUsername: '', uPassword: '', uRole: 'Sales',
+                    expCategory: '', expDescription: '', expAmount: 0, expDate: new Date().toISOString().slice(0,10)
+                },
                 roleLogin: { show: false, role: null, username: '', password: '', error: '' },
 
                 users: [
@@ -641,8 +835,17 @@
                     { id: 'SO004', customer: 'Lekki Gardens', items: [{name:'River Sand', qty:20, amount:360000}], total: 360000, status: 'quotation', created_at: '2026-01-21' }
                 ],
 
+                expenses: [
+                    { date: '2026-01-15', category: 'Transport', description: 'Fuel for delivery trucks', amount: 45000 },
+                    { date: '2026-01-18', category: 'Utilities', description: 'Electricity bill for warehouse', amount: 28000 },
+                    { date: '2026-01-20', category: 'Salaries', description: 'Staff salaries for January', amount: 350000 }
+                ],
+
                 report: { product: '__all__', date_from: '', date_to: ''},
-                reportResults: { items: [], totalQty: 0, totalAmount: 0 }
+                reportResults: { items: [], totalQty: 0, totalAmount: 0 },
+
+                expenseReport: { category: '__all__', date_from: '', date_to: '' },
+                expenseReportResults: { items: [], total: 0 }
             }
         },
         computed: {
@@ -650,6 +853,13 @@
             todaySales() {
                 const today = new Date().toISOString().slice(0,10);
                 return this.orders.filter(o => o.created_at === today).reduce((s,o)=>s+o.total,0);
+            },
+            totalExpenses() {
+                return this.expenses.reduce((sum, e) => sum + e.amount, 0);
+            },
+            todayExpenses() {
+                const today = new Date().toISOString().slice(0,10);
+                return this.expenses.filter(e => e.date === today).reduce((sum, e) => sum + e.amount, 0);
             }
         },
         methods: {
@@ -692,13 +902,113 @@
                 this.modal.userError = '';
                 this.modal.isEdit = false;
                 this.modal.activeIndex = null;
-                this.form = { customer: '', total: 0, status: 'quotation', itemName: '', pName: '', stock: 0, price: 0, uFullname: '', uUsername: '', uPassword: '', uRole: 'Sales' };
+                this.form = { 
+                    customer: '', total: 0, status: 'quotation', itemName: '', 
+                    pName: '', stock: 0, price: 0, 
+                    uFullname: '', uUsername: '', uPassword: '', uRole: 'Sales',
+                    expCategory: '', expDescription: '', expAmount: 0, expDate: new Date().toISOString().slice(0,10)
+                };
                 this.modal.show = true;
             },
 
             updateOrderStatus(order, next) {
                 order.status = next;
                 this.notifs.unshift({ title: 'Order Updated', msg: `${order.id} is now ${next}` });
+                
+                if (next === 'confirmed' && ['Admin', 'Sales'].includes(this.session.role)) {
+                    this.downloadReceipt(order);
+                }
+            },
+
+            downloadReceipt(order) {
+                const receiptHTML = `
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <meta charset="UTF-8">
+                        <title>Receipt - ${order.id}</title>
+                        <style>
+                            body { font-family: Arial, sans-serif; padding: 40px; max-width: 800px; margin: 0 auto; }
+                            .header { text-align: center; border-bottom: 3px solid #714B67; padding-bottom: 20px; margin-bottom: 30px; }
+                            .header h1 { color: #714B67; margin: 0; font-size: 32px; }
+                            .header p { color: #666; margin: 5px 0; }
+                            .receipt-info { display: flex; justify-content: space-between; margin-bottom: 30px; }
+                            .receipt-info div { flex: 1; }
+                            .receipt-info strong { display: block; color: #714B67; margin-bottom: 5px; }
+                            table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+                            th { background: #714B67; color: white; padding: 12px; text-align: left; }
+                            td { padding: 12px; border-bottom: 1px solid #ddd; }
+                            .total-row { background: #f9f9f9; font-weight: bold; font-size: 18px; }
+                            .footer { margin-top: 40px; padding-top: 20px; border-top: 2px solid #ddd; text-align: center; color: #666; font-size: 12px; }
+                            .status-badge { display: inline-block; padding: 5px 15px; background: #00A09D; color: white; border-radius: 20px; font-size: 12px; font-weight: bold; text-transform: uppercase; }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="header">
+                            <h1>LADU INVESTMENT</h1>
+                            <p>Construction Materials & Equipment</p>
+                            <p style="font-size: 12px; margin-top: 10px;">Address: Lagos, Nigeria | Phone: +234 XXX XXX XXXX | Email: info@laduinvestment.com</p>
+                        </div>
+                        
+                        <div style="text-align: center; margin: 30px 0;">
+                            <h2 style="color: #714B67; margin: 0;">SALES RECEIPT</h2>
+                            <p style="color: #666; margin: 5px 0;">Receipt No: ${order.id}</p>
+                            <span class="status-badge">${order.status}</span>
+                        </div>
+
+                        <div class="receipt-info">
+                            <div>
+                                <strong>Customer Details:</strong>
+                                <p>${order.customer}</p>
+                            </div>
+                            <div style="text-align: right;">
+                                <strong>Date:</strong>
+                                <p>${this.formatDate(order.created_at)}</p>
+                                <strong>Processed By:</strong>
+                                <p>${this.session.fullname} (${this.session.role})</p>
+                            </div>
+                        </div>
+
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Item Description</th>
+                                    <th style="text-align: center;">Quantity</th>
+                                    <th style="text-align: right;">Amount (₦)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${order.items.map(item => `
+                                    <tr>
+                                        <td>${item.name}</td>
+                                        <td style="text-align: center;">${item.qty}</td>
+                                        <td style="text-align: right;">₦${this.formatMoney(item.amount)}</td>
+                                    </tr>
+                                `).join('')}
+                                <tr class="total-row">
+                                    <td colspan="2" style="text-align: right;">TOTAL AMOUNT:</td>
+                                    <td style="text-align: right;">₦${this.formatMoney(order.total)}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <div class="footer">
+                            <p><strong>Thank you for your business!</strong></p>
+                            <p>This is a computer-generated receipt and does not require a signature.</p>
+                            <p>For inquiries, please contact us at the details above.</p>
+                            <p style="margin-top: 20px; font-size: 10px;">Generated on ${new Date().toLocaleString()}</p>
+                        </div>
+                    </body>
+                    </html>
+                `;
+
+                const printWindow = window.open('', '_blank');
+                printWindow.document.write(receiptHTML);
+                printWindow.document.close();
+                
+                setTimeout(() => {
+                    printWindow.print();
+                }, 500);
             },
 
             editProduct(p) {
@@ -710,6 +1020,13 @@
             },
 
             deleteProduct(idx) { if(confirm('Are you sure you want to delete this product?')) this.products.splice(idx,1); },
+
+            deleteExpense(idx) { 
+                if(confirm('Are you sure you want to delete this expense record?')) {
+                    this.expenses.splice(idx,1);
+                    this.notifs.unshift({ title: 'Expense Deleted', msg: 'Expense record has been removed.' });
+                }
+            },
 
             deleteUser(idx) { if(confirm('Remove user access?')) this.users.splice(idx,1); },
 
@@ -730,6 +1047,11 @@
 
             exportReport(type) {
                 const summary = `Exporting ${type} for ${this.report.product === '__all__' ? 'All Products' : this.report.product} from ${this.report.date_from || 'start'} to ${this.report.date_to || 'end'} — Total: ₦${this.formatMoney(this.reportResults.totalAmount)}`;
+                alert(summary);
+            },
+
+            exportExpenseReport(type) {
+                const summary = `Exporting ${type} for ${this.expenseReport.category === '__all__' ? 'All Categories' : this.expenseReport.category} from ${this.expenseReport.date_from || 'start'} to ${this.expenseReport.date_to || 'end'} — Total: ₦${this.formatMoney(this.expenseReportResults.total)}`;
                 alert(summary);
             },
 
@@ -754,6 +1076,18 @@
                     } else {
                         this.products.unshift({ name: this.form.pName, category: 'General', stock: this.form.stock, unit: 'units', price: this.form.price });
                     }
+                } else if (this.view === 'expenses') {
+                    if (!this.form.expCategory || !this.form.expDescription.trim() || !this.form.expAmount || !this.form.expDate) {
+                        alert('Please fill all required fields');
+                        return;
+                    }
+                    this.expenses.unshift({
+                        date: this.form.expDate,
+                        category: this.form.expCategory,
+                        description: this.form.expDescription,
+                        amount: this.form.expAmount
+                    });
+                    this.notifs.unshift({ title: 'Expense Added', msg: `New ${this.form.expCategory} expense recorded: ₦${this.formatMoney(this.form.expAmount)}` });
                 } else if (this.view === 'users') {
                     this.modal.userError = '';
                     if(!this.form.uFullname.trim() || !this.form.uUsername.trim() || !this.form.uPassword.trim()) {
@@ -794,6 +1128,22 @@
                 this.reportResults.items = Object.values(aggr);
                 this.reportResults.totalQty = totalQty;
                 this.reportResults.totalAmount = totalAmount;
+            },
+
+            generateExpenseReport() {
+                const from = this.expenseReport.date_from ? new Date(this.expenseReport.date_from) : null;
+                const to = this.expenseReport.date_to ? new Date(this.expenseReport.date_to) : null;
+
+                const filtered = this.expenses.filter(e => {
+                    const d = new Date(e.date);
+                    if (from && d < from) return false;
+                    if (to && d > to) return false;
+                    if (this.expenseReport.category !== '__all__' && e.category !== this.expenseReport.category) return false;
+                    return true;
+                });
+
+                this.expenseReportResults.items = filtered;
+                this.expenseReportResults.total = filtered.reduce((sum, e) => sum + e.amount, 0);
             }
         }
     }).mount('#app');
