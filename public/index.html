@@ -1,0 +1,2382 @@
+<!DOCTYPE html>
+<html lang="en" style="height: auto; min-height: 100%;">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Ladu Investment ERP</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
+        [v-cloak] { display: none; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-fade-in-up { animation: fadeInUp 0.2s ease-out; }
+        @keyframes slideIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+        .animate-slide-in { animation: slideIn 0.3s ease-out; }
+        @media print {
+            body * { visibility: hidden; }
+            #printReceipt, #printReceipt * { visibility: visible; }
+            #printReceipt { position: absolute; left: 0; top: 0; width: 100%; }
+        }
+    </style>
+</head>
+<body style="height: auto; min-height: 100%;">
+
+<div id="app" v-cloak class="flex flex-col min-h-screen">
+
+    <!-- ===================== PORTAL SELECTION ===================== -->
+    <div v-if="!session && portalView === 'select'" class="min-h-screen flex flex-col items-center justify-center p-4 bg-gradient-to-br from-gray-100 to-gray-200">
+        <div class="w-full max-w-xl bg-white rounded-2xl shadow-xl overflow-hidden animate-fade-in-up">
+            <div class="bg-[#714B67] p-8 text-white text-center">
+                <div class="w-14 h-14 bg-white/20 rounded-xl flex items-center justify-center text-xl font-black mx-auto mb-4">LDI</div>
+                <h1 class="text-2xl font-black">Ladu Investment ERP</h1>
+                <p class="text-white/70 text-sm mt-1">Construction Materials & Equipment</p>
+            </div>
+            <div class="p-8">
+                <p class="text-center text-gray-500 text-sm mb-6">Select your portal to continue</p>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <button @click="portalView = 'staff'" class="group p-6 rounded-xl border-2 border-gray-200 hover:border-[#714B67] hover:bg-[#FFF3F8] transition text-center flex flex-col items-center gap-3">
+                        <div class="w-14 h-14 rounded-full bg-gray-100 group-hover:bg-white flex items-center justify-center text-[#714B67] text-2xl transition shadow-sm">
+                            <i class="fas fa-building"></i>
+                        </div>
+                        <div>
+                            <p class="font-bold text-gray-800">Staff Portal</p>
+                            <p class="text-xs text-gray-500 mt-1">Admin, Sales & Store access</p>
+                        </div>
+                    </button>
+                    <button @click="portalView = 'customer'" class="group p-6 rounded-xl border-2 border-gray-200 hover:border-[#00A09D] hover:bg-[#F0FDFA] transition text-center flex flex-col items-center gap-3">
+                        <div class="w-14 h-14 rounded-full bg-gray-100 group-hover:bg-white flex items-center justify-center text-[#00A09D] text-2xl transition shadow-sm">
+                            <i class="fas fa-user-circle"></i>
+                        </div>
+                        <div>
+                            <p class="font-bold text-gray-800">Customer Portal</p>
+                            <p class="text-xs text-gray-500 mt-1">View orders, quotes & payments</p>
+                        </div>
+                    </button>
+                </div>
+                <div class="mt-6 text-center">
+                    <button @click="portalView = 'customer_register'" class="text-sm text-[#00A09D] hover:underline font-medium">
+                        <i class="fas fa-user-plus mr-1"></i> New customer? Register here
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================== STAFF LOGIN ===================== -->
+    <div v-if="!session && portalView === 'staff'" class="min-h-screen flex flex-col items-center justify-center p-4 md:p-8 bg-gray-100">
+        <div class="w-full max-w-4xl bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col md:flex-row">
+            <div class="md:w-5/12 bg-[#714B67] p-8 text-white flex flex-col justify-between relative overflow-hidden">
+                <div class="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none">
+                    <i class="fas fa-cubes text-[200px] absolute -bottom-10 -right-10"></i>
+                </div>
+                <div class="relative z-10">
+                    <div class="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center text-xl font-black mb-6">LDI</div>
+                    <h1 class="text-3xl font-black leading-tight mb-2">Ladu<br>Investment</h1>
+                    <p class="text-white/70 text-sm">Enterprise Resource Planning for Construction Materials</p>
+                </div>
+                <div class="relative z-10 mt-12 md:mt-0">
+                    <p class="text-xs font-bold uppercase tracking-widest opacity-50">Staff Access</p>
+                    <div class="mt-2 text-sm opacity-80">Secure access management for Admin, Sales, and Inventory operations.</div>
+                </div>
+            </div>
+            <div class="md:w-7/12 p-8 md:p-12">
+                <button @click="portalView = 'select'" class="text-xs text-gray-400 hover:text-gray-600 mb-6 flex items-center gap-1"><i class="fas fa-arrow-left"></i> Back</button>
+                <h2 class="text-2xl font-bold text-gray-800 mb-2">Staff Login</h2>
+                <p class="text-gray-500 mb-8">Please select your role to continue.</p>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+                    <button @click="openRoleLogin('Admin')" class="group p-4 rounded-xl border border-gray-200 hover:border-[#714B67] hover:bg-[#FFF3F8] transition text-center flex flex-col items-center gap-3">
+                        <div class="w-12 h-12 rounded-full bg-gray-100 group-hover:bg-white flex items-center justify-center text-[#714B67] text-xl transition"><i class="fas fa-user-shield"></i></div>
+                        <span class="font-bold text-sm text-gray-700 group-hover:text-[#714B67]">Admin</span>
+                    </button>
+                    <button @click="openRoleLogin('Sales')" class="group p-4 rounded-xl border border-gray-200 hover:border-[#00A09D] hover:bg-[#F0FDFA] transition text-center flex flex-col items-center gap-3">
+                        <div class="w-12 h-12 rounded-full bg-gray-100 group-hover:bg-white flex items-center justify-center text-[#00A09D] text-xl transition"><i class="fas fa-user-tie"></i></div>
+                        <span class="font-bold text-sm text-gray-700 group-hover:text-[#00A09D]">Sales</span>
+                    </button>
+                    <button @click="openRoleLogin('Store')" class="group p-4 rounded-xl border border-gray-200 hover:border-[#FF8C42] hover:bg-[#FFF9F0] transition text-center flex flex-col items-center gap-3">
+                        <div class="w-12 h-12 rounded-full bg-gray-100 group-hover:bg-white flex items-center justify-center text-[#FF8C42] text-xl transition"><i class="fas fa-warehouse"></i></div>
+                        <span class="font-bold text-sm text-gray-700 group-hover:text-[#FF8C42]">Store</span>
+                    </button>
+                </div>
+                <div class="bg-gray-50 rounded-lg p-4 text-xs text-gray-500 border border-gray-100">
+                    <p class="font-bold mb-2 text-gray-400 uppercase">Demo Credentials</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                        <div><span class="font-bold">Admin:</span> admin123 / 1234</div>
+                        <div><span class="font-bold">Sales:</span> sale123 / 1234</div>
+                        <div><span class="font-bold">Store:</span> store123 / 1234</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Role Login Modal -->
+        <div v-if="roleLogin.show" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm overflow-hidden animate-fade-in-up">
+                <div class="bg-[#714B67] p-6 text-white flex justify-between items-start">
+                    <div>
+                        <h3 class="font-bold text-lg">Sign in as {{ roleLogin.role }}</h3>
+                        <p class="text-white/70 text-xs mt-1">Enter your credentials to access the dashboard.</p>
+                    </div>
+                    <button @click="closeRoleLogin" class="text-white/70 hover:text-white"><i class="fas fa-times"></i></button>
+                </div>
+                <div class="p-6 space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Username</label>
+                        <div class="relative"><i class="fas fa-user absolute left-3 top-3 text-gray-400 text-sm"></i><input v-model="roleLogin.username" type="text" class="w-full pl-9 pr-3 py-2.5 border rounded-lg text-sm focus:ring-2 focus:ring-[#714B67] focus:border-[#714B67] outline-none" placeholder="Enter username"></div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Password</label>
+                        <div class="relative"><i class="fas fa-lock absolute left-3 top-3 text-gray-400 text-sm"></i><input v-model="roleLogin.password" type="password" @keyup.enter="attemptRoleLogin" class="w-full pl-9 pr-3 py-2.5 border rounded-lg text-sm focus:ring-2 focus:ring-[#714B67] focus:border-[#714B67] outline-none" placeholder="Enter password"></div>
+                    </div>
+                    <div v-if="roleLogin.error" class="p-3 bg-red-50 text-red-600 text-xs font-bold rounded flex items-center gap-2"><i class="fas fa-exclamation-circle"></i> {{ roleLogin.error }}</div>
+                    <button @click="attemptRoleLogin" class="w-full bg-[#00A09D] hover:bg-[#008a87] text-white font-bold py-3 rounded-lg shadow-lg shadow-teal-500/30 transition transform active:scale-95">Access Dashboard</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================== CUSTOMER REGISTER ===================== -->
+    <div v-if="!session && portalView === 'customer_register'" class="min-h-screen flex flex-col items-center justify-center p-4 bg-gray-100">
+        <div class="w-full max-w-lg bg-white rounded-2xl shadow-xl overflow-hidden animate-fade-in-up">
+            <div class="bg-[#00A09D] p-6 text-white">
+                <button @click="portalView = 'select'" class="text-white/70 hover:text-white text-xs mb-3 flex items-center gap-1"><i class="fas fa-arrow-left"></i> Back</button>
+                <h2 class="text-xl font-black">Create Customer Account</h2>
+                <p class="text-white/70 text-xs mt-1">Fill in your details to register</p>
+            </div>
+            <div class="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="sm:col-span-2">
+                        <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Full Name *</label>
+                        <input v-model="custRegForm.fullname" type="text" class="w-full border border-gray-300 p-2.5 rounded-lg text-sm focus:ring-2 focus:ring-[#00A09D] outline-none bg-gray-50" placeholder="Your full name">
+                    </div>
+                    <div class="sm:col-span-2">
+                        <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Company Name (Optional)</label>
+                        <input v-model="custRegForm.company" type="text" class="w-full border border-gray-300 p-2.5 rounded-lg text-sm focus:ring-2 focus:ring-[#00A09D] outline-none bg-gray-50" placeholder="Company or organization name">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Phone Number *</label>
+                        <input v-model="custRegForm.phone" type="tel" class="w-full border border-gray-300 p-2.5 rounded-lg text-sm focus:ring-2 focus:ring-[#00A09D] outline-none bg-gray-50" placeholder="+234 XXX XXX XXXX">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Email Address *</label>
+                        <input v-model="custRegForm.email" type="email" class="w-full border border-gray-300 p-2.5 rounded-lg text-sm focus:ring-2 focus:ring-[#00A09D] outline-none bg-gray-50" placeholder="your@email.com">
+                    </div>
+                    <div class="sm:col-span-2">
+                        <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Address *</label>
+                        <input v-model="custRegForm.address" type="text" class="w-full border border-gray-300 p-2.5 rounded-lg text-sm focus:ring-2 focus:ring-[#00A09D] outline-none bg-gray-50" placeholder="Street address">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">State *</label>
+                        <select v-model="custRegForm.state" class="w-full border border-gray-300 p-2.5 rounded-lg text-sm focus:ring-2 focus:ring-[#00A09D] outline-none bg-gray-50">
+                            <option value="">Select state</option>
+                            <option v-for="s in nigerianStates" :key="s">{{ s }}</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Username *</label>
+                        <input v-model="custRegForm.username" type="text" class="w-full border border-gray-300 p-2.5 rounded-lg text-sm focus:ring-2 focus:ring-[#00A09D] outline-none bg-gray-50" placeholder="Choose username">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Password *</label>
+                        <input v-model="custRegForm.password" type="password" class="w-full border border-gray-300 p-2.5 rounded-lg text-sm focus:ring-2 focus:ring-[#00A09D] outline-none bg-gray-50" placeholder="Create password">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Confirm Password *</label>
+                        <input v-model="custRegForm.confirmPassword" type="password" class="w-full border border-gray-300 p-2.5 rounded-lg text-sm focus:ring-2 focus:ring-[#00A09D] outline-none bg-gray-50" placeholder="Repeat password">
+                    </div>
+                </div>
+                <div v-if="custRegForm.error" class="p-3 bg-red-50 text-red-600 text-xs font-bold rounded flex items-center gap-2"><i class="fas fa-exclamation-circle"></i> {{ custRegForm.error }}</div>
+                <div v-if="custRegForm.success" class="p-3 bg-green-50 text-green-600 text-xs font-bold rounded flex items-center gap-2"><i class="fas fa-check-circle"></i> {{ custRegForm.success }}</div>
+                <button @click="registerCustomer" class="w-full bg-[#00A09D] hover:bg-teal-700 text-white font-bold py-3 rounded-lg shadow-lg transition transform active:scale-95">Create Account</button>
+                <p class="text-center text-xs text-gray-500">Already have an account? <button @click="portalView = 'customer'" class="text-[#00A09D] font-bold hover:underline">Login here</button></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================== CUSTOMER LOGIN ===================== -->
+    <div v-if="!session && portalView === 'customer'" class="min-h-screen flex flex-col items-center justify-center p-4 bg-gray-100">
+        <div class="w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden animate-fade-in-up">
+            <div class="bg-[#00A09D] p-8 text-white">
+                <button @click="portalView = 'select'" class="text-white/70 hover:text-white text-xs mb-4 flex items-center gap-1"><i class="fas fa-arrow-left"></i> Back</button>
+                <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center text-xl font-black mb-4">LDI</div>
+                <h2 class="text-2xl font-black">Customer Portal</h2>
+                <p class="text-white/70 text-sm mt-1">Sign in to manage your orders and payments</p>
+            </div>
+            <div class="p-8 space-y-4">
+                <div v-if="!custLogin.forgotMode">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Username or Email</label>
+                            <div class="relative"><i class="fas fa-user absolute left-3 top-3 text-gray-400 text-sm"></i><input v-model="custLogin.username" type="text" class="w-full pl-9 pr-3 py-2.5 border rounded-lg text-sm focus:ring-2 focus:ring-[#00A09D] outline-none" placeholder="Your username or email"></div>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Password</label>
+                            <div class="relative"><i class="fas fa-lock absolute left-3 top-3 text-gray-400 text-sm"></i><input v-model="custLogin.password" type="password" @keyup.enter="attemptCustomerLogin" class="w-full pl-9 pr-3 py-2.5 border rounded-lg text-sm focus:ring-2 focus:ring-[#00A09D] outline-none" placeholder="Your password"></div>
+                        </div>
+                        <div v-if="custLogin.error" class="p-3 bg-red-50 text-red-600 text-xs font-bold rounded flex items-center gap-2"><i class="fas fa-exclamation-circle"></i> {{ custLogin.error }}</div>
+                        <button @click="attemptCustomerLogin" class="w-full bg-[#00A09D] hover:bg-teal-700 text-white font-bold py-3 rounded-lg shadow-lg shadow-teal-500/30 transition transform active:scale-95">Sign In</button>
+                        <div class="flex justify-between text-xs">
+                            <button @click="custLogin.forgotMode = true; custLogin.error = ''" class="text-[#00A09D] hover:underline font-medium">Forgot password?</button>
+                            <button @click="portalView = 'customer_register'" class="text-gray-500 hover:underline">Register</button>
+                        </div>
+                    </div>
+                    <div class="mt-6 bg-gray-50 rounded-lg p-3 text-xs text-gray-500 border border-gray-100">
+                        <p class="font-bold mb-1 text-gray-400 uppercase">Demo Customer</p>
+                        <p><span class="font-bold">Username:</span> julius_b / <span class="font-bold">Pass:</span> pass123</p>
+                    </div>
+                </div>
+                <!-- Forgot Password Flow -->
+                <div v-else class="space-y-4">
+                    <div class="text-center mb-2">
+                        <i class="fas fa-key text-3xl text-[#00A09D] mb-2"></i>
+                        <h3 class="font-bold text-gray-800">Reset Password</h3>
+                        <p class="text-xs text-gray-500 mt-1">A verification code will be sent to your registered phone</p>
+                    </div>
+                    <div v-if="custLogin.forgotStep === 1">
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Registered Phone Number</label>
+                        <div class="relative"><i class="fas fa-phone absolute left-3 top-3 text-gray-400 text-sm"></i><input v-model="custLogin.forgotPhone" type="tel" class="w-full pl-9 pr-3 py-2.5 border rounded-lg text-sm focus:ring-2 focus:ring-[#00A09D] outline-none" placeholder="Your phone number"></div>
+                        <div v-if="custLogin.forgotError" class="mt-2 p-2 bg-red-50 text-red-600 text-xs rounded">{{ custLogin.forgotError }}</div>
+                        <button @click="sendResetCode" class="w-full mt-3 bg-[#00A09D] text-white font-bold py-3 rounded-lg transition">Send Verification Code</button>
+                    </div>
+                    <div v-if="custLogin.forgotStep === 2">
+                        <div class="p-3 bg-blue-50 border border-blue-200 rounded-lg text-xs text-blue-700 font-medium mb-3">
+                            <i class="fas fa-sms mr-1"></i> Demo code sent: <strong>{{ custLogin.generatedCode }}</strong> (shown here for demo)
+                        </div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Enter Verification Code</label>
+                        <input v-model="custLogin.enteredCode" type="text" maxlength="6" class="w-full border p-2.5 rounded-lg text-sm text-center tracking-widest font-bold focus:ring-2 focus:ring-[#00A09D] outline-none" placeholder="000000">
+                        <button @click="verifyResetCode" class="w-full mt-3 bg-[#00A09D] text-white font-bold py-3 rounded-lg transition">Verify Code</button>
+                    </div>
+                    <div v-if="custLogin.forgotStep === 3">
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">New Password</label>
+                        <input v-model="custLogin.newPassword" type="password" class="w-full border p-2.5 rounded-lg text-sm focus:ring-2 focus:ring-[#00A09D] outline-none mb-3" placeholder="New password">
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Confirm Password</label>
+                        <input v-model="custLogin.confirmNewPassword" type="password" class="w-full border p-2.5 rounded-lg text-sm focus:ring-2 focus:ring-[#00A09D] outline-none">
+                        <div v-if="custLogin.forgotError" class="mt-2 p-2 bg-red-50 text-red-600 text-xs rounded">{{ custLogin.forgotError }}</div>
+                        <button @click="resetPassword" class="w-full mt-3 bg-green-600 text-white font-bold py-3 rounded-lg transition">Reset Password</button>
+                    </div>
+                    <button @click="custLogin.forgotMode = false; custLogin.forgotStep = 1; custLogin.forgotError = ''" class="w-full text-xs text-gray-400 hover:text-gray-600 text-center">← Back to login</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================== CUSTOMER DASHBOARD ===================== -->
+    <div v-if="session && session.role === 'Customer'" class="min-h-screen bg-gray-100">
+        <header class="bg-[#00A09D] text-white px-4 md:px-8 py-4 flex items-center justify-between shadow-lg">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded bg-white/20 flex items-center justify-center text-white font-black text-xs">LDI</div>
+                <div>
+                    <div class="font-bold text-sm">Customer Portal</div>
+                    <div class="text-[10px] text-white/60">Ladu Investment</div>
+                </div>
+            </div>
+            <div class="flex items-center gap-4">
+                <div class="text-right hidden sm:block">
+                    <div class="font-bold text-sm">{{ session.fullname }}</div>
+                    <div class="text-[10px] text-white/60">ID: {{ session.customerId }}</div>
+                </div>
+                <div class="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center text-sm font-bold">{{ session.fullname.charAt(0) }}</div>
+                <button @click="logout" class="text-xs bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded font-bold transition"><i class="fas fa-sign-out-alt mr-1"></i> Out</button>
+            </div>
+        </header>
+
+        <!-- Customer Tab Nav -->
+        <div class="bg-white border-b sticky top-0 z-30 shadow-sm">
+            <div class="max-w-6xl mx-auto px-4 flex gap-1 overflow-x-auto">
+                <button v-for="tab in customerTabs" :key="tab.key" @click="custView = tab.key" :class="['px-4 py-3 text-sm font-bold whitespace-nowrap border-b-2 transition', custView === tab.key ? 'border-[#00A09D] text-[#00A09D]' : 'border-transparent text-gray-500 hover:text-gray-700']">
+                    <i :class="tab.icon + ' mr-1'"></i> {{ tab.label }}
+                </button>
+            </div>
+        </div>
+
+        <div class="max-w-6xl mx-auto p-4 md:p-8">
+
+            <!-- Customer Overview -->
+            <div v-if="custView === 'overview'" class="space-y-6 animate-fade-in-up">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div class="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
+                        <div class="flex justify-between items-start mb-4">
+                            <div class="p-2 bg-teal-50 rounded-lg text-[#00A09D]"><i class="fas fa-shopping-bag"></i></div>
+                            <span class="text-[10px] font-bold uppercase text-gray-400 bg-gray-50 px-2 py-1 rounded">Orders</span>
+                        </div>
+                        <h3 class="text-2xl font-black text-gray-800">{{ myOrders.length }}</h3>
+                        <p class="text-xs text-gray-500 mt-1">Total orders placed</p>
+                    </div>
+                    <div class="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
+                        <div class="flex justify-between items-start mb-4">
+                            <div class="p-2 bg-green-50 rounded-lg text-green-500"><i class="fas fa-check-circle"></i></div>
+                            <span class="text-[10px] font-bold uppercase text-gray-400 bg-gray-50 px-2 py-1 rounded">Paid</span>
+                        </div>
+                        <h3 class="text-2xl font-black text-gray-800">{{ myPaidOrders.length }}</h3>
+                        <p class="text-xs text-gray-500 mt-1">Confirmed payments</p>
+                    </div>
+                    <div class="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
+                        <div class="flex justify-between items-start mb-4">
+                            <div class="p-2 bg-purple-50 rounded-lg text-purple-500"><i class="fas fa-money-bill-wave"></i></div>
+                            <span class="text-[10px] font-bold uppercase text-gray-400 bg-gray-50 px-2 py-1 rounded">Spent</span>
+                        </div>
+                        <h3 class="text-xl font-black text-gray-800">₦{{ formatMoney(myTotalSpent) }}</h3>
+                        <p class="text-xs text-gray-500 mt-1">Total amount spent</p>
+                    </div>
+                </div>
+
+                <!-- Recent Activity -->
+                <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+                    <div class="p-5 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center">
+                        <h3 class="font-bold text-gray-700">Recent Activity</h3>
+                    </div>
+                    <div class="divide-y">
+                        <div v-if="myOrders.length === 0" class="p-8 text-center text-gray-400 text-sm italic">No activity yet. Start shopping!</div>
+                        <div v-for="o in myOrders.slice(0,5)" :key="o.id" class="p-4 flex items-center justify-between hover:bg-gray-50">
+                            <div class="flex items-center gap-3">
+                                <div :class="activityIconClass(o.status)" class="w-9 h-9 rounded-full flex items-center justify-center text-sm">
+                                    <i :class="activityIcon(o.status)"></i>
+                                </div>
+                                <div>
+                                    <p class="font-bold text-sm text-gray-800">{{ o.items.length > 1 ? o.items.length + ' products' : o.items[0].name }}</p>
+                                    <p class="text-xs text-gray-500">{{ o.id }} · {{ formatDate(o.created_at) }}</p>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <p class="font-bold text-gray-800">₦{{ formatMoney(o.total) }}</p>
+                                <span :class="statusClass(o.status)" class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase">{{ o.status }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Customer Shop / Browse Products -->
+            <div v-if="custView === 'shop'" class="space-y-6 animate-fade-in-up">
+                <div class="flex justify-between items-center">
+                    <p class="text-sm text-gray-500">Browse and add products to your order</p>
+                    <button @click="openFreshCart" class="bg-[#00A09D] hover:bg-teal-700 text-white px-4 py-2.5 rounded-lg text-sm font-bold shadow-md transition flex items-center gap-2">
+                        <i class="fas fa-shopping-bag"></i> Open Order Form
+                    </button>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                    <div v-for="p in products" :key="p.name" class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-md transition">
+                        <div class="bg-gradient-to-br from-gray-50 to-gray-100 h-24 flex items-center justify-center text-5xl text-gray-200">
+                            <i class="fas fa-box"></i>
+                        </div>
+                        <div class="p-4">
+                            <span class="text-[10px] bg-gray-100 text-gray-500 px-2 py-0.5 rounded font-bold uppercase">{{ p.category }}</span>
+                            <h4 class="font-bold text-gray-800 mt-2 mb-1">{{ p.name }}</h4>
+                            <p class="text-[#00A09D] font-black text-lg">₦{{ formatMoney(p.price) }}<span class="text-xs text-gray-400 font-normal">/{{ p.unit }}</span></p>
+                            <div class="flex items-center gap-2 mt-2 mb-4">
+                                <div class="w-2 h-2 rounded-full" :class="p.stock < 20 ? 'bg-red-500' : 'bg-green-500'"></div>
+                                <span class="text-xs text-gray-500">{{ p.stock }} {{ p.unit }} available</span>
+                            </div>
+                            <button @click="addToCartAndOpen(p)" :disabled="p.stock < 1" class="w-full bg-[#00A09D] hover:bg-teal-700 disabled:bg-gray-200 disabled:text-gray-400 text-white font-bold py-2.5 rounded-lg text-sm transition">
+                                <i class="fas fa-cart-plus mr-2"></i> {{ p.stock < 1 ? 'Out of Stock' : 'Add to Order' }}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Customer Orders & Receipts -->
+            <div v-if="custView === 'orders'" class="space-y-4 animate-fade-in-up">
+                <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+                    <div class="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
+                        <h3 class="font-bold text-gray-700">My Orders</h3>
+                        <div class="flex gap-2 flex-wrap">
+                            <select v-model="custOrderFilter.status" class="border border-gray-200 rounded-lg px-3 py-2 text-xs font-bold focus:ring-2 focus:ring-[#00A09D] outline-none bg-gray-50">
+                                <option value="">All Status</option>
+                                <option value="quotation">Quotation</option>
+                                <option value="confirmed">Confirmed</option>
+                                <option value="delivered">Delivered</option>
+                            </select>
+                            <input type="date" v-model="custOrderFilter.dateFrom" class="border border-gray-200 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-[#00A09D] outline-none bg-gray-50" placeholder="From">
+                            <input type="date" v-model="custOrderFilter.dateTo" class="border border-gray-200 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-[#00A09D] outline-none bg-gray-50" placeholder="To">
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left">
+                            <thead class="bg-gray-50 text-xs font-bold uppercase text-gray-400">
+                                <tr>
+                                    <th class="p-4">Reference</th>
+                                    <th class="p-4">Item</th>
+                                    <th class="p-4">Amount</th>
+                                    <th class="p-4">Date</th>
+                                    <th class="p-4">Status</th>
+                                    <th class="p-4">Payment</th>
+                                    <th class="p-4 text-center">Receipt</th>
+                                </tr>
+                            </thead>
+                            <tbody class="text-sm divide-y divide-gray-100">
+                                <tr v-if="filteredMyOrders.length === 0"><td colspan="7" class="p-8 text-center text-gray-400 italic">No orders found</td></tr>
+                                <tr v-for="o in filteredMyOrders" :key="o.id" class="hover:bg-gray-50">
+                                    <td class="p-4 font-bold text-[#714B67]">{{ o.id }}</td>
+                                    <td class="p-4 font-medium text-gray-700 text-xs">
+                                        <div v-for="it in o.items" :key="it.name" class="leading-5">{{ it.name }} ×{{ it.qty }}</div>
+                                    </td>
+                                    <td class="p-4 font-bold text-gray-800">₦{{ formatMoney(o.total) }}</td>
+                                    <td class="p-4 text-gray-500 text-xs">{{ formatDate(o.created_at) }}</td>
+                                    <td class="p-4"><span :class="statusClass(o.status)" class="px-2 py-1 rounded-full text-[10px] font-black uppercase">{{ o.status }}</span></td>
+                                    <td class="p-4">
+                                        <span v-if="o.paymentStatus === 'paid'" class="text-green-600 font-bold text-xs"><i class="fas fa-check-circle mr-1"></i>Paid</span>
+                                        <button v-else-if="o.status !== 'quotation' || true" @click="openPaymentModal(o)" class="text-xs bg-[#00A09D] hover:bg-teal-700 text-white px-3 py-1 rounded font-bold transition">Pay Now</button>
+                                    </td>
+                                    <td class="p-4 text-center">
+                                        <button v-if="o.paymentStatus === 'paid'" @click="downloadReceipt(o)" class="p-2 text-[#714B67] hover:bg-purple-50 rounded transition" title="Download Receipt"><i class="fas fa-file-download"></i></button>
+                                        <span v-else class="text-gray-300 text-xs">—</span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Customer Transaction History -->
+            <div v-if="custView === 'transactions'" class="space-y-4 animate-fade-in-up">
+                <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+                    <div class="p-5 border-b border-gray-100 bg-gray-50/50">
+                        <h3 class="font-bold text-gray-700">Transaction History</h3>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left">
+                            <thead class="bg-gray-50 text-xs font-bold uppercase text-gray-400">
+                                <tr><th class="p-4">Date</th><th class="p-4">Reference</th><th class="p-4">Description</th><th class="p-4 text-right">Amount</th><th class="p-4">Type</th></tr>
+                            </thead>
+                            <tbody class="text-sm divide-y divide-gray-100">
+                                <tr v-if="myTransactions.length === 0"><td colspan="5" class="p-8 text-center text-gray-400 italic">No transactions yet</td></tr>
+                                <tr v-for="t in myTransactions" :key="t.id" class="hover:bg-gray-50">
+                                    <td class="p-4 text-gray-500 text-xs">{{ formatDate(t.date) }}</td>
+                                    <td class="p-4 font-bold text-[#714B67]">{{ t.ref }}</td>
+                                    <td class="p-4 text-gray-700">{{ t.description }}</td>
+                                    <td class="p-4 text-right font-mono font-bold text-gray-800">₦{{ formatMoney(t.amount) }}</td>
+                                    <td class="p-4"><span :class="t.type === 'payment' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'" class="px-2 py-1 rounded text-[10px] font-bold uppercase">{{ t.type }}</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Customer Profile -->
+            <div v-if="custView === 'profile'" class="animate-fade-in-up">
+                <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden max-w-lg">
+                    <div class="bg-[#00A09D] p-6 text-white flex items-center gap-4">
+                        <div class="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center text-2xl font-black">{{ session.fullname.charAt(0) }}</div>
+                        <div>
+                            <h3 class="font-black text-lg">{{ session.fullname }}</h3>
+                            <p class="text-white/70 text-xs">{{ session.customerId }}</p>
+                            <p class="text-white/70 text-xs">{{ session.company || 'Individual Customer' }}</p>
+                        </div>
+                    </div>
+                    <div class="p-6 space-y-3">
+                        <div class="flex justify-between py-2 border-b border-gray-100"><span class="text-xs font-bold text-gray-400 uppercase">Email</span><span class="text-sm text-gray-700">{{ session.email }}</span></div>
+                        <div class="flex justify-between py-2 border-b border-gray-100"><span class="text-xs font-bold text-gray-400 uppercase">Phone</span><span class="text-sm text-gray-700">{{ session.phone }}</span></div>
+                        <div class="flex justify-between py-2 border-b border-gray-100"><span class="text-xs font-bold text-gray-400 uppercase">Address</span><span class="text-sm text-gray-700">{{ session.address }}</span></div>
+                        <div class="flex justify-between py-2 border-b border-gray-100"><span class="text-xs font-bold text-gray-400 uppercase">State</span><span class="text-sm text-gray-700">{{ session.state }}</span></div>
+                        <div class="flex justify-between py-2"><span class="text-xs font-bold text-gray-400 uppercase">Member Since</span><span class="text-sm text-gray-700">{{ formatDate(session.createdAt) }}</span></div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ===================== STAFF DASHBOARD ===================== -->
+    <div v-if="session && session.role !== 'Customer'" class="flex flex-col md:flex-row min-h-screen bg-gray-100">
+        <div v-if="sidebarOpen" @click="sidebarOpen = false" class="fixed inset-0 bg-black/50 z-40 md:hidden"></div>
+        <aside :class="['fixed md:static inset-y-0 left-0 z-50 w-64 bg-[#2A1B26] text-white flex flex-col transition-transform duration-300 ease-in-out shadow-2xl md:shadow-none', sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0']">
+            <div class="h-16 flex items-center px-6 border-b border-white/10 bg-[#714B67]">
+                <div class="w-8 h-8 rounded bg-white/20 flex items-center justify-center text-white font-black text-xs mr-3">LDI</div>
+                <div><div class="font-bold text-sm tracking-wide">Ladu ERP</div><div class="text-[10px] text-white/60 uppercase tracking-wider">Construction</div></div>
+            </div>
+            <nav class="flex-1 overflow-y-auto py-6 px-3 space-y-1">
+                <a href="#" @click.prevent="view = 'dashboard'; sidebarOpen = false" :class="navClass('dashboard')"><i class="fas fa-th-large w-8 text-center"></i> Dashboard</a>
+                <a v-if="['Admin','Sales'].includes(session.role)" href="#" @click.prevent="view = 'sales'; sidebarOpen = false" :class="navClass('sales')"><i class="fas fa-shopping-cart w-8 text-center"></i> Sales Orders</a>
+                <a v-if="['Admin','Store'].includes(session.role)" href="#" @click.prevent="view = 'inventory'; sidebarOpen = false" :class="navClass('inventory')"><i class="fas fa-boxes w-8 text-center"></i> Inventory</a>
+                <a v-if="session.role === 'Admin'" href="#" @click.prevent="view = 'expenses'; sidebarOpen = false" :class="navClass('expenses')"><i class="fas fa-receipt w-8 text-center"></i> Expenses</a>
+                <a v-if="session.role === 'Admin'" href="#" @click.prevent="view = 'users'; sidebarOpen = false" :class="navClass('users')"><i class="fas fa-users-cog w-8 text-center"></i> User Management</a>
+                <a v-if="['Admin','Sales'].includes(session.role)" href="#" @click.prevent="view = 'customers'; sidebarOpen = false" :class="navClass('customers')"><i class="fas fa-address-book w-8 text-center"></i> Customers</a>
+                <a v-if="['Admin','Sales'].includes(session.role)" href="#" @click.prevent="view = 'payments'; sidebarOpen = false" :class="navClass('payments')"><i class="fas fa-money-check-alt w-8 text-center"></i> Payments</a>
+                <a v-if="['Admin','Sales'].includes(session.role)" href="#" @click.prevent="view = 'reports'; sidebarOpen = false" :class="navClass('reports')"><i class="fas fa-chart-pie w-8 text-center"></i> Reports</a>
+                <a v-if="session.role === 'Admin'" href="#" @click.prevent="view = 'financials'; sidebarOpen = false" :class="navClass('financials')"><i class="fas fa-landmark w-8 text-center"></i> Financials</a>
+            </nav>
+            <div class="p-4 bg-black/20 border-t border-white/5">
+                <div class="flex items-center gap-3 mb-3">
+                    <div class="w-10 h-10 rounded-full bg-gradient-to-br from-[#00A09D] to-[#714B67] flex items-center justify-center text-xs font-bold shadow-inner">{{ session.fullname.charAt(0) }}</div>
+                    <div class="overflow-hidden"><div class="text-sm font-bold truncate">{{ session.fullname }}</div><div class="text-[10px] text-gray-400 uppercase tracking-wider">{{ session.role }}</div></div>
+                </div>
+                <button @click="logout" class="w-full py-2 text-xs font-bold text-red-300 hover:text-white hover:bg-red-500/20 rounded transition border border-red-500/20"><i class="fas fa-sign-out-alt mr-2"></i> Sign Out</button>
+            </div>
+        </aside>
+
+        <main class="flex-1 flex flex-col min-w-0 bg-gray-50">
+            <header class="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 md:px-8 sticky top-0 z-30 shadow-sm">
+                <div class="flex items-center gap-4">
+                    <button @click="sidebarOpen = !sidebarOpen" class="md:hidden p-2 text-gray-600 hover:bg-gray-100 rounded-lg"><i class="fas fa-bars text-xl"></i></button>
+                    <h2 class="text-xl font-bold text-gray-800 capitalize hidden sm:block">{{ viewTitles[view] || view }}</h2>
+                </div>
+                <div class="flex items-center gap-3 md:gap-6">
+                    <div class="relative">
+                        <button @click="showNotifs = !showNotifs" class="p-2 text-gray-400 hover:text-[#714B67] transition relative">
+                            <i class="fas fa-bell text-xl"></i>
+                            <span v-if="notifs.length > 0" class="absolute top-1 right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-bold flex items-center justify-center rounded-full border-2 border-white">{{ notifs.length }}</span>
+                        </button>
+                        <div v-if="showNotifs" class="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden z-50 animate-fade-in-up">
+                            <div class="p-3 bg-gray-50 border-b flex justify-between items-center">
+                                <span class="text-xs font-bold text-gray-500 uppercase">Notifications</span>
+                                <button @click="notifs = []; showNotifs = false" class="text-[10px] text-[#00A09D] font-bold hover:underline">Clear All</button>
+                            </div>
+                            <div class="max-h-64 overflow-y-auto">
+                                <div v-if="notifs.length === 0" class="p-8 text-center text-gray-400 text-sm">No new notifications</div>
+                                <div v-for="(n, idx) in notifs" :key="idx" class="p-4 border-b hover:bg-gray-50 transition">
+                                    <p class="text-sm font-bold text-gray-800">{{ n.title }}</p>
+                                    <p class="text-xs text-gray-500 mt-1">{{ n.msg }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <button @click="showChat = !showChat" class="p-2 text-gray-400 hover:text-[#00A09D] transition relative">
+                        <i class="fas fa-comment-alt text-xl"></i>
+                        <span v-if="messages.length > 0" class="absolute top-1 right-1 w-2 h-2 bg-green-500 rounded-full"></span>
+                    </button>
+                    <button v-if="['sales','inventory','users','expenses','customers'].includes(view)" @click="openActionModal" class="bg-[#714B67] hover:bg-[#5a3c52] text-white px-4 py-2 rounded-lg text-sm font-bold shadow-md shadow-purple-900/10 transition flex items-center gap-2">
+                        <i class="fas fa-plus"></i> <span class="hidden sm:inline">Create New</span>
+                    </button>
+                </div>
+            </header>
+
+            <div class="flex-1 p-4 md:p-8 overflow-x-hidden">
+
+                <!-- DASHBOARD -->
+                <div v-if="view === 'dashboard'" class="space-y-6">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div v-if="session.role === 'Admin'" class="bg-white p-5 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition">
+                            <div class="flex justify-between items-start mb-4">
+                                <div class="p-2 bg-purple-50 rounded-lg text-[#714B67]"><i class="fas fa-wallet"></i></div>
+                                <span class="text-[10px] font-bold uppercase text-gray-400 bg-gray-50 px-2 py-1 rounded">Bank</span>
+                            </div>
+                            <h3 class="text-2xl font-black text-gray-800">₦{{ formatMoney(bankBalance) }}</h3>
+                            <p class="text-xs text-gray-500 mt-1">Money in Bank</p>
+                        </div>
+                        <div class="bg-white p-5 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition relative overflow-hidden">
+                            <div v-if="lowStockProducts.length > 0" class="absolute right-0 top-0 w-16 h-16 bg-red-500/10 rounded-bl-full -mr-8 -mt-8"></div>
+                            <div class="flex justify-between items-start mb-4">
+                                <div class="p-2 bg-red-50 rounded-lg text-red-500"><i class="fas fa-exclamation-triangle"></i></div>
+                                <span class="text-[10px] font-bold uppercase text-gray-400 bg-gray-50 px-2 py-1 rounded">Alerts</span>
+                            </div>
+                            <h3 class="text-2xl font-black text-gray-800">{{ lowStockProducts.length }}</h3>
+                            <p class="text-xs text-red-500 font-bold mt-1">Low stock items</p>
+                        </div>
+                        <div class="bg-white p-5 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition">
+                            <div class="flex justify-between items-start mb-4">
+                                <div class="p-2 bg-teal-50 rounded-lg text-[#00A09D]"><i class="fas fa-cash-register"></i></div>
+                                <span class="text-[10px] font-bold uppercase text-gray-400 bg-gray-50 px-2 py-1 rounded">Daily</span>
+                            </div>
+                            <h3 class="text-2xl font-black text-gray-800">₦{{ formatMoney(todaySales) }}</h3>
+                            <p class="text-xs text-gray-500 mt-1">Sales recorded today</p>
+                        </div>
+                        <div class="bg-white p-5 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition">
+                            <div class="flex justify-between items-start mb-4">
+                                <div class="p-2 bg-blue-50 rounded-lg text-blue-500"><i class="fas fa-file-invoice"></i></div>
+                                <span class="text-[10px] font-bold uppercase text-gray-400 bg-gray-50 px-2 py-1 rounded">Orders</span>
+                            </div>
+                            <h3 class="text-2xl font-black text-gray-800">{{ orders.length }}</h3>
+                            <p class="text-xs text-gray-500 mt-1">Total active orders</p>
+                        </div>
+                    </div>
+
+                    <!-- Admin-only Total Assets card -->
+                    <div v-if="session.role === 'Admin'" class="bg-gradient-to-r from-[#714B67] to-[#2A1B26] p-6 rounded-xl text-white shadow-lg">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="font-bold uppercase tracking-widest text-xs text-white/70">Total Assets (Admin Only)</h3>
+                            <i class="fas fa-shield-alt text-white/40"></i>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
+                            <div class="bg-white/10 rounded-lg p-3">
+                                <p class="text-xs text-white/60 mb-1">Money in Bank</p>
+                                <p class="font-black text-lg">₦{{ formatMoney(bankBalance) }}</p>
+                            </div>
+                            <div class="bg-white/10 rounded-lg p-3">
+                                <p class="text-xs text-white/60 mb-1">Stock Value</p>
+                                <p class="font-black text-lg">₦{{ formatMoney(stockValue) }}</p>
+                            </div>
+                            <div class="bg-white/10 rounded-lg p-3">
+                                <p class="text-xs text-white/60 mb-1">Total Expenses</p>
+                                <p class="font-black text-lg text-red-300">- ₦{{ formatMoney(totalExpenses) }}</p>
+                            </div>
+                            <div class="bg-white/20 rounded-lg p-3 border border-white/30">
+                                <p class="text-xs text-white/60 mb-1">Net Total Assets</p>
+                                <p class="font-black text-2xl text-[#00FFF5]">₦{{ formatMoney(totalAssets) }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+                        <div class="p-5 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                            <h3 class="font-bold text-gray-700">Recent Sales Orders</h3>
+                            <button @click="view = 'sales'" class="text-xs font-bold text-[#00A09D] hover:underline">View All</button>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left">
+                                <thead class="bg-gray-50 text-xs uppercase font-bold text-gray-400">
+                                    <tr><th class="p-4">Reference</th><th class="p-4">Customer</th><th class="p-4">Items</th><th class="p-4">Amount</th><th class="p-4">Payment</th><th class="p-4">Date</th><th class="p-4">Status</th></tr>
+                                </thead>
+                                <tbody class="text-sm divide-y divide-gray-100">
+                                    <tr v-for="o in orders.slice(0, 5)" :key="o.id" class="hover:bg-gray-50 transition">
+                                        <td class="p-4 font-bold text-[#714B67]">{{ o.id }}</td>
+                                        <td class="p-4">
+                                            <p class="font-medium text-gray-700 text-sm">{{ o.customerName || o.customer }}</p>
+                                            <p class="text-[10px] text-gray-400 font-mono">{{ o.customerId }}</p>
+                                        </td>
+                                        <td class="p-4">
+                                            <div v-for="item in o.items" :key="item.name" class="text-xs text-gray-600 leading-5">
+                                                {{ item.name }} <span class="font-bold text-[#00A09D]">×{{ item.qty }}</span>
+                                            </div>
+                                        </td>
+                                        <td class="p-4 font-bold text-gray-800">₦{{ formatMoney(o.total) }}</td>
+                                        <td class="p-4">
+                                            <span v-if="o.paymentStatus === 'paid'" class="text-green-600 font-bold text-xs"><i class="fas fa-check-circle mr-1"></i>Paid</span>
+                                            <span v-else class="text-orange-500 font-bold text-xs"><i class="fas fa-clock mr-1"></i>Pending</span>
+                                        </td>
+                                        <td class="p-4 text-gray-500 text-xs">{{ formatDate(o.created_at) }}</td>
+                                        <td class="p-4"><span :class="statusClass(o.status)" class="px-2 py-1 rounded-full text-[10px] font-black uppercase tracking-wide">{{ o.status }}</span></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- INVENTORY -->
+                <div v-if="view === 'inventory'" class="space-y-4">
+                    <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+                        <div class="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
+                            <h3 class="font-bold text-gray-700">Inventory Management</h3>
+                            <div class="flex gap-2 flex-wrap w-full sm:w-auto">
+                                <div class="relative flex-1 sm:flex-initial">
+                                    <i class="fas fa-search absolute left-3 top-2.5 text-gray-400 text-sm"></i>
+                                    <input v-model="inventoryFilters.search" type="text" placeholder="Search products..." class="w-full sm:w-48 pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-xs focus:ring-2 focus:ring-[#00A09D] outline-none bg-gray-50">
+                                </div>
+                                <select v-model="inventoryFilters.category" class="border border-gray-200 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-[#00A09D] outline-none bg-gray-50">
+                                    <option value="">All Categories</option>
+                                    <option v-for="cat in uniqueCategories" :key="cat">{{ cat }}</option>
+                                </select>
+                                <select v-model="inventoryFilters.stockLevel" class="border border-gray-200 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-[#00A09D] outline-none bg-gray-50">
+                                    <option value="">All Stock Levels</option>
+                                    <option value="low">Low Stock (< 20)</option>
+                                    <option value="normal">Normal Stock (≥ 20)</option>
+                                </select>
+                                <select v-model="inventoryFilters.sortBy" class="border border-gray-200 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-[#00A09D] outline-none bg-gray-50">
+                                    <option value="name">Sort: Name (A-Z)</option>
+                                    <option value="name_desc">Sort: Name (Z-A)</option>
+                                    <option value="stock_low">Sort: Stock (Low-High)</option>
+                                    <option value="stock_high">Sort: Stock (High-Low)</option>
+                                    <option value="price_low">Sort: Price (Low-High)</option>
+                                    <option value="price_high">Sort: Price (High-Low)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left">
+                                <thead class="bg-gray-50 text-xs font-bold uppercase text-gray-400">
+                                    <tr><th class="p-4">Product Name</th><th class="p-4">Category</th><th class="p-4">Stock Level</th><th class="p-4 text-right">Unit Price</th><th class="p-4 text-center">Actions</th></tr>
+                                </thead>
+                                <tbody class="text-sm divide-y divide-gray-100">
+                                    <tr v-if="filteredInventory.length === 0"><td colspan="5" class="p-8 text-center text-gray-400 italic">No products found</td></tr>
+                                    <tr v-for="(p, index) in filteredInventory" :key="p.name" class="hover:bg-gray-50 transition">
+                                        <td class="p-4 font-bold text-gray-800">{{ p.name }}</td>
+                                        <td class="p-4"><span class="px-2 py-1 bg-gray-100 rounded text-xs font-bold text-gray-500 uppercase">{{ p.category }}</span></td>
+                                        <td class="p-4">
+                                            <div class="flex items-center gap-2">
+                                                <div class="w-2 h-2 rounded-full" :class="p.stock < 20 ? 'bg-red-500 animate-pulse' : 'bg-green-500'"></div>
+                                                <span :class="p.stock < 20 ? 'text-red-600 font-bold' : 'text-gray-700 font-medium'">{{ p.stock }} {{ p.unit }}</span>
+                                            </div>
+                                        </td>
+                                        <td class="p-4 text-right font-mono text-gray-600">₦{{ formatMoney(p.price) }}</td>
+                                        <td class="p-4 text-center">
+                                            <div class="flex items-center justify-center gap-2">
+                                                <button @click="editProduct(p)" class="p-2 text-[#00A09D] hover:bg-teal-50 rounded transition" title="Edit"><i class="fas fa-edit"></i></button>
+                                                <button v-if="['Admin', 'Store'].includes(session.role)" @click="deleteProduct(products.indexOf(p))" class="p-2 text-red-500 hover:bg-red-50 rounded transition" title="Delete"><i class="fas fa-trash-alt"></i></button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SALES ORDERS -->
+                <div v-if="view === 'sales'" class="space-y-4">
+                    <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+                        <div class="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
+                            <h3 class="font-bold text-gray-700">Sales Orders Pipeline</h3>
+                            <div class="flex gap-2 flex-wrap w-full sm:w-auto">
+                                <div class="relative flex-1 sm:flex-initial">
+                                    <i class="fas fa-search absolute left-3 top-2.5 text-gray-400 text-sm"></i>
+                                    <input v-model="salesFilters.search" type="text" placeholder="Search orders..." class="w-full sm:w-48 pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-xs focus:ring-2 focus:ring-[#00A09D] outline-none bg-gray-50">
+                                </div>
+                                <select v-model="salesFilters.sortBy" class="border border-gray-200 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-[#00A09D] outline-none bg-gray-50">
+                                    <option value="date_new">Sort: Newest First</option>
+                                    <option value="date_old">Sort: Oldest First</option>
+                                    <option value="amount_high">Sort: Amount (High-Low)</option>
+                                    <option value="amount_low">Sort: Amount (Low-High)</option>
+                                    <option value="customer">Sort: Customer (A-Z)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div v-for="st in ['quotation','confirmed','delivered']" :key="st" class="flex flex-col h-full">
+                            <div class="flex items-center justify-between mb-4 px-1">
+                                <h4 class="text-xs font-black uppercase text-gray-500 tracking-wider">{{ st }}</h4>
+                                <span class="bg-gray-200 text-gray-600 text-[10px] font-bold px-2 py-0.5 rounded-full">{{ filteredSalesOrders.filter(x => x.status === st).length }}</span>
+                            </div>
+                            <div class="bg-gray-100/50 rounded-xl p-3 space-y-3 min-h-[200px]">
+                                <div v-if="filteredSalesOrders.filter(x => x.status === st).length === 0" class="text-center py-8 text-gray-400 text-xs italic">No orders</div>
+                                <div v-for="o in filteredSalesOrders.filter(x => x.status === st)" :key="o.id" class="bg-white p-4 rounded-lg shadow-sm border border-gray-100 hover:shadow-md transition group cursor-pointer">
+                                    <div class="flex justify-between items-start mb-2">
+                                        <span class="text-[10px] font-bold text-gray-400 bg-gray-50 px-1.5 py-0.5 rounded border">{{ o.id }}</span>
+                                        <span class="text-[10px] text-gray-400">{{ formatDate(o.created_at) }}</span>
+                                    </div>
+                                    <h5 class="font-bold text-gray-800 text-sm mb-0.5">{{ o.customerName || o.customer }}</h5>
+                                    <p class="text-[9px] text-gray-400 font-mono mb-1">{{ o.customerId }}</p>
+                                    <div class="text-[10px] text-gray-400 mb-1">
+                                        <span v-if="o.items.length === 1">{{ o.items[0].name }}</span>
+                                        <span v-else><i class="fas fa-layer-group mr-1"></i>{{ o.items.length }} products</span>
+                                    </div>
+                                    <div v-if="o.paymentStatus === 'paid'" class="text-[10px] text-green-600 font-bold mb-1"><i class="fas fa-check-circle mr-1"></i>Payment Confirmed</div>
+                                    <div v-else-if="o.paymentStatus === 'pending_confirmation'" class="text-[10px] text-orange-500 font-bold mb-1"><i class="fas fa-clock mr-1"></i>Payment Awaiting Confirmation</div>
+                                    <div class="flex justify-between items-end mt-3">
+                                        <span class="font-black text-[#714B67]">₦{{ formatMoney(o.total) }}</span>
+                                        <div class="flex gap-1 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <!-- Staff can confirm payment on any quotation (unpaid, pending, or direct) -->
+                                            <button v-if="o.status === 'quotation' && o.paymentStatus !== 'paid'" @click.stop="confirmPayment(o)" class="text-[10px] bg-green-600 text-white px-2 py-1 rounded font-bold hover:bg-green-700">
+                                                <i class="fas fa-check mr-1"></i>{{ o.paymentStatus === 'pending_confirmation' ? 'Confirm Pay' : 'Mark Paid' }}
+                                            </button>
+                                            <button v-if="o.status === 'confirmed'" @click.stop="updateOrderStatus(o,'delivered')" class="text-[10px] bg-[#714B67] text-white px-2 py-1 rounded font-bold hover:bg-purple-800">Deliver</button>
+                                            <button v-if="o.paymentStatus === 'paid'" @click.stop="downloadReceipt(o)" class="text-[10px] bg-gray-100 text-gray-600 px-2 py-1 rounded font-bold hover:bg-gray-200"><i class="fas fa-file-download"></i></button>
+                                            <span v-if="o.status === 'delivered'" class="text-green-500 text-sm"><i class="fas fa-check-circle"></i></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- EXPENSES -->
+                <div v-if="view === 'expenses'" class="space-y-6">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div class="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
+                            <div class="flex justify-between items-start mb-4"><div class="p-2 bg-red-50 rounded-lg text-red-500"><i class="fas fa-money-bill-wave"></i></div><span class="text-[10px] font-bold uppercase text-gray-400 bg-gray-50 px-2 py-1 rounded">Total</span></div>
+                            <h3 class="text-2xl font-black text-gray-800">₦{{ formatMoney(totalExpenses) }}</h3>
+                            <p class="text-xs text-gray-500 mt-1">All recorded expenses</p>
+                        </div>
+                        <div class="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
+                            <div class="flex justify-between items-start mb-4"><div class="p-2 bg-orange-50 rounded-lg text-orange-500"><i class="fas fa-calendar-day"></i></div><span class="text-[10px] font-bold uppercase text-gray-400 bg-gray-50 px-2 py-1 rounded">Today</span></div>
+                            <h3 class="text-2xl font-black text-gray-800">₦{{ formatMoney(todayExpenses) }}</h3>
+                            <p class="text-xs text-gray-500 mt-1">Expenses recorded today</p>
+                        </div>
+                        <div class="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
+                            <div class="flex justify-between items-start mb-4"><div class="p-2 bg-purple-50 rounded-lg text-purple-500"><i class="fas fa-list"></i></div><span class="text-[10px] font-bold uppercase text-gray-400 bg-gray-50 px-2 py-1 rounded">Count</span></div>
+                            <h3 class="text-2xl font-black text-gray-800">{{ expenses.length }}</h3>
+                            <p class="text-xs text-gray-500 mt-1">Total expense records</p>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+                        <div class="p-5 border-b border-gray-100 bg-gray-50/50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                            <h3 class="font-bold text-gray-700">Expense Records</h3>
+                            <div class="flex gap-2 flex-wrap w-full sm:w-auto">
+                                <div class="relative flex-1 sm:flex-initial">
+                                    <i class="fas fa-search absolute left-3 top-2.5 text-gray-400 text-sm"></i>
+                                    <input v-model="expenseFilters.search" type="text" placeholder="Search expenses..." class="w-full sm:w-48 pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-xs focus:ring-2 focus:ring-[#00A09D] outline-none bg-gray-50">
+                                </div>
+                                <select v-model="expenseFilters.category" class="border border-gray-200 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-[#00A09D] outline-none bg-gray-50">
+                                    <option value="">All Categories</option>
+                                    <option value="Transport">Transport</option>
+                                    <option value="Utilities">Utilities</option>
+                                    <option value="Salaries">Salaries</option>
+                                    <option value="Maintenance">Maintenance</option>
+                                    <option value="Office">Office</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                                <select v-model="expenseFilters.sortBy" class="border border-gray-200 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-[#00A09D] outline-none bg-gray-50">
+                                    <option value="date_new">Sort: Newest First</option>
+                                    <option value="date_old">Sort: Oldest First</option>
+                                    <option value="amount_high">Sort: Amount (High-Low)</option>
+                                    <option value="amount_low">Sort: Amount (Low-High)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left">
+                                <thead class="bg-gray-50 text-xs font-bold uppercase text-gray-400">
+                                    <tr><th class="p-4">Date</th><th class="p-4">Category</th><th class="p-4">Description</th><th class="p-4 text-right">Amount</th><th class="p-4 text-center">Actions</th></tr>
+                                </thead>
+                                <tbody class="text-sm divide-y divide-gray-100">
+                                    <tr v-if="filteredExpenses.length === 0"><td colspan="5" class="p-8 text-center text-gray-400 italic">No expenses found</td></tr>
+                                    <tr v-for="e in filteredExpenses" :key="e.date + e.description" class="hover:bg-gray-50 transition">
+                                        <td class="p-4 text-gray-600 text-xs">{{ formatDate(e.date) }}</td>
+                                        <td class="p-4"><span class="px-2 py-1 bg-orange-100 text-orange-700 rounded text-xs font-bold uppercase">{{ e.category }}</span></td>
+                                        <td class="p-4 font-medium text-gray-700">{{ e.description }}</td>
+                                        <td class="p-4 text-right font-mono font-bold text-red-600">₦{{ formatMoney(e.amount) }}</td>
+                                        <td class="p-4 text-center"><button @click="deleteExpense(e)" class="p-2 text-red-500 hover:bg-red-50 rounded transition" title="Delete"><i class="fas fa-trash-alt"></i></button></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- STAFF USER MANAGEMENT -->
+                <div v-if="view === 'users'" class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+                    <div class="p-5 border-b border-gray-100 bg-gray-50/50"><h3 class="font-bold text-gray-700">System Users</h3></div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left">
+                            <thead class="bg-gray-50 text-xs font-bold uppercase text-gray-400">
+                                <tr><th class="p-4">User Profile</th><th class="p-4">Username</th><th class="p-4">Role</th><th class="p-4 text-center">Status</th><th class="p-4 text-center">Action</th></tr>
+                            </thead>
+                            <tbody class="text-sm divide-y divide-gray-100">
+                                <tr v-for="(u, idx) in users" :key="idx" class="hover:bg-gray-50 transition">
+                                    <td class="p-4">
+                                        <div class="flex items-center gap-3">
+                                            <div class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-xs font-bold text-gray-600">{{ u.fullname.charAt(0) }}</div>
+                                            <span class="font-bold text-gray-800">{{ u.fullname }}</span>
+                                        </div>
+                                    </td>
+                                    <td class="p-4 font-mono text-gray-600 text-xs">{{ u.username }}</td>
+                                    <td class="p-4"><span :class="{'bg-purple-100 text-purple-700': u.role==='Admin', 'bg-teal-100 text-teal-700': u.role==='Sales', 'bg-orange-100 text-orange-700': u.role==='Store'}" class="px-2 py-1 rounded text-[10px] font-bold uppercase">{{ u.role }}</span></td>
+                                    <td class="p-4 text-center"><span class="w-2 h-2 rounded-full bg-green-500 inline-block mr-1"></span><span class="text-xs text-gray-500">Active</span></td>
+                                    <td class="p-4 text-center"><button @click="deleteUser(idx)" class="text-red-400 hover:text-red-600 transition"><i class="fas fa-trash-alt"></i></button></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- CUSTOMERS MANAGEMENT -->
+                <div v-if="view === 'customers'" class="space-y-6">
+                    <div class="flex gap-3 mb-2 flex-wrap">
+                        <button @click="custTypeFilter = 'all'" :class="custTypeFilter === 'all' ? 'bg-[#714B67] text-white' : 'bg-white text-gray-600 border border-gray-200'" class="px-4 py-2 rounded-lg text-xs font-bold transition">All ({{ customers.length }})</button>
+                        <button @click="custTypeFilter = 'regular'" :class="custTypeFilter === 'regular' ? 'bg-[#00A09D] text-white' : 'bg-white text-gray-600 border border-gray-200'" class="px-4 py-2 rounded-lg text-xs font-bold transition">Regular ({{ customers.filter(c=>c.type==='regular').length }})</button>
+                        <button @click="custTypeFilter = 'temporary'" :class="custTypeFilter === 'temporary' ? 'bg-orange-500 text-white' : 'bg-white text-gray-600 border border-gray-200'" class="px-4 py-2 rounded-lg text-xs font-bold transition">Temporary ({{ customers.filter(c=>c.type==='temporary').length }})</button>
+                    </div>
+                    <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+                        <div class="p-5 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center">
+                            <h3 class="font-bold text-gray-700">Customer Directory</h3>
+                            <input v-model="custSearch" type="text" placeholder="Search customers..." class="border border-gray-200 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-[#00A09D] outline-none bg-gray-50 w-48">
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left">
+                                <thead class="bg-gray-50 text-xs font-bold uppercase text-gray-400">
+                                    <tr><th class="p-4">Customer</th><th class="p-4">ID</th><th class="p-4">Phone</th><th class="p-4">State</th><th class="p-4">Type</th><th class="p-4 text-center">Actions</th></tr>
+                                </thead>
+                                <tbody class="text-sm divide-y divide-gray-100">
+                                    <tr v-if="filteredCustomers.length === 0"><td colspan="6" class="p-8 text-center text-gray-400 italic">No customers found</td></tr>
+                                    <tr v-for="(c, idx) in filteredCustomers" :key="c.customerId" class="hover:bg-gray-50 transition">
+                                        <td class="p-4">
+                                            <div class="flex items-center gap-3">
+                                                <div class="w-8 h-8 rounded-full bg-teal-100 flex items-center justify-center text-xs font-bold text-teal-700">{{ c.fullname.charAt(0) }}</div>
+                                                <div>
+                                                    <p class="font-bold text-gray-800">{{ c.fullname }}</p>
+                                                    <p class="text-xs text-gray-400">{{ c.company || c.email }}</p>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="p-4 font-mono text-xs text-gray-500">{{ c.customerId }}</td>
+                                        <td class="p-4 text-xs text-gray-600">{{ c.phone }}</td>
+                                        <td class="p-4 text-xs text-gray-600">{{ c.state }}</td>
+                                        <td class="p-4">
+                                            <span :class="c.type === 'regular' ? 'bg-teal-100 text-teal-700' : 'bg-orange-100 text-orange-700'" class="px-2 py-1 rounded text-[10px] font-bold uppercase">{{ c.type }}</span>
+                                        </td>
+                                        <td class="p-4 text-center">
+                                            <button @click="deleteCustomer(c.customerId)" class="text-red-400 hover:text-red-600 transition text-xs p-1"><i class="fas fa-trash-alt"></i></button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PAYMENTS -->
+                <div v-if="view === 'payments'" class="space-y-6">
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div class="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
+                            <div class="flex justify-between items-start mb-4"><div class="p-2 bg-green-50 rounded-lg text-green-500"><i class="fas fa-check-circle"></i></div><span class="text-[10px] font-bold uppercase text-gray-400 bg-gray-50 px-2 py-1 rounded">Confirmed</span></div>
+                            <h3 class="text-2xl font-black text-gray-800">₦{{ formatMoney(confirmedPaymentsTotal) }}</h3>
+                            <p class="text-xs text-gray-500 mt-1">{{ confirmedPaymentsCount }} confirmed payments</p>
+                        </div>
+                        <div class="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
+                            <div class="flex justify-between items-start mb-4"><div class="p-2 bg-orange-50 rounded-lg text-orange-500"><i class="fas fa-clock"></i></div><span class="text-[10px] font-bold uppercase text-gray-400 bg-gray-50 px-2 py-1 rounded">Pending</span></div>
+                            <h3 class="text-2xl font-black text-gray-800">{{ pendingPaymentsCount }}</h3>
+                            <p class="text-xs text-gray-500 mt-1">Awaiting confirmation</p>
+                        </div>
+                        <div class="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
+                            <div class="flex justify-between items-start mb-4"><div class="p-2 bg-blue-50 rounded-lg text-blue-500"><i class="fas fa-receipt"></i></div><span class="text-[10px] font-bold uppercase text-gray-400 bg-gray-50 px-2 py-1 rounded">Receipts</span></div>
+                            <h3 class="text-2xl font-black text-gray-800">{{ confirmedPaymentsCount }}</h3>
+                            <p class="text-xs text-gray-500 mt-1">Receipts available</p>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+                        <div class="p-5 border-b border-gray-100 bg-gray-50/50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                            <h3 class="font-bold text-gray-700">Payment Records</h3>
+                            <div class="flex gap-2 flex-wrap">
+                                <select v-model="paymentFilter.status" class="border border-gray-200 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-[#00A09D] outline-none bg-gray-50">
+                                    <option value="">All Status</option>
+                                    <option value="paid">Paid</option>
+                                    <option value="pending_confirmation">Pending</option>
+                                    <option value="unpaid">Unpaid</option>
+                                </select>
+                                <input type="date" v-model="paymentFilter.dateFrom" class="border border-gray-200 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-[#00A09D] outline-none bg-gray-50">
+                                <input type="date" v-model="paymentFilter.dateTo" class="border border-gray-200 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-[#00A09D] outline-none bg-gray-50">
+                            </div>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left">
+                                <thead class="bg-gray-50 text-xs font-bold uppercase text-gray-400">
+                                    <tr><th class="p-4">Order Ref</th><th class="p-4">Customer</th><th class="p-4">Items</th><th class="p-4">Amount</th><th class="p-4">Date</th><th class="p-4">Payment Status</th><th class="p-4 text-center">Actions</th></tr>
+                                </thead>
+                                <tbody class="text-sm divide-y divide-gray-100">
+                                    <tr v-if="filteredPayments.length === 0"><td colspan="7" class="p-8 text-center text-gray-400 italic">No payment records found</td></tr>
+                                    <tr v-for="o in filteredPayments" :key="o.id" class="hover:bg-gray-50 transition">
+                                        <td class="p-4 font-bold text-[#714B67]">{{ o.id }}</td>
+                                        <td class="p-4">
+                                            <p class="font-medium text-gray-700 text-sm">{{ o.customerName || o.customer }}</p>
+                                            <p class="text-[10px] text-gray-400 font-mono">{{ o.customerId }}</p>
+                                        </td>
+                                        <td class="p-4">
+                                            <div v-for="item in o.items" :key="item.name" class="text-xs text-gray-600 leading-5">
+                                                {{ item.name }} <span class="font-bold text-[#00A09D]">×{{ item.qty }}</span>
+                                            </div>
+                                        </td>
+                                        <td class="p-4 font-bold text-gray-800">₦{{ formatMoney(o.total) }}</td>
+                                        <td class="p-4 text-gray-500 text-xs">{{ formatDate(o.created_at) }}</td>
+                                        <td class="p-4">
+                                            <span v-if="o.paymentStatus === 'paid'" class="text-green-600 font-bold text-xs flex items-center gap-1"><i class="fas fa-check-circle"></i> Paid</span>
+                                            <span v-else-if="o.paymentStatus === 'pending_confirmation'" class="text-orange-500 font-bold text-xs flex items-center gap-1"><i class="fas fa-clock"></i> Pending Confirmation</span>
+                                            <span v-else class="text-gray-400 text-xs flex items-center gap-1"><i class="fas fa-minus-circle"></i> Unpaid</span>
+                                        </td>
+                                        <td class="p-4 text-center">
+                                            <div class="flex justify-center gap-2">
+                                                <button v-if="o.paymentStatus === 'pending_confirmation' || o.paymentStatus === 'unpaid'" @click="confirmPayment(o)" class="text-xs bg-green-100 hover:bg-green-200 text-green-700 px-3 py-1 rounded font-bold transition">
+                                                    <i class="fas fa-check mr-1"></i>{{ o.paymentStatus === 'pending_confirmation' ? 'Confirm' : 'Mark Paid' }}
+                                                </button>
+                                                <button v-if="o.paymentStatus === 'paid'" @click="downloadReceipt(o)" class="text-xs bg-purple-100 hover:bg-purple-200 text-purple-700 px-3 py-1 rounded font-bold transition"><i class="fas fa-file-download mr-1"></i>Receipt</button>
+                                                <button v-if="o.paymentStatus === 'paid'" @click="printReceipt(o)" class="text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1 rounded font-bold transition"><i class="fas fa-print mr-1"></i>Print</button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- REPORTS -->
+                <div v-if="view === 'reports'" class="space-y-6">
+                    <div class="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
+                        <h3 class="font-bold text-gray-700 mb-4 border-b pb-2">Generate Sales Report</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                            <div>
+                                <label class="block text-[10px] font-bold uppercase text-gray-400 mb-1">Product</label>
+                                <select v-model="report.product" class="w-full border border-gray-200 p-2.5 rounded-lg text-sm bg-gray-50 focus:ring-2 focus:ring-[#00A09D] outline-none">
+                                    <option value="__all__">All Products</option>
+                                    <option v-for="p in products" :key="p.name" :value="p.name">{{ p.name }}</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold uppercase text-gray-400 mb-1">Date From</label>
+                                <input type="date" v-model="report.date_from" class="w-full border border-gray-200 p-2.5 rounded-lg text-sm bg-gray-50 focus:ring-2 focus:ring-[#00A09D] outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold uppercase text-gray-400 mb-1">Date To</label>
+                                <input type="date" v-model="report.date_to" class="w-full border border-gray-200 p-2.5 rounded-lg text-sm bg-gray-50 focus:ring-2 focus:ring-[#00A09D] outline-none">
+                            </div>
+                            <button @click="generateReport" class="bg-[#00A09D] hover:bg-teal-700 text-white p-2.5 rounded-lg font-bold text-sm transition shadow-md shadow-teal-900/10"><i class="fas fa-filter mr-2"></i> Generate Data</button>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-8 rounded-xl border border-gray-100 shadow-sm min-h-[400px] relative">
+                        <div class="flex justify-between items-start border-b-2 border-gray-800 pb-6 mb-8">
+                            <div><h1 class="text-3xl font-black uppercase text-[#714B67] tracking-tighter">Ladu Investment</h1><p class="text-sm text-gray-500 font-medium tracking-wide">Construction Materials & Equipment ERP</p></div>
+                            <div class="text-right text-xs text-gray-500"><p>Generated: {{ formatDate(new Date().toISOString()) }}</p></div>
+                        </div>
+                        <h2 class="text-center font-bold uppercase text-lg mb-8 tracking-widest underline decoration-2 decoration-[#00A09D] underline-offset-4">Sales Performance Report</h2>
+                        <div v-if="reportResults.totalQty === 0" class="text-center py-12 bg-gray-50 rounded-lg border border-dashed border-gray-300">
+                            <i class="fas fa-search text-4xl text-gray-300 mb-3"></i>
+                            <p class="text-gray-500 font-medium">No data found for the selected criteria.</p>
+                        </div>
+                        <div v-else>
+                            <table class="w-full text-sm border border-gray-200">
+                                <thead class="bg-gray-100 text-gray-700">
+                                    <tr><th class="p-3 border border-gray-200 text-left">Item Description</th><th class="p-3 border border-gray-200 text-center">Quantity Sold</th><th class="p-3 border border-gray-200 text-right">Total Revenue</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="r in reportResults.items" :key="r.name"><td class="p-3 border border-gray-200 font-medium">{{ r.name }}</td><td class="p-3 border border-gray-200 text-center">{{ r.qty }}</td><td class="p-3 border border-gray-200 text-right font-mono">₦{{ formatMoney(r.amount) }}</td></tr>
+                                    <tr class="bg-gray-50 font-bold text-gray-800"><td colspan="2" class="p-3 border border-gray-200 text-right uppercase text-xs tracking-wider">Grand Total</td><td class="p-3 border border-gray-200 text-right font-mono text-lg">₦{{ formatMoney(reportResults.totalAmount) }}</td></tr>
+                                </tbody>
+                            </table>
+                            <div class="mt-8 flex justify-end gap-3 print:hidden">
+                                <button @click="exportReport('PDF')" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded font-bold text-xs uppercase tracking-wide shadow-md"><i class="fas fa-file-pdf mr-2"></i> Download PDF</button>
+                                <button @click="exportReport('Excel')" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded font-bold text-xs uppercase tracking-wide shadow-md"><i class="fas fa-file-excel mr-2"></i> Export Excel</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
+                        <h3 class="font-bold text-gray-700 mb-4 border-b pb-2">Generate Expenses Report</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                            <div>
+                                <label class="block text-[10px] font-bold uppercase text-gray-400 mb-1">Category</label>
+                                <select v-model="expenseReport.category" class="w-full border border-gray-200 p-2.5 rounded-lg text-sm bg-gray-50 focus:ring-2 focus:ring-[#00A09D] outline-none">
+                                    <option value="__all__">All Categories</option>
+                                    <option value="Transport">Transport</option>
+                                    <option value="Utilities">Utilities</option>
+                                    <option value="Salaries">Salaries</option>
+                                    <option value="Maintenance">Maintenance</option>
+                                    <option value="Office">Office</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold uppercase text-gray-400 mb-1">Date From</label>
+                                <input type="date" v-model="expenseReport.date_from" class="w-full border border-gray-200 p-2.5 rounded-lg text-sm bg-gray-50 focus:ring-2 focus:ring-[#00A09D] outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold uppercase text-gray-400 mb-1">Date To</label>
+                                <input type="date" v-model="expenseReport.date_to" class="w-full border border-gray-200 p-2.5 rounded-lg text-sm bg-gray-50 focus:ring-2 focus:ring-[#00A09D] outline-none">
+                            </div>
+                            <button @click="generateExpenseReport" class="bg-[#714B67] hover:bg-purple-800 text-white p-2.5 rounded-lg font-bold text-sm transition shadow-md shadow-purple-900/10"><i class="fas fa-filter mr-2"></i> Generate Report</button>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-8 rounded-xl border border-gray-100 shadow-sm min-h-[400px]">
+                        <div class="flex justify-between items-start border-b-2 border-gray-800 pb-6 mb-8">
+                            <div><h1 class="text-3xl font-black uppercase text-[#714B67] tracking-tighter">Ladu Investment</h1><p class="text-sm text-gray-500 font-medium tracking-wide">Construction Materials & Equipment ERP</p></div>
+                            <div class="text-right text-xs text-gray-500"><p>Generated: {{ formatDate(new Date().toISOString()) }}</p></div>
+                        </div>
+                        <h2 class="text-center font-bold uppercase text-lg mb-8 tracking-widest underline decoration-2 decoration-red-500 underline-offset-4">Expenses Report</h2>
+                        <div v-if="expenseReportResults.items.length === 0" class="text-center py-12 bg-gray-50 rounded-lg border border-dashed border-gray-300">
+                            <i class="fas fa-search text-4xl text-gray-300 mb-3"></i>
+                            <p class="text-gray-500 font-medium">No expense data found for the selected criteria.</p>
+                        </div>
+                        <div v-else>
+                            <table class="w-full text-sm border border-gray-200">
+                                <thead class="bg-gray-100 text-gray-700">
+                                    <tr><th class="p-3 border border-gray-200 text-left">Date</th><th class="p-3 border border-gray-200 text-left">Category</th><th class="p-3 border border-gray-200 text-left">Description</th><th class="p-3 border border-gray-200 text-right">Amount</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="e in expenseReportResults.items" :key="e.id"><td class="p-3 border border-gray-200">{{ formatDate(e.date) }}</td><td class="p-3 border border-gray-200 font-medium">{{ e.category }}</td><td class="p-3 border border-gray-200">{{ e.description }}</td><td class="p-3 border border-gray-200 text-right font-mono text-red-600">₦{{ formatMoney(e.amount) }}</td></tr>
+                                    <tr class="bg-gray-50 font-bold text-gray-800"><td colspan="3" class="p-3 border border-gray-200 text-right uppercase text-xs tracking-wider">Total Expenses</td><td class="p-3 border border-gray-200 text-right font-mono text-lg text-red-600">₦{{ formatMoney(expenseReportResults.total) }}</td></tr>
+                                </tbody>
+                            </table>
+                            <div class="mt-8 flex justify-end gap-3 print:hidden">
+                                <button @click="exportExpenseReport('PDF')" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded font-bold text-xs uppercase tracking-wide shadow-md"><i class="fas fa-file-pdf mr-2"></i> Download PDF</button>
+                                <button @click="exportExpenseReport('Excel')" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded font-bold text-xs uppercase tracking-wide shadow-md"><i class="fas fa-file-excel mr-2"></i> Export Excel</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FINANCIALS (Admin Only) -->
+                <div v-if="view === 'financials' && session.role === 'Admin'" class="space-y-6">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div class="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
+                            <div class="flex justify-between items-start mb-4"><div class="p-2 bg-teal-50 rounded-lg text-[#00A09D]"><i class="fas fa-university"></i></div><span class="text-[10px] font-bold uppercase text-gray-400 bg-gray-50 px-2 py-1 rounded">Bank</span></div>
+                            <h3 class="text-2xl font-black text-gray-800">₦{{ formatMoney(bankBalance) }}</h3>
+                            <p class="text-xs text-gray-500 mt-1">Money in Bank</p>
+                        </div>
+                        <div class="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
+                            <div class="flex justify-between items-start mb-4"><div class="p-2 bg-blue-50 rounded-lg text-blue-500"><i class="fas fa-boxes"></i></div><span class="text-[10px] font-bold uppercase text-gray-400 bg-gray-50 px-2 py-1 rounded">Stock</span></div>
+                            <h3 class="text-2xl font-black text-gray-800">₦{{ formatMoney(stockValue) }}</h3>
+                            <p class="text-xs text-gray-500 mt-1">Inventory Value</p>
+                        </div>
+                        <div class="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
+                            <div class="flex justify-between items-start mb-4"><div class="p-2 bg-red-50 rounded-lg text-red-500"><i class="fas fa-minus-circle"></i></div><span class="text-[10px] font-bold uppercase text-gray-400 bg-gray-50 px-2 py-1 rounded">Expenses</span></div>
+                            <h3 class="text-2xl font-black text-red-600">₦{{ formatMoney(totalExpenses) }}</h3>
+                            <p class="text-xs text-gray-500 mt-1">Total Expenses</p>
+                        </div>
+                        <div class="bg-gradient-to-br from-[#714B67] to-[#2A1B26] p-5 rounded-xl shadow-lg">
+                            <div class="flex justify-between items-start mb-4"><div class="p-2 bg-white/20 rounded-lg text-white"><i class="fas fa-chart-line"></i></div><span class="text-[10px] font-bold uppercase text-white/50 bg-white/10 px-2 py-1 rounded">Net</span></div>
+                            <h3 class="text-2xl font-black text-white">₦{{ formatMoney(totalAssets) }}</h3>
+                            <p class="text-xs text-white/60 mt-1">Total Net Assets</p>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+                        <div class="p-5 border-b border-gray-100 bg-gray-50/50"><h3 class="font-bold text-gray-700">Bank Ledger — Money In Bank</h3></div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left">
+                                <thead class="bg-gray-50 text-xs font-bold uppercase text-gray-400">
+                                    <tr><th class="p-4">Date</th><th class="p-4">Reference</th><th class="p-4">Description</th><th class="p-4 text-right">Credit</th><th class="p-4 text-right">Balance</th></tr>
+                                </thead>
+                                <tbody class="text-sm divide-y divide-gray-100">
+                                    <tr class="bg-blue-50 font-bold">
+                                        <td class="p-4 text-gray-600 text-xs">System Setup</td>
+                                        <td class="p-4 text-gray-500 font-mono text-xs">INIT-001</td>
+                                        <td class="p-4 text-gray-700">Initial Deposit</td>
+                                        <td class="p-4 text-right font-mono font-bold text-green-600">₦{{ formatMoney(initialDeposit) }}</td>
+                                        <td class="p-4 text-right font-mono font-bold text-gray-800">₦{{ formatMoney(initialDeposit) }}</td>
+                                    </tr>
+                                    <tr v-for="(entry, idx) in bankLedger" :key="idx" class="hover:bg-gray-50">
+                                        <td class="p-4 text-gray-600 text-xs">{{ formatDate(entry.date) }}</td>
+                                        <td class="p-4 text-gray-500 font-mono text-xs">{{ entry.ref }}</td>
+                                        <td class="p-4 font-medium text-gray-700">{{ entry.description }}</td>
+                                        <td class="p-4 text-right font-mono font-bold text-green-600">₦{{ formatMoney(entry.amount) }}</td>
+                                        <td class="p-4 text-right font-mono font-bold text-gray-800">₦{{ formatMoney(entry.runningBalance) }}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- CHAT WIDGET -->
+    <div v-if="session && session.role !== 'Customer' && showChat" class="fixed right-4 bottom-4 w-80 bg-white shadow-2xl rounded-t-xl border border-gray-200 z-50 flex flex-col overflow-hidden animate-fade-in-up">
+        <div class="p-3 bg-[#714B67] text-white flex justify-between items-center">
+            <div class="flex items-center gap-2"><div class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div><span class="font-bold text-xs uppercase tracking-wide">Team Chat</span></div>
+            <button @click="showChat = false" class="text-white/70 hover:text-white"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="h-64 bg-gray-50 p-4 overflow-y-auto space-y-3 flex flex-col">
+            <div v-for="(m, idx) in messages" :key="idx" :class="m.from === session.fullname ? 'self-end bg-[#00A09D] text-white rounded-tr-none' : 'self-start bg-white text-gray-700 border border-gray-200 rounded-tl-none'" class="p-2.5 rounded-xl text-xs max-w-[85%] shadow-sm">
+                <p class="font-bold text-[9px] uppercase mb-1 opacity-70">{{ m.from }}</p>
+                {{ m.text }}
+            </div>
+        </div>
+        <div class="p-2 border-t bg-white flex gap-2">
+            <input v-model="newMessage" @keyup.enter="sendMessage" type="text" placeholder="Type a message..." class="flex-1 text-xs border border-gray-200 rounded-lg p-2 outline-none focus:border-[#00A09D]">
+            <button @click="sendMessage" class="bg-[#00A09D] text-white px-3 rounded-lg hover:bg-teal-700 transition"><i class="fas fa-paper-plane text-xs"></i></button>
+        </div>
+    </div>
+
+    <!-- ===================== MAIN MODAL (STAFF CREATE/EDIT) ===================== -->
+    <div v-if="modal.show" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4" @click.self="modal.show = false">
+        <div class="bg-white w-full max-w-lg rounded-xl shadow-2xl overflow-hidden animate-fade-in-up">
+            <div class="p-5 bg-[#714B67] text-white flex justify-between items-center">
+                <h3 class="font-bold uppercase tracking-widest text-sm flex items-center gap-2"><i class="fas fa-edit"></i>
+                    {{ modal.isEdit ? 'Update' : 'Create New' }}
+                    {{ view === 'users' ? 'Staff User' : view === 'expenses' ? 'Expense' : view === 'customers' ? 'Customer' : view.slice(0,1).toUpperCase() + view.slice(1) }}
+                </h3>
+                <button @click="modal.show = false" class="text-white/70 hover:text-white transition"><i class="fas fa-times text-lg"></i></button>
+            </div>
+            <div class="p-6 space-y-4 max-h-[80vh] overflow-y-auto">
+                <!-- Sales Form — Multi-Item Order Builder -->
+                <div v-if="view === 'sales'" class="space-y-4">
+
+                    <!-- Customer Type Toggle -->
+                    <div>
+                        <label class="block text-[10px] font-bold text-gray-500 uppercase mb-2">Customer Type *</label>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button @click="form.custSelectType = 'regular'; form.selectedCustomer = null; form.custSearchQuery = ''; form.custSearchOpen = false"
+                                :class="form.custSelectType === 'regular' ? 'bg-[#00A09D] text-white border-[#00A09D]' : 'bg-white text-gray-600 border-gray-300'"
+                                class="p-2.5 border rounded-lg text-xs font-bold transition flex items-center justify-center gap-2">
+                                <i class="fas fa-user-check"></i> Registered Customer
+                            </button>
+                            <button @click="form.custSelectType = 'walkin'; form.selectedCustomer = null; form.custSearchQuery = ''; form.custSearchOpen = false"
+                                :class="form.custSelectType === 'walkin' ? 'bg-orange-500 text-white border-orange-500' : 'bg-white text-gray-600 border-gray-300'"
+                                class="p-2.5 border rounded-lg text-xs font-bold transition flex items-center justify-center gap-2">
+                                <i class="fas fa-walking"></i> Walk-in / Temporary
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Registered Customer: Searchable Dropdown -->
+                    <div v-if="form.custSelectType === 'regular'" class="relative">
+                        <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Search Customer *</label>
+
+                        <!-- Selected Customer Display -->
+                        <div v-if="form.selectedCustomer" class="flex items-center justify-between p-3 bg-teal-50 border border-teal-300 rounded-lg">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-full bg-[#00A09D] text-white flex items-center justify-center text-xs font-black">
+                                    {{ form.selectedCustomer.fullname.charAt(0) }}
+                                </div>
+                                <div>
+                                    <p class="font-bold text-gray-800 text-sm">{{ form.selectedCustomer.fullname }}</p>
+                                    <p class="text-[10px] text-gray-500">
+                                        {{ form.selectedCustomer.customerId }}
+                                        <span v-if="form.selectedCustomer.company"> · {{ form.selectedCustomer.company }}</span>
+                                    </p>
+                                </div>
+                            </div>
+                            <button @click="form.selectedCustomer = null; form.custSearchQuery = ''" class="text-gray-400 hover:text-red-500 text-sm transition"><i class="fas fa-times-circle"></i></button>
+                        </div>
+
+                        <!-- Search Input -->
+                        <div v-else class="relative">
+                            <i class="fas fa-search absolute left-3 top-3 text-gray-400 text-sm"></i>
+                            <input v-model="form.custSearchQuery"
+                                @input="form.custSearchOpen = true"
+                                @focus="form.custSearchOpen = true"
+                                type="text"
+                                class="w-full pl-9 pr-3 py-2.5 border border-gray-300 rounded-lg bg-gray-50 focus:ring-2 focus:ring-[#00A09D] outline-none text-sm"
+                                placeholder="Type name, ID, phone or company...">
+
+                            <!-- Dropdown Results -->
+                            <div v-if="form.custSearchOpen && form.custSearchQuery.length > 0"
+                                class="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-xl z-[80] max-h-52 overflow-y-auto">
+
+                                <div v-if="filteredCustSearch.length === 0" class="p-4 text-center text-gray-400 text-xs italic">No customers found</div>
+
+                                <button v-for="c in filteredCustSearch" :key="c.customerId"
+                                    @click="selectCustomer(c)"
+                                    class="w-full text-left px-4 py-3 hover:bg-teal-50 transition border-b border-gray-50 last:border-0 flex items-center gap-3">
+                                    <div class="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-black"
+                                        :class="c.type === 'regular' ? 'bg-teal-100 text-teal-700' : 'bg-orange-100 text-orange-700'">
+                                        {{ c.fullname.charAt(0) }}
+                                    </div>
+                                    <div class="min-w-0">
+                                        <p class="font-bold text-gray-800 text-sm truncate">{{ c.fullname }}</p>
+                                        <p class="text-[10px] text-gray-400 truncate">
+                                            {{ c.customerId }}
+                                            <span v-if="c.company"> · {{ c.company }}</span>
+                                            <span v-if="c.phone"> · {{ c.phone }}</span>
+                                        </p>
+                                    </div>
+                                    <span :class="c.type === 'regular' ? 'bg-teal-100 text-teal-600' : 'bg-orange-100 text-orange-600'"
+                                        class="ml-auto flex-shrink-0 text-[9px] font-black uppercase px-1.5 py-0.5 rounded">
+                                        {{ c.type }}
+                                    </span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Validation note -->
+                        <p v-if="!form.selectedCustomer && form.custSearchQuery.length === 0" class="text-[10px] text-gray-400 mt-1">
+                            <i class="fas fa-info-circle mr-1"></i>Start typing to search registered and temporary customers
+                        </p>
+                    </div>
+
+                    <!-- Walk-in Customer: Manual Entry -->
+                    <div v-if="form.custSelectType === 'walkin'" class="space-y-3">
+                        <div class="p-3 bg-orange-50 border border-orange-200 rounded-lg text-xs text-orange-700 flex items-center gap-2">
+                            <i class="fas fa-info-circle"></i>
+                            Walk-in orders are recorded without a customer account. A temporary reference will be used.
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Walk-in Name *</label>
+                            <input v-model="form.walkinName" type="text" class="w-full border border-gray-300 p-3 rounded-lg bg-gray-50 focus:ring-2 focus:ring-[#00A09D] outline-none text-sm" placeholder="e.g. John Doe or Anonymous">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Phone (Optional)</label>
+                            <input v-model="form.walkinPhone" type="tel" class="w-full border border-gray-300 p-3 rounded-lg bg-gray-50 focus:ring-2 focus:ring-[#00A09D] outline-none text-sm" placeholder="+234 XXX XXX XXXX">
+                        </div>
+                    </div>
+
+                    <!-- Line Items -->
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <label class="block text-[10px] font-bold text-gray-500 uppercase">Order Items *</label>
+                            <button @click="addOrderLine" class="text-[10px] font-bold text-[#00A09D] hover:underline flex items-center gap-1"><i class="fas fa-plus-circle"></i> Add Item</button>
+                        </div>
+
+                        <div class="space-y-2">
+                            <div v-for="(line, idx) in form.orderLines" :key="idx" class="bg-gray-50 border border-gray-200 rounded-lg p-3">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="text-[10px] font-bold uppercase" :class="line.name ? 'text-teal-600' : 'text-gray-400'">
+                                        {{ line.name ? line.name : (idx === 0 ? '+ New Item' : 'Item ' + (form.orderLines.length - idx)) }}
+                                    </span>
+                                    <button v-if="form.orderLines.length > 1" @click="removeOrderLine(idx)" class="text-red-400 hover:text-red-600 text-xs"><i class="fas fa-times-circle"></i></button>
+                                </div>
+                                <select v-model="line.name" @change="autoFillLinePrice(line)" class="w-full border border-gray-200 p-2.5 rounded-lg bg-white focus:ring-2 focus:ring-[#00A09D] outline-none text-sm mb-2">
+                                    <option value="" disabled>Select product</option>
+                                    <option v-for="p in products" :key="p.name" :value="p.name">{{ p.name }} (₦{{ formatMoney(p.price) }}/{{ p.unit }})</option>
+                                </select>
+                                <div class="grid grid-cols-3 gap-2">
+                                    <div>
+                                        <label class="block text-[9px] font-bold text-gray-400 uppercase mb-1">Qty</label>
+                                        <input v-model.number="line.qty" @input="recalcLine(line)" type="number" min="1" class="w-full border border-gray-200 p-2 rounded-lg bg-white focus:ring-2 focus:ring-[#00A09D] outline-none text-sm" placeholder="0">
+                                    </div>
+                                    <div>
+                                        <label class="block text-[9px] font-bold text-gray-400 uppercase mb-1">Unit Price (₦)</label>
+                                        <input v-model.number="line.unitPrice" @input="recalcLine(line)" type="number" min="0" class="w-full border border-gray-200 p-2 rounded-lg bg-white focus:ring-2 focus:ring-[#00A09D] outline-none text-sm" placeholder="0">
+                                    </div>
+                                    <div>
+                                        <label class="block text-[9px] font-bold text-gray-400 uppercase mb-1">Subtotal</label>
+                                        <div class="p-2 bg-teal-50 border border-teal-100 rounded-lg text-sm font-bold text-teal-700">₦{{ formatMoney(line.amount || 0) }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Order Total -->
+                    <div class="bg-teal-50 border border-teal-200 rounded-lg p-4 flex justify-between items-center">
+                        <div>
+                            <label class="block text-[10px] font-bold text-teal-700 uppercase mb-1">Order Total</label>
+                            <div class="text-2xl font-black text-teal-600">₦{{ formatMoney(orderLinesTotal) }}</div>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-[10px] text-teal-600 font-bold">{{ form.orderLines.filter(l=>l.name).length }} item(s)</p>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Initial Status</label>
+                        <select v-model="form.status" class="w-full border border-gray-300 p-3 rounded-lg bg-gray-50 focus:ring-2 focus:ring-[#00A09D] outline-none text-sm">
+                            <option value="quotation">Quotation</option>
+                            <option value="confirmed">Confirmed</option>
+                        </select>
+                    </div>
+                </div>
+                <!-- Inventory Form -->
+                <div v-if="view === 'inventory'" class="space-y-4">
+                    <div><label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Product Name</label><input v-model="form.pName" type="text" class="w-full border border-gray-300 p-3 rounded-lg bg-gray-50 focus:ring-2 focus:ring-[#00A09D] outline-none text-sm"></div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div><label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Stock Quantity</label><input v-model.number="form.stock" type="number" class="w-full border border-gray-300 p-3 rounded-lg bg-gray-50 focus:ring-2 focus:ring-[#00A09D] outline-none text-sm"></div>
+                        <div><label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Unit Price (₦)</label><input v-model.number="form.price" type="number" class="w-full border border-gray-300 p-3 rounded-lg bg-gray-50 focus:ring-2 focus:ring-[#00A09D] outline-none text-sm"></div>
+                    </div>
+                </div>
+                <!-- Expenses Form -->
+                <div v-if="view === 'expenses'" class="space-y-4">
+                    <div><label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Expense Category</label>
+                        <select v-model="form.expCategory" class="w-full border border-gray-300 p-3 rounded-lg bg-gray-50 focus:ring-2 focus:ring-[#00A09D] outline-none text-sm">
+                            <option value="" disabled>Select category</option>
+                            <option value="Transport">Transport</option><option value="Utilities">Utilities</option><option value="Salaries">Salaries</option><option value="Maintenance">Maintenance</option><option value="Office">Office</option><option value="Other">Other</option>
+                        </select>
+                    </div>
+                    <div><label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Description</label><textarea v-model="form.expDescription" rows="3" class="w-full border border-gray-300 p-3 rounded-lg bg-gray-50 focus:ring-2 focus:ring-[#00A09D] outline-none text-sm resize-none"></textarea></div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div><label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Amount (₦)</label><input v-model.number="form.expAmount" type="number" class="w-full border border-gray-300 p-3 rounded-lg bg-gray-50 focus:ring-2 focus:ring-[#00A09D] outline-none text-sm"></div>
+                        <div><label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Date</label><input v-model="form.expDate" type="date" class="w-full border border-gray-300 p-3 rounded-lg bg-gray-50 focus:ring-2 focus:ring-[#00A09D] outline-none text-sm"></div>
+                    </div>
+                </div>
+                <!-- Staff Users Form -->
+                <div v-if="view === 'users'" class="space-y-4">
+                    <div><label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Full Name</label><input v-model="form.uFullname" type="text" class="w-full border border-gray-300 p-3 rounded-lg bg-gray-50 focus:ring-2 focus:ring-[#00A09D] outline-none text-sm"></div>
+                    <div><label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Username</label><input v-model="form.uUsername" type="text" class="w-full border border-gray-300 p-3 rounded-lg bg-gray-50 focus:ring-2 focus:ring-[#00A09D] outline-none text-sm"></div>
+                    <div><label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Password</label><input v-model="form.uPassword" type="password" class="w-full border border-gray-300 p-3 rounded-lg bg-gray-50 focus:ring-2 focus:ring-[#00A09D] outline-none text-sm"></div>
+                    <div><label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Role</label>
+                        <select v-model="form.uRole" class="w-full border border-gray-300 p-3 rounded-lg bg-gray-50 focus:ring-2 focus:ring-[#00A09D] outline-none text-sm">
+                            <option value="Admin">Admin</option><option value="Sales">Sales</option><option value="Store">Store</option>
+                        </select>
+                    </div>
+                    <div v-if="modal.userError" class="p-3 bg-red-50 text-red-600 text-xs font-bold rounded flex items-center gap-2"><i class="fas fa-exclamation-circle"></i> {{ modal.userError }}</div>
+                </div>
+                <!-- Customer Creation Form (Admin/Sales) -->
+                <div v-if="view === 'customers'" class="space-y-4">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="col-span-2"><label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Customer Type</label>
+                            <div class="grid grid-cols-2 gap-2">
+                                <button @click="form.custType = 'regular'" :class="form.custType === 'regular' ? 'bg-[#00A09D] text-white border-[#00A09D]' : 'bg-white text-gray-600 border-gray-300'" class="p-3 border rounded-lg text-sm font-bold transition"><i class="fas fa-user-check mr-2"></i>Regular</button>
+                                <button @click="form.custType = 'temporary'" :class="form.custType === 'temporary' ? 'bg-orange-500 text-white border-orange-500' : 'bg-white text-gray-600 border-gray-300'" class="p-3 border rounded-lg text-sm font-bold transition"><i class="fas fa-user-clock mr-2"></i>Temporary</button>
+                            </div>
+                        </div>
+                        <div class="col-span-2"><label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Full Name *</label><input v-model="form.custFullname" type="text" class="w-full border border-gray-300 p-3 rounded-lg bg-gray-50 focus:ring-2 focus:ring-[#00A09D] outline-none text-sm"></div>
+                        <div class="col-span-2"><label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Company Name</label><input v-model="form.custCompany" type="text" class="w-full border border-gray-300 p-3 rounded-lg bg-gray-50 focus:ring-2 focus:ring-[#00A09D] outline-none text-sm"></div>
+                        <div><label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Phone *</label><input v-model="form.custPhone" type="tel" class="w-full border border-gray-300 p-3 rounded-lg bg-gray-50 focus:ring-2 focus:ring-[#00A09D] outline-none text-sm"></div>
+                        <div><label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Email *</label><input v-model="form.custEmail" type="email" class="w-full border border-gray-300 p-3 rounded-lg bg-gray-50 focus:ring-2 focus:ring-[#00A09D] outline-none text-sm"></div>
+                        <div class="col-span-2"><label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Address *</label><input v-model="form.custAddress" type="text" class="w-full border border-gray-300 p-3 rounded-lg bg-gray-50 focus:ring-2 focus:ring-[#00A09D] outline-none text-sm"></div>
+                        <div><label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">State *</label>
+                            <select v-model="form.custState" class="w-full border border-gray-300 p-3 rounded-lg bg-gray-50 focus:ring-2 focus:ring-[#00A09D] outline-none text-sm">
+                                <option value="">Select state</option>
+                                <option v-for="s in nigerianStates" :key="s">{{ s }}</option>
+                            </select>
+                        </div>
+                        <div v-if="form.custType === 'regular'">
+                            <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Username *</label>
+                            <input v-model="form.custUsername" type="text" class="w-full border border-gray-300 p-3 rounded-lg bg-gray-50 focus:ring-2 focus:ring-[#00A09D] outline-none text-sm">
+                        </div>
+                        <div v-if="form.custType === 'regular'" class="col-span-2">
+                            <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Password *</label>
+                            <input v-model="form.custPassword" type="password" class="w-full border border-gray-300 p-3 rounded-lg bg-gray-50 focus:ring-2 focus:ring-[#00A09D] outline-none text-sm">
+                        </div>
+                    </div>
+                    <div v-if="form.custType === 'regular'" class="p-3 bg-teal-50 border border-teal-200 rounded-lg text-xs text-teal-700">
+                        <i class="fas fa-info-circle mr-1"></i> Regular customers can log into the Customer Portal.
+                    </div>
+                    <div v-else class="p-3 bg-orange-50 border border-orange-200 rounded-lg text-xs text-orange-700">
+                        <i class="fas fa-info-circle mr-1"></i> Temporary customers are for record purposes only and cannot log in.
+                    </div>
+                    <div v-if="modal.userError" class="p-3 bg-red-50 text-red-600 text-xs font-bold rounded flex items-center gap-2"><i class="fas fa-exclamation-circle"></i> {{ modal.userError }}</div>
+                </div>
+
+                <button @click="submitRecord" class="w-full py-3.5 bg-[#00A09D] hover:bg-teal-700 text-white rounded-lg font-bold uppercase tracking-widest shadow-lg shadow-teal-900/20 transition transform active:scale-95 mt-4">
+                    {{ modal.isEdit ? 'Update Record' : 'Save Record' }}
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- PAYMENT MODAL (Customer) -->
+    <div v-if="paymentModal.show" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-md rounded-xl shadow-2xl overflow-hidden animate-fade-in-up">
+            <div class="p-5 bg-[#00A09D] text-white flex justify-between items-center">
+                <h3 class="font-bold text-sm flex items-center gap-2"><i class="fas fa-credit-card"></i> Make Payment</h3>
+                <button @click="paymentModal.show = false" class="text-white/70 hover:text-white"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="p-6 space-y-4">
+                <div class="bg-gray-50 rounded-lg p-4 border border-gray-100">
+                    <p class="text-xs text-gray-500 uppercase font-bold mb-2">Order Summary</p>
+                    <div v-for="item in paymentModal.order?.items" :key="item.name" class="flex justify-between text-xs text-gray-600 py-0.5">
+                        <span>{{ item.name }} × {{ item.qty }}</span>
+                        <span class="font-bold">₦{{ formatMoney(item.amount) }}</span>
+                    </div>
+                    <div class="flex justify-between items-center border-t border-gray-200 mt-2 pt-2">
+                        <span class="font-bold text-gray-700 text-sm">{{ paymentModal.order?.id }}</span>
+                        <p class="font-black text-xl text-[#00A09D]">₦{{ formatMoney(paymentModal.order?.total) }}</p>
+                    </div>
+                </div>
+                <div><label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Payment Method</label>
+                    <div class="grid grid-cols-3 gap-2">
+                        <button @click="paymentModal.method = 'bank'" :class="paymentModal.method === 'bank' ? 'bg-[#00A09D] text-white border-[#00A09D]' : 'bg-white text-gray-600 border-gray-300'" class="p-2 border rounded-lg text-xs font-bold transition text-center"><i class="fas fa-university block text-lg mb-1"></i>Bank</button>
+                        <button @click="paymentModal.method = 'transfer'" :class="paymentModal.method === 'transfer' ? 'bg-[#00A09D] text-white border-[#00A09D]' : 'bg-white text-gray-600 border-gray-300'" class="p-2 border rounded-lg text-xs font-bold transition text-center"><i class="fas fa-mobile-alt block text-lg mb-1"></i>Transfer</button>
+                        <button @click="paymentModal.method = 'cash'" :class="paymentModal.method === 'cash' ? 'bg-[#00A09D] text-white border-[#00A09D]' : 'bg-white text-gray-600 border-gray-300'" class="p-2 border rounded-lg text-xs font-bold transition text-center"><i class="fas fa-money-bill block text-lg mb-1"></i>Cash</button>
+                    </div>
+                </div>
+                <div v-if="paymentModal.method === 'bank' || paymentModal.method === 'transfer'" class="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                    <p class="text-xs font-bold text-blue-700 uppercase mb-2">Bank Details</p>
+                    <p class="text-sm font-bold text-gray-800">Ladu Investment Ltd</p>
+                    <p class="text-sm text-gray-600">Account: <strong>0123456789</strong></p>
+                    <p class="text-sm text-gray-600">Bank: First Bank of Nigeria</p>
+                    <p class="text-xs text-blue-600 mt-2">Use Order ID as reference: {{ paymentModal.order?.id }}</p>
+                </div>
+                <div><label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Payment Reference / Note</label><input v-model="paymentModal.reference" type="text" class="w-full border border-gray-300 p-3 rounded-lg bg-gray-50 focus:ring-2 focus:ring-[#00A09D] outline-none text-sm" :placeholder="'e.g. ' + (paymentModal.order?.id || '') + '-REF'"></div>
+                <button @click="submitPayment" class="w-full py-3 bg-[#00A09D] hover:bg-teal-700 text-white rounded-lg font-bold transition shadow-lg">
+                    <i class="fas fa-check mr-2"></i> Submit Payment
+                </button>
+                <p class="text-xs text-center text-gray-400">Your payment will be confirmed by the Sales team shortly.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- CUSTOMER ORDER MODAL — Multi-Product Cart -->
+    <div v-if="custOrderModal.show" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-xl rounded-xl shadow-2xl overflow-hidden animate-fade-in-up">
+            <div class="p-5 bg-[#00A09D] text-white flex justify-between items-center">
+                <div>
+                    <h3 class="font-bold text-sm flex items-center gap-2"><i class="fas fa-shopping-bag"></i> Place Order</h3>
+                    <p class="text-white/70 text-xs mt-0.5">Add one or more products to your order</p>
+                </div>
+                <button @click="custOrderModal.show = false" class="text-white/70 hover:text-white"><i class="fas fa-times"></i></button>
+            </div>
+
+            <div class="p-5 space-y-4 max-h-[80vh] overflow-y-auto">
+
+                <!-- Cart Line Items -->
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <label class="text-[10px] font-bold text-gray-500 uppercase">Your Cart</label>
+                        <button @click="addCustCartLine" class="text-[10px] font-bold text-[#00A09D] hover:underline flex items-center gap-1"><i class="fas fa-plus-circle"></i> Add Product</button>
+                    </div>
+
+                    <div class="space-y-2">
+                        <div v-for="(line, idx) in custOrderModal.cartLines" :key="idx" class="bg-gray-50 border border-gray-200 rounded-lg p-3">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-[10px] font-bold text-gray-400 uppercase">Product {{ idx + 1 }}</span>
+                                <button v-if="custOrderModal.cartLines.length > 1" @click="removeCustCartLine(idx)" class="text-red-400 hover:text-red-600 text-xs"><i class="fas fa-times-circle"></i></button>
+                            </div>
+                            <select v-model="line.name" @change="autoFillCustLine(line)" class="w-full border border-gray-200 p-2.5 rounded-lg bg-white focus:ring-2 focus:ring-[#00A09D] outline-none text-sm mb-2">
+                                <option value="" disabled>Select a product</option>
+                                <option v-for="p in products" :key="p.name" :value="p.name" :disabled="p.stock < 1">
+                                    {{ p.name }} — ₦{{ formatMoney(p.price) }}/{{ p.unit }} ({{ p.stock }} available)
+                                </option>
+                            </select>
+                            <div class="grid grid-cols-3 gap-2">
+                                <div>
+                                    <label class="block text-[9px] font-bold text-gray-400 uppercase mb-1">Quantity</label>
+                                    <input v-model.number="line.qty" @input="recalcCustLine(line)" type="number" min="1" class="w-full border border-gray-200 p-2 rounded-lg bg-white focus:ring-2 focus:ring-[#00A09D] outline-none text-sm" placeholder="0">
+                                </div>
+                                <div>
+                                    <label class="block text-[9px] font-bold text-gray-400 uppercase mb-1">Unit Price</label>
+                                    <div class="p-2 bg-gray-100 border border-gray-200 rounded-lg text-sm text-gray-600 font-mono">₦{{ formatMoney(line.unitPrice || 0) }}</div>
+                                </div>
+                                <div>
+                                    <label class="block text-[9px] font-bold text-gray-400 uppercase mb-1">Subtotal</label>
+                                    <div class="p-2 bg-teal-50 border border-teal-100 rounded-lg text-sm font-bold text-teal-700">₦{{ formatMoney(line.amount || 0) }}</div>
+                                </div>
+                            </div>
+                            <div v-if="line.name" class="mt-1.5 text-[10px] text-gray-400 flex items-center gap-1">
+                                <div class="w-1.5 h-1.5 rounded-full" :class="(products.find(p=>p.name===line.name)?.stock||0) < 20 ? 'bg-red-400' : 'bg-green-400'"></div>
+                                {{ products.find(p=>p.name===line.name)?.stock || 0 }} {{ products.find(p=>p.name===line.name)?.unit || 'units' }} in stock
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Order Summary -->
+                <div class="bg-teal-50 border border-teal-200 rounded-lg p-4">
+                    <div class="flex justify-between items-center mb-2">
+                        <label class="text-[10px] font-bold text-teal-700 uppercase">Order Summary</label>
+                        <span class="text-[10px] text-teal-600 font-bold">{{ custOrderModal.cartLines.filter(l=>l.name&&l.qty>0).length }} product(s)</span>
+                    </div>
+                    <div v-for="line in custOrderModal.cartLines.filter(l=>l.name&&l.qty>0)" :key="line.name" class="flex justify-between text-xs text-teal-700 py-0.5">
+                        <span>{{ line.name }} × {{ line.qty }}</span>
+                        <span class="font-bold">₦{{ formatMoney(line.amount) }}</span>
+                    </div>
+                    <div class="border-t border-teal-200 mt-2 pt-2 flex justify-between">
+                        <span class="font-black text-teal-800 text-sm uppercase">Total</span>
+                        <span class="font-black text-2xl text-teal-600">₦{{ formatMoney(custCartTotal) }}</span>
+                    </div>
+                </div>
+
+                <!-- Order Type -->
+                <div>
+                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-2">Order Type</label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button @click="custOrderModal.type = 'quotation'" :class="custOrderModal.type === 'quotation' ? 'bg-[#714B67] text-white border-[#714B67]' : 'bg-white text-gray-600 border-gray-300'" class="p-3 border rounded-lg text-xs font-bold transition text-center">
+                            <i class="fas fa-file-alt block text-lg mb-1"></i>Quotation
+                        </button>
+                        <button @click="custOrderModal.type = 'order'" :class="custOrderModal.type === 'order' ? 'bg-[#00A09D] text-white border-[#00A09D]' : 'bg-white text-gray-600 border-gray-300'" class="p-3 border rounded-lg text-xs font-bold transition text-center">
+                            <i class="fas fa-shopping-cart block text-lg mb-1"></i>Direct Order
+                        </button>
+                    </div>
+                </div>
+
+                <button @click="submitCustomerOrder" class="w-full py-3.5 bg-[#00A09D] hover:bg-teal-700 text-white rounded-lg font-bold transition shadow-lg">
+                    <i class="fas fa-paper-plane mr-2"></i> Submit Order — ₦{{ formatMoney(custCartTotal) }}
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="printReceipt" style="display: none;"></div>
+</div>
+
+<script>
+const { createApp } = Vue;
+createApp({
+    data() {
+        const today = new Date().toISOString().slice(0,10);
+        return {
+            session: null,
+            view: 'dashboard',
+            portalView: 'select',
+            custView: 'overview',
+            sidebarOpen: false,
+            showNotifs: false,
+            showChat: false,
+            newMessage: '',
+
+            viewTitles: { dashboard: 'Dashboard', sales: 'Sales Orders', inventory: 'Inventory', expenses: 'Expenses', users: 'User Management', customers: 'Customers', payments: 'Payments', reports: 'Reports', financials: 'Financials' },
+
+            customerTabs: [
+                { key: 'overview', label: 'Overview', icon: 'fas fa-home' },
+                { key: 'shop', label: 'Shop', icon: 'fas fa-store' },
+                { key: 'orders', label: 'My Orders', icon: 'fas fa-box' },
+                { key: 'transactions', label: 'Transactions', icon: 'fas fa-history' },
+                { key: 'profile', label: 'Profile', icon: 'fas fa-user' }
+            ],
+
+            // ---- Financial Data ----
+            initialDeposit: 5000000,
+            bankLedger: [],
+
+            // ---- Role Login ----
+            roleLogin: { show: false, role: null, username: '', password: '', error: '' },
+
+            // ---- Customer Login ----
+            custLogin: {
+                username: '', password: '', error: '',
+                forgotMode: false, forgotStep: 1,
+                forgotPhone: '', generatedCode: '', enteredCode: '', forgotError: '',
+                foundCustomer: null, newPassword: '', confirmNewPassword: ''
+            },
+
+            // ---- Customer Registration ----
+            custRegForm: { fullname: '', company: '', phone: '', email: '', address: '', state: '', username: '', password: '', confirmPassword: '', error: '', success: '' },
+
+            // ---- Staff Users ----
+            users: [
+                { fullname: 'Administrator', username: 'admin123', password: '1234', role: 'Admin' },
+                { fullname: 'Sales User', username: 'sale123', password: '1234', role: 'Sales' },
+                { fullname: 'Store User', username: 'store123', password: '1234', role: 'Store' }
+            ],
+
+            // ---- Customers ----
+            customers: [
+                { customerId: 'CUST-' + 10001, fullname: 'Julius Berger', company: 'Julius Berger Nigeria', phone: '+234 801 234 5678', email: 'julius.b@jbn.com', address: '14 Berger Road, VI', state: 'Lagos', username: 'julius_b', password: 'pass123', type: 'regular', createdAt: '2026-01-05' },
+                { customerId: 'CUST-' + 10002, fullname: 'Alhaji Gafar Ibrahim', company: '', phone: '+234 803 987 6543', email: 'gafar.i@mail.com', address: 'Kano Road, GRA', state: 'Kano', username: 'gafar_i', password: 'pass123', type: 'regular', createdAt: '2026-01-10' },
+                { customerId: 'CUST-' + 10003, fullname: 'Walk-In Customer', company: '', phone: '+234 809 000 0001', email: '', address: 'N/A', state: 'Lagos', username: '', password: '', type: 'temporary', createdAt: '2026-01-12' }
+            ],
+
+            custTypeFilter: 'all',
+            custSearch: '',
+
+            // ---- Notifications ----
+            notifs: [
+                { title: 'Stock Alert', msg: '10mm Steel Rod is below 10 bundles!' },
+                { title: 'Payment Received', msg: 'SO003 payment confirmed by Admin.' }
+            ],
+
+            messages: [
+                { from: 'Musa Ibrahim', text: 'Truck for Cement arrived at gate.' },
+                { from: 'Kemi Adebayo', text: 'Preparing quotation for Site C project.' }
+            ],
+
+            // ---- Products ----
+            products: [
+                { name: 'Dangote Cement (50kg)', category: 'Cement', stock: 450, unit: 'bags', price: 8500 },
+                { name: '10mm Steel Rod', category: 'Rods', stock: 8, unit: 'bundles', price: 720000 },
+                { name: 'River Sand (per ton)', category: 'Aggregates', stock: 65, unit: 'tons', price: 18000 },
+                { name: 'Granite (3/4 inch)', category: 'Aggregates', stock: 120, unit: 'tons', price: 22000 },
+                { name: 'Royal Tiles 60x60', category: 'Finishing', stock: 200, unit: 'sqm', price: 9500 }
+            ],
+
+            // ---- Orders ----
+            orders: [
+                { id: 'SO001', customer: 'Julius Berger Nigeria (Julius Berger) — CUST-10001', customerName: 'Julius Berger (Julius Berger Nigeria)', customerId: 'CUST-10001', items: [{ name: 'Dangote Cement (50kg)', qty: 150, amount: 1275000 }], total: 1275000, status: 'confirmed', paymentStatus: 'paid', paymentRef: 'SO001-PAY', paymentMethod: 'bank', paymentDate: '2026-01-19', created_at: '2026-01-18' },
+                { id: 'SO002', customer: 'Alhaji Gafar Ibrahim — CUST-10002', customerName: 'Alhaji Gafar Ibrahim', customerId: 'CUST-10002', items: [{ name: '10mm Steel Rod', qty: 2, amount: 1440000 }], total: 1440000, status: 'quotation', paymentStatus: 'pending_confirmation', paymentRef: 'SO002-TRF', paymentMethod: 'transfer', paymentDate: '2026-01-21', created_at: '2026-01-20' },
+                { id: 'SO003', customer: 'Walk-In Customer (Walk-in) — WALK-10003', customerName: 'Walk-In Customer', customerId: 'WALK-10003', items: [{ name: 'Dangote Cement (50kg)', qty: 50, amount: 425000 }], total: 425000, status: 'delivered', paymentStatus: 'paid', paymentRef: 'SO003-CASH', paymentMethod: 'cash', paymentDate: '2026-01-12', created_at: '2026-01-12' },
+                { id: 'SO004', customer: 'Julius Berger Nigeria (Julius Berger) — CUST-10001', customerName: 'Julius Berger (Julius Berger Nigeria)', customerId: 'CUST-10001', items: [{ name: 'River Sand (per ton)', qty: 20, amount: 360000 }], total: 360000, status: 'quotation', paymentStatus: 'unpaid', paymentRef: '', paymentMethod: '', paymentDate: '', created_at: '2026-01-21' }
+            ],
+
+            // ---- Expenses ----
+            expenses: [
+                { date: '2026-01-15', category: 'Transport', description: 'Fuel for delivery trucks', amount: 45000 },
+                { date: '2026-01-18', category: 'Utilities', description: 'Electricity bill for warehouse', amount: 28000 },
+                { date: '2026-01-20', category: 'Salaries', description: 'Staff salaries for January', amount: 350000 }
+            ],
+
+            // ---- Customer Transactions ----
+            transactions: [
+                { id: 'TXN001', customerId: 'CUST-10001', ref: 'SO001', description: 'Payment for Dangote Cement (150 bags)', amount: 1275000, date: '2026-01-19', type: 'payment' },
+                { id: 'TXN002', customerId: 'CUST-10003', ref: 'SO003', description: 'Payment for Dangote Cement (50 bags)', amount: 425000, date: '2026-01-12', type: 'payment' }
+            ],
+
+            // ---- Filters ----
+            paymentFilter: { status: '', dateFrom: '', dateTo: '' },
+            custOrderFilter: { status: '', dateFrom: '', dateTo: '' },
+            inventoryFilters: { search: '', category: '', stockLevel: '', sortBy: 'name' },
+            salesFilters: { search: '', sortBy: 'date_new' },
+            expenseFilters: { search: '', category: '', sortBy: 'date_new' },
+
+            // ---- Modals ----
+            modal: { show: false, isEdit: false, activeIndex: null, userError: '' },
+            paymentModal: { show: false, order: null, method: 'bank', reference: '' },
+            custOrderModal: { show: false, cartLines: [{ name: '', qty: 1, unitPrice: 0, amount: 0 }], type: 'quotation' },
+
+            // ---- Forms ----
+            form: {
+                customer: '', status: 'quotation',
+                orderLines: [{ name: '', qty: 1, unitPrice: 0, amount: 0 }],
+                // customer select for sales orders
+                custSelectType: 'regular',
+                selectedCustomer: null,
+                custSearchQuery: '',
+                custSearchOpen: false,
+                walkinName: '',
+                walkinPhone: '',
+                pName: '', stock: 0, price: 0,
+                uFullname: '', uUsername: '', uPassword: '', uRole: 'Sales',
+                expCategory: '', expDescription: '', expAmount: 0, expDate: today,
+                custType: 'regular', custFullname: '', custCompany: '', custPhone: '', custEmail: '', custAddress: '', custState: '', custUsername: '', custPassword: ''
+            },
+
+            // ---- Reports ----
+            report: { product: '__all__', date_from: '', date_to: '' },
+            reportResults: { items: [], totalQty: 0, totalAmount: 0 },
+            expenseReport: { category: '__all__', date_from: '', date_to: '' },
+            expenseReportResults: { items: [], total: 0 },
+
+            nigerianStates: ['Abia','Adamawa','Akwa Ibom','Anambra','Bauchi','Bayelsa','Benue','Borno','Cross River','Delta','Ebonyi','Edo','Ekiti','Enugu','FCT (Abuja)','Gombe','Imo','Jigawa','Kaduna','Kano','Katsina','Kebbi','Kogi','Kwara','Lagos','Nasarawa','Niger','Ogun','Ondo','Osun','Oyo','Plateau','Rivers','Sokoto','Taraba','Yobe','Zamfara']
+        };
+    },
+
+    computed: {
+        // ---- Financial Computations ----
+        bankBalance() {
+            const salesRevenue = this.orders.filter(o => o.paymentStatus === 'paid').reduce((s, o) => s + o.total, 0);
+            return this.initialDeposit + salesRevenue;
+        },
+        stockValue() {
+            return this.products.reduce((s, p) => s + (p.stock * p.price), 0);
+        },
+        totalExpenses() {
+            return this.expenses.reduce((s, e) => s + e.amount, 0);
+        },
+        totalAssets() {
+            return this.bankBalance + this.stockValue - this.totalExpenses;
+        },
+        todayExpenses() {
+            const today = new Date().toISOString().slice(0, 10);
+            return this.expenses.filter(e => e.date === today).reduce((s, e) => s + e.amount, 0);
+        },
+        lowStockProducts() {
+            return this.products.filter(p => p.stock < 20);
+        },
+        todaySales() {
+            const today = new Date().toISOString().slice(0, 10);
+            return this.orders.filter(o => o.created_at === today && o.paymentStatus === 'paid').reduce((s, o) => s + o.total, 0);
+        },
+
+        // ---- Payment Computations ----
+        confirmedPaymentsTotal() { return this.orders.filter(o => o.paymentStatus === 'paid').reduce((s, o) => s + o.total, 0); },
+        confirmedPaymentsCount() { return this.orders.filter(o => o.paymentStatus === 'paid').length; },
+        pendingPaymentsCount() { return this.orders.filter(o => o.paymentStatus === 'pending_confirmation').length; },
+
+        filteredPayments() {
+            return this.orders.filter(o => {
+                if (this.paymentFilter.status && o.paymentStatus !== this.paymentFilter.status) return false;
+                if (this.paymentFilter.dateFrom && o.created_at < this.paymentFilter.dateFrom) return false;
+                if (this.paymentFilter.dateTo && o.created_at > this.paymentFilter.dateTo) return false;
+                return true;
+            });
+        },
+
+        // ---- Customer Computations ----
+        filteredCustomers() {
+            return this.customers.filter(c => {
+                if (this.custTypeFilter !== 'all' && c.type !== this.custTypeFilter) return false;
+                if (this.custSearch) {
+                    const q = this.custSearch.toLowerCase();
+                    return c.fullname.toLowerCase().includes(q) || c.email?.toLowerCase().includes(q) || c.phone?.includes(q) || c.customerId?.includes(q);
+                }
+                return true;
+            });
+        },
+
+        // ---- Customer Portal Computations ----
+        myOrders() {
+            if (!this.session || this.session.role !== 'Customer') return [];
+            return this.orders.filter(o => o.customerId === this.session.customerId);
+        },
+        myPaidOrders() { return this.myOrders.filter(o => o.paymentStatus === 'paid'); },
+        myTotalSpent() { return this.myPaidOrders.reduce((s, o) => s + o.total, 0); },
+        myTransactions() {
+            if (!this.session) return [];
+            return this.transactions.filter(t => t.customerId === this.session.customerId);
+        },
+        filteredMyOrders() {
+            return this.myOrders.filter(o => {
+                if (this.custOrderFilter.status && o.status !== this.custOrderFilter.status) return false;
+                if (this.custOrderFilter.dateFrom && o.created_at < this.custOrderFilter.dateFrom) return false;
+                if (this.custOrderFilter.dateTo && o.created_at > this.custOrderFilter.dateTo) return false;
+                return true;
+            });
+        },
+
+        // ---- Order Builder Totals ----
+        orderLinesTotal() {
+            if (!this.form.orderLines) return 0;
+            return this.form.orderLines.reduce((s, l) => s + (l.amount || 0), 0);
+        },
+        custCartTotal() {
+            if (!this.custOrderModal.cartLines) return 0;
+            return this.custOrderModal.cartLines.reduce((s, l) => s + (l.amount || 0), 0);
+        },
+
+        // ---- Customer Search (in Sales Order form) ----
+        filteredCustSearch() {
+            const q = (this.form.custSearchQuery || '').toLowerCase().trim();
+            if (!q) return [];
+            return this.customers.filter(c => {
+                return (
+                    c.fullname.toLowerCase().includes(q) ||
+                    (c.company || '').toLowerCase().includes(q) ||
+                    (c.customerId || '').toLowerCase().includes(q) ||
+                    (c.phone || '').includes(q) ||
+                    (c.email || '').toLowerCase().includes(q)
+                );
+            }).slice(0, 8); // limit to 8 results
+        },
+
+        // ---- Inventory Filters & Sort ----
+        uniqueCategories() {
+            return [...new Set(this.products.map(p => p.category))];
+        },
+        filteredInventory() {
+            let result = this.products.slice();
+            // Search
+            if (this.inventoryFilters.search) {
+                const q = this.inventoryFilters.search.toLowerCase();
+                result = result.filter(p =>
+                    p.name.toLowerCase().includes(q) ||
+                    p.category.toLowerCase().includes(q)
+                );
+            }
+            // Category filter
+            if (this.inventoryFilters.category) {
+                result = result.filter(p => p.category === this.inventoryFilters.category);
+            }
+            // Stock level filter
+            if (this.inventoryFilters.stockLevel === 'low') {
+                result = result.filter(p => p.stock < 20);
+            } else if (this.inventoryFilters.stockLevel === 'normal') {
+                result = result.filter(p => p.stock >= 20);
+            }
+            // Sort
+            if (this.inventoryFilters.sortBy === 'name') {
+                result.sort((a, b) => a.name.localeCompare(b.name));
+            } else if (this.inventoryFilters.sortBy === 'name_desc') {
+                result.sort((a, b) => b.name.localeCompare(a.name));
+            } else if (this.inventoryFilters.sortBy === 'stock_low') {
+                result.sort((a, b) => a.stock - b.stock);
+            } else if (this.inventoryFilters.sortBy === 'stock_high') {
+                result.sort((a, b) => b.stock - a.stock);
+            } else if (this.inventoryFilters.sortBy === 'price_low') {
+                result.sort((a, b) => a.price - b.price);
+            } else if (this.inventoryFilters.sortBy === 'price_high') {
+                result.sort((a, b) => b.price - a.price);
+            }
+            return result;
+        },
+
+        // ---- Sales Orders Filters & Sort ----
+        filteredSalesOrders() {
+            let result = this.orders.slice();
+            // Search
+            if (this.salesFilters.search) {
+                const q = this.salesFilters.search.toLowerCase();
+                result = result.filter(o =>
+                    o.id.toLowerCase().includes(q) ||
+                    (o.customerName || o.customer || '').toLowerCase().includes(q) ||
+                    (o.customerId || '').toLowerCase().includes(q)
+                );
+            }
+            // Sort
+            if (this.salesFilters.sortBy === 'date_new') {
+                result.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+            } else if (this.salesFilters.sortBy === 'date_old') {
+                result.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+            } else if (this.salesFilters.sortBy === 'amount_high') {
+                result.sort((a, b) => b.total - a.total);
+            } else if (this.salesFilters.sortBy === 'amount_low') {
+                result.sort((a, b) => a.total - b.total);
+            } else if (this.salesFilters.sortBy === 'customer') {
+                result.sort((a, b) => (a.customerName || a.customer).localeCompare(b.customerName || b.customer));
+            }
+            return result;
+        },
+
+        // ---- Expenses Filters & Sort ----
+        filteredExpenses() {
+            let result = this.expenses.slice();
+            // Search
+            if (this.expenseFilters.search) {
+                const q = this.expenseFilters.search.toLowerCase();
+                result = result.filter(e =>
+                    e.description.toLowerCase().includes(q) ||
+                    e.category.toLowerCase().includes(q)
+                );
+            }
+            // Category filter
+            if (this.expenseFilters.category) {
+                result = result.filter(e => e.category === this.expenseFilters.category);
+            }
+            // Sort
+            if (this.expenseFilters.sortBy === 'date_new') {
+                result.sort((a, b) => new Date(b.date) - new Date(a.date));
+            } else if (this.expenseFilters.sortBy === 'date_old') {
+                result.sort((a, b) => new Date(a.date) - new Date(b.date));
+            } else if (this.expenseFilters.sortBy === 'amount_high') {
+                result.sort((a, b) => b.amount - a.amount);
+            } else if (this.expenseFilters.sortBy === 'amount_low') {
+                result.sort((a, b) => a.amount - b.amount);
+            }
+            return result;
+        }
+    },
+
+    methods: {
+        // ---- Navigation ----
+        navClass(v) {
+            return ['flex items-center px-3 py-3 rounded-lg text-sm font-medium transition-colors',
+                this.view === v ? 'bg-[#00A09D] text-white shadow-lg shadow-teal-900/20' : 'text-gray-300 hover:bg-white/5 hover:text-white'].join(' ');
+        },
+
+        // ---- Auth ----
+        openRoleLogin(role) {
+            this.roleLogin = { show: true, role, username: '', password: '', error: '' };
+        },
+        closeRoleLogin() {
+            this.roleLogin.show = false;
+        },
+        attemptRoleLogin() {
+            this.roleLogin.error = '';
+            const u = this.users.find(x => x.username === this.roleLogin.username && x.password === this.roleLogin.password && x.role === this.roleLogin.role);
+            if (!u) { this.roleLogin.error = 'Invalid credentials for selected role.'; return; }
+            this.session = { username: u.username, role: u.role, fullname: u.fullname };
+            this.roleLogin.show = false;
+            this.view = 'dashboard';
+            this.sidebarOpen = false;
+            this.checkStockAlerts();
+        },
+        attemptCustomerLogin() {
+            this.custLogin.error = '';
+            const c = this.customers.find(x =>
+                x.type === 'regular' &&
+                (x.username === this.custLogin.username || x.email === this.custLogin.username) &&
+                x.password === this.custLogin.password
+            );
+            if (!c) { this.custLogin.error = 'Invalid username or password.'; return; }
+            this.session = { ...c, role: 'Customer' };
+            this.custView = 'overview';
+        },
+        registerCustomer() {
+            this.custRegForm.error = '';
+            const f = this.custRegForm;
+            if (!f.fullname || !f.phone || !f.email || !f.address || !f.state || !f.username || !f.password || !f.confirmPassword) {
+                f.error = 'Please fill all required fields.'; return;
+            }
+            if (f.password !== f.confirmPassword) { f.error = 'Passwords do not match.'; return; }
+            if (this.customers.find(c => c.username === f.username)) { f.error = 'Username already exists.'; return; }
+            const newCust = {
+                customerId: 'CUST-' + Math.floor(10000 + Math.random() * 90000),
+                fullname: f.fullname, company: f.company, phone: f.phone, email: f.email,
+                address: f.address, state: f.state, username: f.username, password: f.password,
+                type: 'regular', createdAt: new Date().toISOString().slice(0, 10)
+            };
+            this.customers.push(newCust);
+            f.success = 'Account created! You can now log in.';
+            setTimeout(() => { this.portalView = 'customer'; }, 1500);
+        },
+
+        // ---- Forgot Password ----
+        sendResetCode() {
+            this.custLogin.forgotError = '';
+            const c = this.customers.find(x => x.phone === this.custLogin.forgotPhone && x.type === 'regular');
+            if (!c) { this.custLogin.forgotError = 'Phone number not found.'; return; }
+            this.custLogin.foundCustomer = c;
+            this.custLogin.generatedCode = Math.floor(100000 + Math.random() * 900000).toString();
+            this.custLogin.forgotStep = 2;
+        },
+        verifyResetCode() {
+            if (this.custLogin.enteredCode !== this.custLogin.generatedCode) {
+                this.custLogin.forgotError = 'Invalid code. Please try again.'; return;
+            }
+            this.custLogin.forgotStep = 3;
+            this.custLogin.forgotError = '';
+        },
+        resetPassword() {
+            this.custLogin.forgotError = '';
+            if (!this.custLogin.newPassword) { this.custLogin.forgotError = 'Enter a new password.'; return; }
+            if (this.custLogin.newPassword !== this.custLogin.confirmNewPassword) { this.custLogin.forgotError = 'Passwords do not match.'; return; }
+            const c = this.customers.find(x => x.customerId === this.custLogin.foundCustomer.customerId);
+            if (c) c.password = this.custLogin.newPassword;
+            alert('Password reset successfully! Please log in with your new password.');
+            this.custLogin.forgotMode = false;
+            this.custLogin.forgotStep = 1;
+            this.custLogin.forgotError = '';
+            this.custLogin.foundCustomer = null;
+        },
+
+        logout() {
+            this.session = null;
+            this.view = 'dashboard';
+            this.sidebarOpen = false;
+            this.portalView = 'select';
+            this.custView = 'overview';
+        },
+
+        // ---- Formatting ----
+        formatMoney(val) { if (!val && val !== 0) return '0'; return Number(val).toLocaleString(); },
+        formatDate(d) { if (!d) return ''; return new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }); },
+        statusClass(s) {
+            const map = { quotation: 'bg-gray-100 text-gray-500', confirmed: 'bg-blue-100 text-blue-600', delivered: 'bg-green-100 text-green-600' };
+            return map[s] || 'bg-gray-100 text-gray-500';
+        },
+        activityIcon(s) {
+            const map = { quotation: 'fas fa-file-alt', confirmed: 'fas fa-check', delivered: 'fas fa-truck' };
+            return map[s] || 'fas fa-circle';
+        },
+        activityIconClass(s) {
+            const map = { quotation: 'bg-gray-100 text-gray-500', confirmed: 'bg-blue-100 text-blue-600', delivered: 'bg-green-100 text-green-600' };
+            return map[s] || 'bg-gray-100 text-gray-500';
+        },
+
+        // ---- Order Flow ----
+        openActionModal() {
+            this.modal.userError = '';
+            this.modal.isEdit = false;
+            this.modal.activeIndex = null;
+            this.form = {
+                customer: '', status: 'quotation',
+                orderLines: [{ name: '', qty: 1, unitPrice: 0, amount: 0 }],
+                // customer select
+                custSelectType: 'regular',
+                selectedCustomer: null,
+                custSearchQuery: '',
+                custSearchOpen: false,
+                walkinName: '',
+                walkinPhone: '',
+                pName: '', stock: 0, price: 0,
+                uFullname: '', uUsername: '', uPassword: '', uRole: 'Sales',
+                expCategory: '', expDescription: '', expAmount: 0, expDate: new Date().toISOString().slice(0, 10),
+                custType: 'regular', custFullname: '', custCompany: '', custPhone: '', custEmail: '', custAddress: '', custState: '', custUsername: '', custPassword: ''
+            };
+            this.modal.show = true;
+        },
+        addOrderLine() {
+            this.form.orderLines.unshift({ name: '', qty: 1, unitPrice: 0, amount: 0 });
+        },
+        selectCustomer(c) {
+            this.form.selectedCustomer = c;
+            this.form.custSearchQuery = '';
+            this.form.custSearchOpen = false;
+        },
+        removeOrderLine(idx) {
+            this.form.orderLines.splice(idx, 1);
+        },
+        autoFillLinePrice(line) {
+            const p = this.products.find(x => x.name === line.name);
+            if (p) { line.unitPrice = p.price; this.recalcLine(line); }
+        },
+        recalcLine(line) {
+            line.amount = (line.qty || 0) * (line.unitPrice || 0);
+        },
+        // Keep old names as no-ops for safety
+        updateUnitPrice() {},
+        calculateTotal() {},
+        updateOrderStatus(order, next) {
+            order.status = next;
+            this.notifs.unshift({ title: 'Order Updated', msg: `${order.id} is now ${next}` });
+        },
+        confirmPayment(order) {
+            order.paymentStatus = 'paid';
+            order.status = 'confirmed';
+            this.notifs.unshift({ title: 'Payment Confirmed', msg: `Payment for ${order.id} has been confirmed.` });
+            // Add to bank ledger
+            const runningBal = this.initialDeposit + this.orders.filter(o => o.paymentStatus === 'paid').reduce((s, o) => s + o.total, 0);
+            this.bankLedger.push({ date: new Date().toISOString().slice(0, 10), ref: order.id, description: `Sales payment — ${order.customer}`, amount: order.total, runningBalance: runningBal });
+            // Deduct stock
+            order.items.forEach(item => {
+                const p = this.products.find(x => x.name === item.name);
+                if (p) p.stock = Math.max(0, p.stock - item.qty);
+            });
+            // Add transaction record
+            this.transactions.push({ id: 'TXN' + (this.transactions.length + 1).toString().padStart(3, '0'), customerId: order.customerId, ref: order.id, description: order.items.length > 1 ? `Payment for ${order.items.length} items` : `Payment for ${order.items[0].name}`, amount: order.total, date: new Date().toISOString().slice(0, 10), type: 'payment' });
+            this.checkStockAlerts();
+        },
+
+        // ---- Customer Order (Multi-Product Cart) ----
+        openFreshCart() {
+            this.custOrderModal = {
+                show: true,
+                cartLines: [{ name: '', qty: 1, unitPrice: 0, amount: 0 }],
+                type: 'quotation'
+            };
+        },
+        openCustomerOrder(p) {
+            // Legacy: open cart with product pre-filled
+            this.custOrderModal = {
+                show: true,
+                cartLines: [{ name: p.name, qty: 1, unitPrice: p.price, amount: p.price }],
+                type: 'quotation'
+            };
+        },
+        addToCartAndOpen(p) {
+            if (this.custOrderModal.show) {
+                // add to existing open cart at the top
+                const existing = this.custOrderModal.cartLines.find(l => l.name === p.name);
+                if (existing) { existing.qty += 1; this.recalcCustLine(existing); }
+                else { this.custOrderModal.cartLines.unshift({ name: p.name, qty: 1, unitPrice: p.price, amount: p.price }); }
+            } else {
+                this.custOrderModal = {
+                    show: true,
+                    cartLines: [{ name: p.name, qty: 1, unitPrice: p.price, amount: p.price }],
+                    type: 'quotation'
+                };
+            }
+        },
+        addCustCartLine() {
+            this.custOrderModal.cartLines.unshift({ name: '', qty: 1, unitPrice: 0, amount: 0 });
+        },
+        removeCustCartLine(idx) {
+            this.custOrderModal.cartLines.splice(idx, 1);
+        },
+        autoFillCustLine(line) {
+            const p = this.products.find(x => x.name === line.name);
+            if (p) { line.unitPrice = p.price; this.recalcCustLine(line); }
+        },
+        recalcCustLine(line) {
+            line.amount = (line.qty || 0) * (line.unitPrice || 0);
+        },
+        submitCustomerOrder() {
+            const validLines = this.custOrderModal.cartLines.filter(l => l.name && l.qty > 0);
+            if (validLines.length === 0) { alert('Please add at least one product with a valid quantity.'); return; }
+
+            // Validate stock
+            for (const line of validLines) {
+                const prod = this.products.find(x => x.name === line.name);
+                if (!prod) { alert(`Product "${line.name}" not found.`); return; }
+                if (line.qty > prod.stock) { alert(`"${line.name}" only has ${prod.stock} ${prod.unit} in stock.`); return; }
+            }
+
+            const id = 'SO' + Math.floor(1000 + Math.random() * 9000);
+            const items = validLines.map(l => ({ name: l.name, qty: l.qty, amount: l.amount }));
+            const total = validLines.reduce((s, l) => s + (l.amount || 0), 0);
+
+            const displayName = this.session.company
+                ? `${this.session.fullname} (${this.session.company})`
+                : this.session.fullname;
+
+            this.orders.unshift({
+                id,
+                customer: `${displayName} — ${this.session.customerId}`,
+                customerName: displayName,
+                customerId: this.session.customerId,
+                items, total,
+                status: 'quotation', paymentStatus: 'unpaid', paymentRef: '', paymentMethod: '', paymentDate: '',
+                created_at: new Date().toISOString().slice(0, 10)
+            });
+            this.custOrderModal.show = false;
+            this.notifs.unshift({ title: 'New Order', msg: `Order ${id} (${items.length} item${items.length > 1 ? 's' : ''}) placed by ${this.session.fullname}` });
+            this.custView = 'orders';
+        },
+
+        // ---- Payment ----
+        openPaymentModal(order) {
+            this.paymentModal = { show: true, order, method: 'bank', reference: order.id + '-PAY' };
+        },
+        submitPayment() {
+            if (!this.paymentModal.reference.trim()) { alert('Enter a payment reference'); return; }
+            const o = this.orders.find(x => x.id === this.paymentModal.order.id);
+            if (o) {
+                o.paymentStatus = 'pending_confirmation';
+                o.paymentRef = this.paymentModal.reference;
+                o.paymentMethod = this.paymentModal.method;
+                o.paymentDate = new Date().toISOString().slice(0, 10);
+            }
+            this.paymentModal.show = false;
+            this.notifs.unshift({ title: 'Payment Submitted', msg: `Payment for ${this.paymentModal.order?.id} is awaiting confirmation.` });
+            alert('Payment submitted! The Sales team will confirm your payment shortly.');
+        },
+
+        // ---- Receipt ----
+        downloadReceipt(order) {
+            const receiptHTML = this.buildReceiptHTML(order);
+            const blob = new Blob([receiptHTML], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Receipt-${order.id}.html`;
+            a.click();
+            URL.revokeObjectURL(url);
+        },
+        printReceipt(order) {
+            const receiptHTML = this.buildReceiptHTML(order);
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(receiptHTML);
+            printWindow.document.close();
+            setTimeout(() => { printWindow.print(); }, 500);
+        },
+        buildReceiptHTML(order) {
+            return `<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><title>Receipt - ${order.id}</title>
+<style>
+body{font-family:Arial,sans-serif;padding:40px;max-width:800px;margin:0 auto;}
+.header{text-align:center;border-bottom:3px solid #714B67;padding-bottom:20px;margin-bottom:30px;}
+.header h1{color:#714B67;margin:0;font-size:32px;}
+.header p{color:#666;margin:5px 0;}
+.receipt-info{display:flex;justify-content:space-between;margin-bottom:30px;}
+.receipt-info div{flex:1;}
+.receipt-info strong{display:block;color:#714B67;margin-bottom:5px;}
+table{width:100%;border-collapse:collapse;margin:20px 0;}
+th{background:#714B67;color:white;padding:12px;text-align:left;}
+td{padding:12px;border-bottom:1px solid #ddd;}
+.total-row{background:#f9f9f9;font-weight:bold;font-size:18px;}
+.footer{margin-top:40px;padding-top:20px;border-top:2px solid #ddd;text-align:center;color:#666;font-size:12px;}
+.badge{display:inline-block;padding:5px 15px;background:#00A09D;color:white;border-radius:20px;font-size:12px;font-weight:bold;text-transform:uppercase;}
+</style></head><body>
+<div class="header"><h1>LADU INVESTMENT</h1><p>Construction Materials & Equipment</p><p style="font-size:12px;margin-top:10px">Lagos, Nigeria | info@laduinvestment.com</p></div>
+<div style="text-align:center;margin:30px 0"><h2 style="color:#714B67;margin:0">OFFICIAL RECEIPT</h2><p style="color:#666;margin:5px 0">Receipt No: ${order.id}</p><span class="badge">PAID</span></div>
+<div class="receipt-info">
+<div><strong>Customer:</strong><p>${order.customerName || order.customer}</p><p style="font-size:12px;color:#999">ID: ${order.customerId || 'Walk-in'}</p><p style="font-size:12px;color:#999">${(order.customerName && order.customer !== order.customerName) ? order.customer.replace(order.customerName, '').replace('—','').trim() : ''}</p></div>
+<div style="text-align:right"><strong>Date:</strong><p>${this.formatDate(order.paymentDate || order.created_at)}</p><strong>Payment Method:</strong><p style="text-transform:capitalize">${order.paymentMethod || 'N/A'}</p></div>
+</div>
+<table><thead><tr><th>Item Description</th><th style="text-align:center">Qty</th><th style="text-align:right">Amount (₦)</th></tr></thead>
+<tbody>
+${order.items.map(i => `<tr><td>${i.name}</td><td style="text-align:center">${i.qty}</td><td style="text-align:right">₦${this.formatMoney(i.amount)}</td></tr>`).join('')}
+<tr class="total-row"><td colspan="2" style="text-align:right">TOTAL PAID:</td><td style="text-align:right">₦${this.formatMoney(order.total)}</td></tr>
+</tbody></table>
+<div class="footer"><p><strong>Thank you for your business!</strong></p><p>This is a computer-generated receipt. Payment Ref: ${order.paymentRef || 'N/A'}</p><p>Generated: ${new Date().toLocaleString()}</p></div>
+</body></html>`;
+        },
+
+        // ---- Inventory ----
+        editProduct(p) {
+            this.modal.isEdit = true;
+            this.modal.activeIndex = this.products.indexOf(p);
+            this.form = { ...this.form, pName: p.name, stock: p.stock, price: p.price };
+            this.modal.show = true;
+        },
+        deleteProduct(idx) { if (confirm('Delete this product?')) this.products.splice(idx, 1); },
+
+        // ---- Expenses ----
+        deleteExpense(expense) {
+            if (confirm('Delete this expense?')) {
+                const idx = this.expenses.indexOf(expense);
+                if (idx > -1) {
+                    this.expenses.splice(idx, 1);
+                    this.notifs.unshift({ title: 'Expense Deleted', msg: 'Record removed.' });
+                }
+            }
+        },
+
+        // ---- Users ----
+        deleteUser(idx) { if (confirm('Remove user access?')) this.users.splice(idx, 1); },
+        deleteCustomer(id) {
+            if (confirm('Remove customer?')) {
+                const idx = this.customers.findIndex(c => c.customerId === id);
+                if (idx > -1) this.customers.splice(idx, 1);
+            }
+        },
+
+        // ---- Chat ----
+        sendMessage() {
+            if (!this.newMessage.trim()) return;
+            this.messages.push({ from: this.session.fullname, text: this.newMessage });
+            this.newMessage = '';
+        },
+
+        // ---- Alerts ----
+        checkStockAlerts() {
+            this.lowStockProducts.forEach(p => {
+                const exists = this.notifs.find(n => n.msg.includes(p.name));
+                if (!exists) this.notifs.unshift({ title: 'Low Stock Alert', msg: `${p.name} only has ${p.stock} remaining!` });
+            });
+        },
+
+        // ---- Record Submission ----
+        submitRecord() {
+            if (this.view === 'sales') {
+                // Resolve customer identity
+                let customerName = '';
+                let customerId = '';
+                let customerDisplay = '';
+
+                if (this.form.custSelectType === 'regular') {
+                    if (!this.form.selectedCustomer) { alert('Please search and select a customer.'); return; }
+                    const c = this.form.selectedCustomer;
+                    customerName = c.company ? `${c.fullname} (${c.company})` : c.fullname;
+                    customerId = c.customerId;
+                    customerDisplay = `${customerName} — ${c.customerId}`;
+                } else {
+                    // Walk-in
+                    if (!this.form.walkinName.trim()) { alert('Enter a walk-in customer name.'); return; }
+                    const walkId = 'WALK-' + Math.floor(10000 + Math.random() * 90000);
+                    customerName = this.form.walkinName.trim();
+                    customerId = walkId;
+                    customerDisplay = `${customerName} (Walk-in) — ${walkId}`;
+                    // Auto-register as temporary customer for record
+                    this.customers.push({
+                        customerId: walkId,
+                        fullname: this.form.walkinName.trim(),
+                        company: '',
+                        phone: this.form.walkinPhone || '',
+                        email: '',
+                        address: '',
+                        state: '',
+                        username: '',
+                        password: '',
+                        type: 'temporary',
+                        createdAt: new Date().toISOString().slice(0, 10)
+                    });
+                }
+
+                const validLines = (this.form.orderLines || []).filter(l => l.name && l.qty > 0);
+                if (validLines.length === 0) { alert('Add at least one product line with a quantity.'); return; }
+                const id = 'SO' + Math.floor(1000 + Math.random() * 9000);
+                const items = validLines.map(l => ({ name: l.name, qty: l.qty, amount: l.amount || 0 }));
+                const total = items.reduce((s, i) => s + i.amount, 0);
+                this.orders.unshift({
+                    id,
+                    customer: customerDisplay,
+                    customerName,
+                    customerId,
+                    items, total,
+                    status: this.form.status, paymentStatus: 'unpaid', paymentRef: '', paymentMethod: '', paymentDate: '',
+                    created_at: new Date().toISOString().slice(0, 10)
+                });
+                this.notifs.unshift({ title: 'Order Created', msg: `${id} created for ${customerName}` });
+            } else if (this.view === 'inventory') {
+                if (!this.form.pName.trim() || !this.form.stock || !this.form.price) { alert('Fill all required fields'); return; }
+                if (this.modal.isEdit && this.modal.activeIndex !== null) {
+                    const p = this.products[this.modal.activeIndex];
+                    p.name = this.form.pName; p.stock = this.form.stock; p.price = this.form.price;
+                } else {
+                    this.products.unshift({ name: this.form.pName, category: 'General', stock: this.form.stock, unit: 'units', price: this.form.price });
+                }
+            } else if (this.view === 'expenses') {
+                if (!this.form.expCategory || !this.form.expDescription.trim() || !this.form.expAmount || !this.form.expDate) { alert('Fill all required fields'); return; }
+                this.expenses.unshift({ date: this.form.expDate, category: this.form.expCategory, description: this.form.expDescription, amount: this.form.expAmount });
+                this.notifs.unshift({ title: 'Expense Added', msg: `${this.form.expCategory}: ₦${this.formatMoney(this.form.expAmount)}` });
+            } else if (this.view === 'users') {
+                this.modal.userError = '';
+                if (!this.form.uFullname.trim() || !this.form.uUsername.trim() || !this.form.uPassword.trim()) { this.modal.userError = 'All fields required.'; return; }
+                if (this.users.find(u => u.username === this.form.uUsername)) { this.modal.userError = 'Username already exists.'; return; }
+                this.users.push({ fullname: this.form.uFullname, username: this.form.uUsername, password: this.form.uPassword, role: this.form.uRole });
+            } else if (this.view === 'customers') {
+                this.modal.userError = '';
+                if (!this.form.custFullname.trim() || !this.form.custPhone.trim() || !this.form.custEmail.trim() || !this.form.custAddress.trim() || !this.form.custState) {
+                    this.modal.userError = 'Fill all required fields.'; return;
+                }
+                if (this.form.custType === 'regular') {
+                    if (!this.form.custUsername.trim() || !this.form.custPassword.trim()) { this.modal.userError = 'Username and password required for regular customers.'; return; }
+                    if (this.customers.find(c => c.username === this.form.custUsername)) { this.modal.userError = 'Username already exists.'; return; }
+                }
+                const newCust = {
+                    customerId: 'CUST-' + Math.floor(10000 + Math.random() * 90000),
+                    fullname: this.form.custFullname, company: this.form.custCompany, phone: this.form.custPhone,
+                    email: this.form.custEmail, address: this.form.custAddress, state: this.form.custState,
+                    username: this.form.custType === 'regular' ? this.form.custUsername : '',
+                    password: this.form.custType === 'regular' ? this.form.custPassword : '',
+                    type: this.form.custType, createdAt: new Date().toISOString().slice(0, 10)
+                };
+                this.customers.push(newCust);
+                this.notifs.unshift({ title: 'Customer Added', msg: `${newCust.fullname} (${newCust.customerId}) added.` });
+            }
+            this.modal.show = false;
+            this.checkStockAlerts();
+        },
+
+        // ---- Reports ----
+        generateReport() {
+            const from = this.report.date_from ? new Date(this.report.date_from) : null;
+            const to = this.report.date_to ? new Date(this.report.date_to) : null;
+            const aggr = {};
+            let totalQty = 0, totalAmount = 0;
+            this.orders.forEach(o => {
+                const d = new Date(o.created_at);
+                if (from && d < from) return;
+                if (to && d > to) return;
+                o.items.forEach(it => {
+                    if (this.report.product !== '__all__' && it.name !== this.report.product) return;
+                    if (!aggr[it.name]) aggr[it.name] = { name: it.name, qty: 0, amount: 0 };
+                    aggr[it.name].qty += it.qty;
+                    aggr[it.name].amount += it.amount;
+                    totalQty += it.qty;
+                    totalAmount += it.amount;
+                });
+            });
+            this.reportResults.items = Object.values(aggr);
+            this.reportResults.totalQty = totalQty;
+            this.reportResults.totalAmount = totalAmount;
+        },
+        generateExpenseReport() {
+            const from = this.expenseReport.date_from ? new Date(this.expenseReport.date_from) : null;
+            const to = this.expenseReport.date_to ? new Date(this.expenseReport.date_to) : null;
+            const filtered = this.expenses.filter(e => {
+                const d = new Date(e.date);
+                if (from && d < from) return false;
+                if (to && d > to) return false;
+                if (this.expenseReport.category !== '__all__' && e.category !== this.expenseReport.category) return false;
+                return true;
+            });
+            this.expenseReportResults.items = filtered;
+            this.expenseReportResults.total = filtered.reduce((s, e) => s + e.amount, 0);
+        },
+        exportReport(type) { alert(`Exporting ${type} — Total: ₦${this.formatMoney(this.reportResults.totalAmount)}`); },
+        exportExpenseReport(type) { alert(`Exporting ${type} — Total Expenses: ₦${this.formatMoney(this.expenseReportResults.total)}`); }
+    }
+}).mount('#app');
+</script>
+</body>
+</html>
