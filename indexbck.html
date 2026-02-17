@@ -680,24 +680,35 @@
                     
                     <div>
                         <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Product Item</label>
-                        <select v-model="form.itemName" class="w-full border border-gray-300 p-3 rounded-lg bg-gray-50 focus:ring-2 focus:ring-[#00A09D] outline-none text-sm">
+                        <select v-model="form.itemName" @change="updateUnitPrice" class="w-full border border-gray-300 p-3 rounded-lg bg-gray-50 focus:ring-2 focus:ring-[#00A09D] outline-none text-sm">
                             <option value="" disabled>Select a product</option>
-                            <option v-for="p in products" :key="p.name" :value="p.name">{{ p.name }} (₦{{ formatMoney(p.price) }})</option>
+                            <option v-for="p in products" :key="p.name" :value="p.name">{{ p.name }} (₦{{ formatMoney(p.price) }}/unit)</option>
                         </select>
                     </div>
 
                     <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Total Amount (₦)</label>
-                            <input v-model.number="form.total" type="number" class="w-full border border-gray-300 p-3 rounded-lg bg-gray-50 focus:ring-2 focus:ring-[#00A09D] outline-none text-sm">
+                            <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Quantity</label>
+                            <input v-model.number="form.quantity" @input="calculateTotal" type="number" min="1" class="w-full border border-gray-300 p-3 rounded-lg bg-gray-50 focus:ring-2 focus:ring-[#00A09D] outline-none text-sm" placeholder="Enter quantity">
                         </div>
                         <div>
-                            <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Initial Status</label>
-                            <select v-model="form.status" class="w-full border border-gray-300 p-3 rounded-lg bg-gray-50 focus:ring-2 focus:ring-[#00A09D] outline-none text-sm">
-                                <option value="quotation">Quotation</option>
-                                <option value="confirmed">Confirmed</option>
-                            </select>
+                            <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Unit Price (₦)</label>
+                            <input v-model.number="form.unitPrice" @input="calculateTotal" type="number" min="0" step="0.01" class="w-full border border-gray-300 p-3 rounded-lg bg-gray-50 focus:ring-2 focus:ring-[#00A09D] outline-none text-sm" placeholder="Price per unit">
                         </div>
+                    </div>
+
+                    <div class="bg-teal-50 border border-teal-200 rounded-lg p-4">
+                        <label class="block text-[10px] font-bold text-teal-700 uppercase mb-1">Total Amount</label>
+                        <div class="text-2xl font-bold text-teal-600">₦{{ formatMoney(form.total || 0) }}</div>
+                    </div>
+
+                    <div>
+                        <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Initial Status</label>
+                        <select v-model="form.status" class="w-full border border-gray-300 p-3 rounded-lg bg-gray-50 focus:ring-2 focus:ring-[#00A09D] outline-none text-sm">
+                            <option value="quotation">Quotation</option>
+                            <option value="confirmed">Confirmed</option>
+                        </select>
+                    </div>
                     </div>
                 </div>
 
@@ -798,7 +809,7 @@
                 modal: { show: false, isEdit: false, activeIndex: null, userError: '' },
                 newMessage: '',
                 form: { 
-                    customer: '', total: 0, status: 'quotation', itemName: '', 
+                    customer: '', total: 0, status: 'quotation', itemName: '', quantity: 1, unitPrice: 0,
                     pName: '', stock: 0, price: 0, 
                     uFullname: '', uUsername: '', uPassword: '', uRole: 'Sales',
                     expCategory: '', expDescription: '', expAmount: 0, expDate: new Date().toISOString().slice(0,10)
@@ -903,12 +914,28 @@
                 this.modal.isEdit = false;
                 this.modal.activeIndex = null;
                 this.form = { 
-                    customer: '', total: 0, status: 'quotation', itemName: '', 
+                    customer: '', total: 0, status: 'quotation', itemName: '', quantity: 1, unitPrice: 0,
                     pName: '', stock: 0, price: 0, 
                     uFullname: '', uUsername: '', uPassword: '', uRole: 'Sales',
                     expCategory: '', expDescription: '', expAmount: 0, expDate: new Date().toISOString().slice(0,10)
                 };
                 this.modal.show = true;
+            },
+
+            updateUnitPrice() {
+                // Auto-fill unit price when product is selected
+                const product = this.products.find(p => p.name === this.form.itemName);
+                if (product) {
+                    this.form.unitPrice = product.price;
+                    this.calculateTotal();
+                }
+            },
+
+            calculateTotal() {
+                // Calculate total based on quantity and unit price
+                const qty = this.form.quantity || 0;
+                const price = this.form.unitPrice || 0;
+                this.form.total = qty * price;
             },
 
             updateOrderStatus(order, next) {
@@ -1057,13 +1084,17 @@
 
             submitRecord() {
                 if (this.view === 'sales') {
-                    if (!this.form.customer.trim() || !this.form.itemName || !this.form.total) {
-                        alert('Please fill all required fields');
+                    if (!this.form.customer.trim() || !this.form.itemName || !this.form.quantity || !this.form.unitPrice || !this.form.total) {
+                        alert('Please fill all required fields (customer, item, quantity, and unit price)');
+                        return;
+                    }
+                    if (this.form.quantity < 1) {
+                        alert('Quantity must be at least 1');
                         return;
                     }
                     const id = 'SO' + Math.floor(1000 + Math.random() * 9000);
                     const created = new Date().toISOString().slice(0,10);
-                    const item = { name: this.form.itemName, qty: 1, amount: this.form.total };
+                    const item = { name: this.form.itemName, qty: this.form.quantity, amount: this.form.total };
                     this.orders.unshift({ id, customer: this.form.customer, items: [item], total: this.form.total, status: this.form.status, created_at: created });
                 } else if (this.view === 'inventory') {
                     if (!this.form.pName.trim() || !this.form.stock || !this.form.price) {
