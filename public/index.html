@@ -2094,7 +2094,8 @@
 const { createApp } = Vue;
 createApp({
     data() {
-        const today = new Date().toISOString().slice(0,10);
+        const _d = new Date();
+        const today = _d.getFullYear() + '-' + String(_d.getMonth()+1).padStart(2,'0') + '-' + String(_d.getDate()).padStart(2,'0');
         return {
             session: null,
             view: 'dashboard',
@@ -2190,24 +2191,24 @@ createApp({
 
             // ---- Orders ----
             orders: [
-                { id: 'SO001', customer: 'Julius Berger Nigeria (Julius Berger) — CUST-10001', customerName: 'Julius Berger (Julius Berger Nigeria)', customerId: 'CUST-10001', items: [{ name: 'Dangote Cement (50kg)', qty: 150, amount: 1275000 }], total: 1275000, amountPaid: 1275000, status: 'confirmed', paymentStatus: 'paid', paymentRef: 'SO001-PAY', paymentMethod: 'bank', bankName: 'Zenith Bank', paymentDate: '2026-01-19', created_at: '2026-01-18' },
-                { id: 'SO002', customer: 'Alhaji Gafar Ibrahim — CUST-10002', customerName: 'Alhaji Gafar Ibrahim', customerId: 'CUST-10002', items: [{ name: '10mm Steel Rod', qty: 2, amount: 1440000 }], total: 1440000, amountPaid: 600000, status: 'quotation', paymentStatus: 'partial', paymentRef: 'SO002-TRF', paymentMethod: 'bank', bankName: 'Touch Bank', paymentDate: '2026-01-21', created_at: '2026-01-20' },
-                { id: 'SO003', customer: 'Walk-In Customer (Walk-in) — WALK-10003', customerName: 'Walk-In Customer', customerId: 'WALK-10003', items: [{ name: 'Dangote Cement (50kg)', qty: 50, amount: 425000 }], total: 425000, amountPaid: 425000, status: 'delivered', paymentStatus: 'paid', paymentRef: 'SO003-CASH', paymentMethod: 'cash', bankName: '', paymentDate: '2026-01-12', created_at: '2026-01-12' },
-                { id: 'SO004', customer: 'Julius Berger Nigeria (Julius Berger) — CUST-10001', customerName: 'Julius Berger (Julius Berger Nigeria)', customerId: 'CUST-10001', items: [{ name: 'River Sand (per ton)', qty: 20, amount: 360000 }], total: 360000, amountPaid: 0, status: 'quotation', paymentStatus: 'unpaid', paymentRef: '', paymentMethod: '', bankName: '', paymentDate: '', created_at: '2026-01-21' }
+                { id: 'SO001', customer: 'Julius Berger Nigeria (Julius Berger) — CUST-10001', customerName: 'Julius Berger (Julius Berger Nigeria)', customerId: 'CUST-10001', items: [{ name: 'Dangote Cement (50kg)', qty: 150, amount: 1275000 }], total: 1275000, amountPaid: 1275000, status: 'confirmed', paymentStatus: 'paid', paymentRef: 'SO001-PAY', paymentMethod: 'bank', bankName: 'Zenith Bank', paymentDate: '2026-02-12', created_at: '2026-02-10' },
+                { id: 'SO002', customer: 'Alhaji Gafar Ibrahim — CUST-10002', customerName: 'Alhaji Gafar Ibrahim', customerId: 'CUST-10002', items: [{ name: '10mm Steel Rod', qty: 2, amount: 1440000 }], total: 1440000, amountPaid: 600000, status: 'quotation', paymentStatus: 'partial', paymentRef: 'SO002-TRF', paymentMethod: 'bank', bankName: 'Touch Bank', paymentDate: '2026-02-15', created_at: '2026-02-14' },
+                { id: 'SO003', customer: 'Walk-In Customer (Walk-in) — WALK-10003', customerName: 'Walk-In Customer', customerId: 'WALK-10003', items: [{ name: 'Dangote Cement (50kg)', qty: 50, amount: 425000 }], total: 425000, amountPaid: 425000, status: 'delivered', paymentStatus: 'paid', paymentRef: 'SO003-CASH', paymentMethod: 'cash', bankName: '', paymentDate: '2026-02-05', created_at: '2026-02-05' },
+                { id: 'SO004', customer: 'Julius Berger Nigeria (Julius Berger) — CUST-10001', customerName: 'Julius Berger (Julius Berger Nigeria)', customerId: 'CUST-10001', items: [{ name: 'River Sand (per ton)', qty: 20, amount: 360000 }], total: 360000, amountPaid: 0, status: 'quotation', paymentStatus: 'unpaid', paymentRef: '', paymentMethod: '', bankName: '', paymentDate: '', created_at: '2026-02-18' }
             ],
 
             // ---- Expenses ----
             expenses: [
-                { date: '2026-01-15', category: 'Transport', description: 'Fuel for delivery trucks', amount: 45000 },
-                { date: '2026-01-18', category: 'Utilities', description: 'Electricity bill for warehouse', amount: 28000 },
-                { date: '2026-01-20', category: 'Salaries', description: 'Staff salaries for January', amount: 350000 }
+                { date: '2026-02-08', category: 'Transport', description: 'Fuel for delivery trucks', amount: 45000 },
+                { date: '2026-02-12', category: 'Utilities', description: 'Electricity bill for warehouse', amount: 28000 },
+                { date: '2026-02-17', category: 'Salaries', description: 'Staff salaries for February', amount: 350000 }
             ],
 
             // ---- Customer Transactions ----
             transactions: [
-                { id: 'TXN001', customerId: 'CUST-10001', ref: 'SO001', description: 'Payment for Dangote Cement (150 bags)', amount: 1275000, date: '2026-01-19', type: 'payment', method: 'bank', bankName: 'Zenith Bank', outstanding: 0 },
-                { id: 'TXN002', customerId: 'WALK-10003', ref: 'SO003', description: 'Cash payment for Dangote Cement (50 bags)', amount: 425000, date: '2026-01-12', type: 'payment', method: 'cash', bankName: '', outstanding: 0 },
-                { id: 'TXN003', customerId: 'CUST-10002', ref: 'SO002', description: 'Partial payment for 10mm Steel Rod', amount: 600000, date: '2026-01-21', type: 'payment', method: 'bank', bankName: 'Touch Bank', outstanding: 840000 }
+                { id: 'TXN001', customerId: 'CUST-10001', ref: 'SO001', description: 'Payment for Dangote Cement (150 bags)', amount: 1275000, date: '2026-02-12', type: 'payment', method: 'bank', bankName: 'Zenith Bank', outstanding: 0 },
+                { id: 'TXN002', customerId: 'WALK-10003', ref: 'SO003', description: 'Cash payment for Dangote Cement (50 bags)', amount: 425000, date: '2026-02-05', type: 'payment', method: 'cash', bankName: '', outstanding: 0 },
+                { id: 'TXN003', customerId: 'CUST-10002', ref: 'SO002', description: 'Partial payment for 10mm Steel Rod', amount: 600000, date: '2026-02-15', type: 'payment', method: 'bank', bankName: 'Touch Bank', outstanding: 840000 }
             ],
 
             // ---- Filters ----
@@ -2316,14 +2317,14 @@ createApp({
             return this.totalBankBalance + this.drawerBalance + this.stockValue - this.totalExpenses;
         },
         todayExpenses() {
-            const today = new Date().toISOString().slice(0, 10);
+            const today = this.localDateStr();
             return this.expenses.filter(e => e.date === today).reduce((s, e) => s + e.amount, 0);
         },
         lowStockProducts() {
             return this.products.filter(p => p.stock < 20);
         },
         todaySales() {
-            const today = new Date().toISOString().slice(0, 10);
+            const today = this.localDateStr();
             return this.orders.filter(o => o.created_at === today && o.paymentStatus === 'paid').reduce((s, o) => s + o.total, 0);
         },
 
@@ -2562,6 +2563,11 @@ createApp({
     },
 
     methods: {
+        // ---- Local Date Helper (avoids UTC off-by-one in timezones ahead of UTC) ----
+        localDateStr() {
+            const d = new Date();
+            return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+        },
         // ---- Navigation ----
         navClass(v) {
             return ['flex items-center px-3 py-3 rounded-lg text-sm font-medium transition-colors',
@@ -2608,7 +2614,7 @@ createApp({
                 customerId: 'CUST-' + Math.floor(10000 + Math.random() * 90000),
                 fullname: f.fullname, company: f.company, phone: f.phone, email: f.email,
                 address: f.address, state: f.state, username: f.username, password: f.password,
-                type: 'regular', createdAt: new Date().toISOString().slice(0, 10)
+                type: 'regular', createdAt: this.localDateStr()
             };
             this.customers.push(newCust);
             f.success = 'Account created! You can now log in.';
@@ -2685,7 +2691,7 @@ createApp({
                 walkinPhone: '',
                 pName: '', stock: 0, price: 0,
                 uFullname: '', uUsername: '', uPassword: '', uRole: 'Sales',
-                expCategory: '', expDescription: '', expAmount: 0, expDate: new Date().toISOString().slice(0, 10),
+                expCategory: '', expDescription: '', expAmount: 0, expDate: this.localDateStr(),
                 custType: 'regular', custFullname: '', custCompany: '', custPhone: '', custEmail: '', custAddress: '', custState: '', custUsername: '', custPassword: ''
             };
             this.modal.show = true;
@@ -2785,7 +2791,7 @@ createApp({
                 items, total,
                 amountPaid: 0,
                 status: 'quotation', paymentStatus: 'unpaid', paymentRef: '', paymentMethod: '', bankName: '', paymentDate: '',
-                created_at: new Date().toISOString().slice(0, 10)
+                created_at: this.localDateStr()
             });
             this.custOrderModal.show = false;
             this.notifs.unshift({ title: 'New Order', msg: `Order ${id} (${items.length} item${items.length > 1 ? 's' : ''}) placed by ${this.session.fullname}` });
@@ -2809,7 +2815,7 @@ createApp({
                 o.paymentRef = this.paymentModal.reference;
                 o.paymentMethod = this.paymentModal.mode;
                 o.bankName = this.paymentModal.selectedBank || '';
-                o.paymentDate = new Date().toISOString().slice(0, 10);
+                o.paymentDate = this.localDateStr();
             }
             this.paymentModal.show = false;
             this.notifs.unshift({ title: 'Payment Submitted', msg: `Payment for ${this.paymentModal.order?.id} awaiting confirmation.` });
@@ -2944,7 +2950,7 @@ ${order.items.map(i => `<tr><td>${i.name}</td><td style="text-align:center">${i.
                         username: '',
                         password: '',
                         type: 'temporary',
-                        createdAt: new Date().toISOString().slice(0, 10)
+                        createdAt: this.localDateStr()
                     });
                 }
 
@@ -2961,7 +2967,7 @@ ${order.items.map(i => `<tr><td>${i.name}</td><td style="text-align:center">${i.
                     items, total,
                     amountPaid: 0,
                     status: this.form.status, paymentStatus: 'unpaid', paymentRef: '', paymentMethod: '', bankName: '', paymentDate: '',
-                    created_at: new Date().toISOString().slice(0, 10)
+                    created_at: this.localDateStr()
                 });
                 this.notifs.unshift({ title: 'Order Created', msg: `${id} created for ${customerName}` });
             } else if (this.view === 'inventory') {
@@ -2996,7 +3002,7 @@ ${order.items.map(i => `<tr><td>${i.name}</td><td style="text-align:center">${i.
                     email: this.form.custEmail, address: this.form.custAddress, state: this.form.custState,
                     username: this.form.custType === 'regular' ? this.form.custUsername : '',
                     password: this.form.custType === 'regular' ? this.form.custPassword : '',
-                    type: this.form.custType, createdAt: new Date().toISOString().slice(0, 10)
+                    type: this.form.custType, createdAt: this.localDateStr()
                 };
                 this.customers.push(newCust);
                 this.notifs.unshift({ title: 'Customer Added', msg: `${newCust.fullname} (${newCust.customerId}) added.` });
@@ -3125,7 +3131,7 @@ ${order.items.map(i => `<tr><td>${i.name}</td><td style="text-align:center">${i.
                 doc.autoTable({ startY: y, head: [['Date','Ref','Method','Bank','Amount (NGN)','Balance After (NGN)']], body: txns.map(t=>[this.formatDate(t.date), t.ref, t.method||'-', t.bankName||'-', this.pdfMoney(t.amount), this.pdfMoney(t.outstanding||0)]), styles: { fontSize: 7.5, cellPadding: 2 }, headStyles: { fillColor: [0,160,157] }, theme: 'grid', margin: { left: 14, right: 14 } });
             }
             this.addPDFFooter(doc);
-            doc.save('Statement-' + nm.replace(/\s+/g,'_') + '-' + new Date().toISOString().slice(0,10) + '.pdf');
+            doc.save('Statement-' + nm.replace(/\s+/g,'_') + '-' + this.localDateStr() + '.pdf');
         },
         downloadMyStatementPDF() {
             const orders = this.myOrders;
@@ -3145,7 +3151,7 @@ ${order.items.map(i => `<tr><td>${i.name}</td><td style="text-align:center">${i.
             doc.setFontSize(9); doc.setFont(undefined,'bold'); doc.text('ORDER HISTORY', 14, y); y += 4;
             doc.autoTable({ startY: y, head: [['Order','Date','Items','Total (NGN)','Paid (NGN)','Balance (NGN)','Status']], body: orders.map(o=>[o.id, this.formatDate(o.created_at), o.items.map(i=>i.name+' x'+i.qty).join(', '), this.pdfMoney(o.total), this.pdfMoney(o.amountPaid||0), this.pdfMoney(Math.max(0,o.total-(o.amountPaid||0))), (o.paymentStatus||'').toUpperCase()]), styles: { fontSize: 7.5, cellPadding: 2 }, headStyles: { fillColor: [42,27,38] }, alternateRowStyles: { fillColor: [248,248,248] }, theme: 'grid', margin: { left: 14, right: 14 } });
             this.addPDFFooter(doc);
-            doc.save('MyStatement-' + cust.fullname.replace(/\s+/g,'_') + '-' + new Date().toISOString().slice(0,10) + '.pdf');
+            doc.save('MyStatement-' + cust.fullname.replace(/\s+/g,'_') + '-' + this.localDateStr() + '.pdf');
         },
         downloadMyTransactionPDF() {
             const { doc, lw } = this.createPDFDoc('MY TRANSACTION HISTORY');
@@ -3167,7 +3173,7 @@ ${order.items.map(i => `<tr><td>${i.name}</td><td style="text-align:center">${i.
             doc.setFontSize(10); doc.setFont(undefined,'bold');
             doc.text('GRAND TOTAL OUTSTANDING: NGN ' + this.formatMoney(this.totalOutstandingDebts), 14, y);
             this.addPDFFooter(doc);
-            doc.save('Outstanding-Statement-' + new Date().toISOString().slice(0,10) + '.pdf');
+            doc.save('Outstanding-Statement-' + this.localDateStr() + '.pdf');
         },
         downloadGeneralHistoryPDF() {
             const f = this.filteredGeneralHistory;
@@ -3177,7 +3183,7 @@ ${order.items.map(i => `<tr><td>${i.name}</td><td style="text-align:center">${i.
             doc.text('Total Orders: ' + f.length + '  |  Total Value: NGN ' + this.formatMoney(f.reduce((s,o)=>s+o.total,0)) + '  |  Outstanding: NGN ' + this.formatMoney(f.reduce((s,o)=>s+Math.max(0,o.total-(o.amountPaid||0)),0)), 14, y); y += 8;
             doc.autoTable({ startY: y, head: [['Order','Customer','Date','Items','Total (NGN)','Paid (NGN)','Balance (NGN)','Method','Status']], body: f.map(o=>[o.id, o.customerName||o.customer, this.formatDate(o.created_at), o.items.map(i=>i.name.substring(0,14)+' x'+i.qty).join(', '), this.pdfMoney(o.total), this.pdfMoney(o.amountPaid||0), this.pdfMoney(Math.max(0,o.total-(o.amountPaid||0))), o.paymentMethod||'-', (o.paymentStatus||'').toUpperCase()]), styles: { fontSize: 6.5, cellPadding: 1.5 }, headStyles: { fillColor: [42,27,38] }, alternateRowStyles: { fillColor: [248,248,248] }, theme: 'grid', margin: { left: 14, right: 14 } });
             this.addPDFFooter(doc);
-            doc.save('GeneralHistory-' + new Date().toISOString().slice(0,10) + '.pdf');
+            doc.save('GeneralHistory-' + this.localDateStr() + '.pdf');
         },
         exportReport(type) {
             const { doc, lw } = this.createPDFDoc('SALES PERFORMANCE REPORT');
@@ -3189,7 +3195,7 @@ ${order.items.map(i => `<tr><td>${i.name}</td><td style="text-align:center">${i.
             doc.setFontSize(9); doc.setFont(undefined,'bold'); doc.setTextColor(0,0,0); doc.text('PRODUCT BREAKDOWN', 14, y); y += 4;
             doc.autoTable({ startY: y, head: [['Product','Qty Sold','Revenue (NGN)']], body: this.reportResults.items.map(it=>[it.name, it.qty, this.pdfMoney(it.amount)]), styles: { fontSize: 8 }, headStyles: { fillColor: [42,27,38] }, theme: 'grid', margin: { left: 14, right: 14 } });
             this.addPDFFooter(doc);
-            doc.save('SalesReport-' + new Date().toISOString().slice(0,10) + '.pdf');
+            doc.save('SalesReport-' + this.localDateStr() + '.pdf');
         },
         exportExpenseReport(type) {
             const { doc, lw } = this.createPDFDoc('EXPENSES REPORT');
@@ -3199,7 +3205,7 @@ ${order.items.map(i => `<tr><td>${i.name}</td><td style="text-align:center">${i.
             doc.setFontSize(10); doc.setFont(undefined,'bold');
             doc.text('TOTAL EXPENSES: NGN ' + this.formatMoney(this.expenseReportResults.total), 14, fy);
             this.addPDFFooter(doc);
-            doc.save('ExpenseReport-' + new Date().toISOString().slice(0,10) + '.pdf');
+            doc.save('ExpenseReport-' + this.localDateStr() + '.pdf');
         },
                 openStaffPaymentModal(order) {
             this.staffPayModal = { show: true, order, mode: 'bank', selectedBank: this.banks[0]?.name || '', bankAmount: Math.max(0, order.total - (order.amountPaid||0)), cashAmount: 0, reference: order.id + '-PAY' };
@@ -3211,7 +3217,7 @@ ${order.items.map(i => `<tr><td>${i.name}</td><td style="text-align:center">${i.
             if (totalPaying > remaining + 0.01) { alert('Payment exceeds outstanding balance of ₦' + this.formatMoney(remaining)); return; }
             if ((this.staffPayModal.mode === 'bank' || this.staffPayModal.mode === 'mixed') && bankAmt > 0 && !this.staffPayModal.selectedBank) { alert('Please select a bank'); return; }
             const newPaid = (o.amountPaid||0) + totalPaying; const newOutstanding = Math.max(0, o.total - newPaid);
-            const date = new Date().toISOString().slice(0,10);
+            const date = this.localDateStr();
             o.amountPaid = newPaid; o.paymentMethod = this.staffPayModal.mode; o.bankName = this.staffPayModal.mode !== 'cash' ? this.staffPayModal.selectedBank : ''; o.paymentRef = this.staffPayModal.reference || (o.id+'-PAY'); o.paymentDate = date;
             if (newOutstanding <= 0.01) { o.paymentStatus = 'paid'; o.status = 'confirmed'; o.amountPaid = o.total; o.items.forEach(it => { const p = this.products.find(x => x.name === it.name); if (p) p.stock = Math.max(0, p.stock - it.qty); }); } else { o.paymentStatus = 'partial'; }
             if (bankAmt > 0) this.bankLedger.push({ date, ref: o.id, customerName: o.customerName, description: 'Bank payment - '+o.customerName, amount: bankAmt, method: 'bank', bankName: this.staffPayModal.selectedBank, runningBalance: 0 });
