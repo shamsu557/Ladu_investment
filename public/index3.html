@@ -545,15 +545,15 @@
             </div>
             <nav class="flex-1 overflow-y-auto py-6 px-3 space-y-1">
                 <a href="#" @click.prevent="view = 'dashboard'; sidebarOpen = false" :class="navClass('dashboard')"><i class="fas fa-th-large w-8 text-center"></i> Dashboard</a>
-                <a v-if="session.role === 'Admin'" href="#" @click.prevent="view = 'purchases'; sidebarOpen = false" :class="navClass('purchases')"><i class="fas fa-shopping-basket w-8 text-center"></i> Purchases</a>
-                <a v-if="['Admin','Store'].includes(session.role)" href="#" @click.prevent="view = 'inventory'; sidebarOpen = false" :class="navClass('inventory')"><i class="fas fa-boxes w-8 text-center"></i> Stock</a>
                 <a v-if="['Admin','Sales'].includes(session.role)" href="#" @click.prevent="view = 'sales'; sidebarOpen = false" :class="navClass('sales')"><i class="fas fa-shopping-cart w-8 text-center"></i> Sales Orders</a>
-                <a v-if="['Admin','Sales'].includes(session.role)" href="#" @click.prevent="view = 'customers'; sidebarOpen = false" :class="navClass('customers')"><i class="fas fa-address-book w-8 text-center"></i> Customers</a>
-                <a v-if="session.role === 'Admin'" href="#" @click.prevent="view = 'financials'; sidebarOpen = false" :class="navClass('financials')"><i class="fas fa-landmark w-8 text-center"></i> Financials</a>
-                <a v-if="['Admin','Sales'].includes(session.role)" href="#" @click.prevent="view = 'payments'; sidebarOpen = false" :class="navClass('payments')"><i class="fas fa-money-check-alt w-8 text-center"></i> Payments</a>
-                <a v-if="['Admin','Sales'].includes(session.role)" href="#" @click.prevent="view = 'reports'; sidebarOpen = false" :class="navClass('reports')"><i class="fas fa-chart-pie w-8 text-center"></i> Reports</a>
+                <a v-if="['Admin','Store'].includes(session.role)" href="#" @click.prevent="view = 'inventory'; sidebarOpen = false" :class="navClass('inventory')"><i class="fas fa-boxes w-8 text-center"></i> Inventory</a>
                 <a v-if="session.role === 'Admin'" href="#" @click.prevent="view = 'expenses'; sidebarOpen = false" :class="navClass('expenses')"><i class="fas fa-receipt w-8 text-center"></i> Expenses</a>
                 <a v-if="session.role === 'Admin'" href="#" @click.prevent="view = 'users'; sidebarOpen = false" :class="navClass('users')"><i class="fas fa-users-cog w-8 text-center"></i> User Management</a>
+                <a v-if="['Admin','Sales'].includes(session.role)" href="#" @click.prevent="view = 'customers'; sidebarOpen = false" :class="navClass('customers')"><i class="fas fa-address-book w-8 text-center"></i> Customers</a>
+                <a v-if="['Admin','Sales'].includes(session.role)" href="#" @click.prevent="view = 'payments'; sidebarOpen = false" :class="navClass('payments')"><i class="fas fa-money-check-alt w-8 text-center"></i> Payments</a>
+                <a v-if="['Admin','Sales'].includes(session.role)" href="#" @click.prevent="view = 'reports'; sidebarOpen = false" :class="navClass('reports')"><i class="fas fa-chart-pie w-8 text-center"></i> Reports</a>
+                <a v-if="session.role === 'Admin'" href="#" @click.prevent="view = 'financials'; sidebarOpen = false" :class="navClass('financials')"><i class="fas fa-landmark w-8 text-center"></i> Financials</a>
+                <a v-if="session.role === 'Admin'" href="#" @click.prevent="view = 'purchases'; sidebarOpen = false" :class="navClass('purchases')"><i class="fas fa-shopping-basket w-8 text-center"></i> Purchases</a>
             </nav>
             <div class="p-4 bg-black/20 border-t border-white/5">
                 <div class="flex items-center gap-3 mb-3">
@@ -1303,16 +1303,13 @@
                         </div>
                         <div class="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
                             <div class="flex justify-between items-start mb-3"><div class="p-2 bg-green-50 rounded-lg text-green-600"><i class="fas fa-money-bill-wave"></i></div>
-                                <button @click="showCashSetup=!showCashSetup" class="text-[10px] font-bold uppercase text-[#00A09D] bg-teal-50 px-1 py-0.5 rounded hover:bg-teal-100">Setup / Top Up</button>
+                                <button @click="showCashSetup=!showCashSetup" class="text-[10px] font-bold uppercase text-[#00A09D] bg-teal-50 px-1 py-0.5 rounded hover:bg-teal-100">Setup</button>
                             </div>
                             <h3 class="text-lg font-black text-gray-800">₦{{ formatMoney(drawerBalance) }}</h3>
                             <p class="text-xs text-gray-500 mt-1">Cash drawer</p>
-                            <div v-if="showCashSetup" class="mt-3 space-y-2">
-                                <p class="text-[10px] font-bold text-gray-500 uppercase">Edit Initial Float</p>
-                                <div class="flex gap-2">
-                                    <input type="number" v-model.number="newInitialCash" placeholder="New initial cash" class="flex-1 border border-gray-200 rounded px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-[#00A09D]">
-                                    <button @click="setInitialCash()" class="bg-[#00A09D] text-white text-xs px-3 py-1 rounded font-bold">Set</button>
-                                </div>
+                            <div v-if="showCashSetup" class="mt-3 flex gap-2">
+                                <input type="number" v-model.number="newInitialCash" placeholder="New initial cash" class="flex-1 border border-gray-200 rounded px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-[#00A09D]">
+                                <button @click="setInitialCash()" class="bg-[#00A09D] text-white text-xs px-3 py-1 rounded font-bold">Set</button>
                             </div>
                         </div>
                         <div class="bg-white p-4 rounded-xl border border-yellow-200 shadow-sm">
@@ -1331,9 +1328,9 @@
                             <p class="text-xs text-gray-500 mt-1">{{ purchases.length }} orders ↗ View</p>
                         </div>
                         <div class="bg-gradient-to-br from-[#714B67] to-[#2A1B26] p-4 rounded-xl shadow-lg">
-                            <div class="flex justify-between items-start mb-3"><div class="p-2 bg-white/20 rounded-lg text-white"><i class="fas fa-chart-line"></i></div><span class="text-[10px] font-bold uppercase text-white/50 bg-white/10 px-1 py-0.5 rounded">Total Assets</span></div>
+                            <div class="flex justify-between items-start mb-3"><div class="p-2 bg-white/20 rounded-lg text-white"><i class="fas fa-chart-line"></i></div><span class="text-[10px] font-bold uppercase text-white/50 bg-white/10 px-1 py-0.5 rounded">Net</span></div>
                             <h3 class="text-lg font-black text-white">₦{{ formatMoney(totalAssets) }}</h3>
-                            <p class="text-xs text-white/60 mt-1">Banks + Drawer + Stock Value</p>
+                            <p class="text-xs text-white/60 mt-1">Net Assets (incl. outstanding)</p>
                         </div>
                     </div>
 
@@ -1356,31 +1353,11 @@
                             </div>
                         </div>
                         <!-- Edit Opening Balance for selected bank -->
-                        <div v-if="selectedBank" class="border-t border-gray-100 p-4 bg-amber-50 flex flex-col gap-3">
-                            <div class="flex items-center gap-2">
-                                <i class="fas fa-exclamation-triangle text-amber-600"></i>
-                                <span class="text-xs font-bold text-amber-800">{{ selectedBank }} — Balance Management</span>
-                            </div>
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                <!-- Edit Opening Balance -->
-                                <div class="bg-white border border-amber-200 rounded-lg p-3">
-                                    <p class="text-[10px] font-bold text-amber-700 uppercase mb-2"><i class="fas fa-edit mr-1"></i>Edit Opening Balance</p>
-                                    <input type="number" v-model.number="bankEditOpening" class="w-full border border-amber-300 rounded px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-amber-400 mb-2" :placeholder="'Current: ₦' + formatMoney(banks.find(b=>b.name===selectedBank)?.openingBalance||0)">
-                                    <button @click="confirmEditBankOpening(selectedBank)" class="w-full bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold py-1.5 rounded transition"><i class="fas fa-save mr-1"></i>Update Opening Balance</button>
-                                </div>
-                                <!-- Top Up (direct bank deposit) -->
-                                <div class="bg-white border border-teal-200 rounded-lg p-3">
-                                    <p class="text-[10px] font-bold text-teal-700 uppercase mb-2"><i class="fas fa-plus-circle mr-1"></i>Top Up (Add Deposit)</p>
-                                    <input type="number" v-model.number="bankTopUpAmount" class="w-full border border-teal-300 rounded px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-teal-400 mb-2" placeholder="Amount to top up">
-                                    <input type="text" v-model="bankTopUpNote" class="w-full border border-teal-300 rounded px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-teal-400 mb-2" placeholder="Note / Reference">
-                                    <button @click="submitBankTopUp(selectedBank)" class="w-full bg-[#00A09D] hover:bg-teal-700 text-white text-xs font-bold py-1.5 rounded transition"><i class="fas fa-arrow-up mr-1"></i>Top Up Bank</button>
-                                </div>
-                            </div>
-                            <div class="flex flex-wrap gap-3 text-xs text-gray-600">
-                                <span>Opening: <strong>₦{{ formatMoney(banks.find(b=>b.name===selectedBank)?.openingBalance||0) }}</strong></span>
-                                <span>Deposits in: <strong class="text-green-600">₦{{ formatMoney(bankLedger.filter(e=>e.bankName===selectedBank&&e.method==='bank').reduce((s,e)=>s+e.amount,0)) }}</strong></span>
-                                <span>→ Total: <strong class="text-[#00A09D]">₦{{ formatMoney(bankBalances[selectedBank]||0) }}</strong></span>
-                            </div>
+                        <div v-if="selectedBank" class="border-t border-gray-100 p-4 bg-amber-50 flex items-center gap-3 flex-wrap">
+                            <span class="text-xs font-bold text-amber-800">{{ selectedBank }} — Opening Balance:</span>
+                            <input type="number" :value="banks.find(b=>b.name===selectedBank)?.openingBalance||0" @change="updateBankOpening(selectedBank, $event.target.value)" class="border border-amber-300 rounded px-2 py-1 text-xs w-36 focus:outline-none focus:ring-1 focus:ring-amber-400" placeholder="Opening balance">
+                            <span class="text-xs text-amber-700">Deposits in: ₦{{ formatMoney(bankLedger.filter(e=>e.bankName===selectedBank&&e.method==='bank').reduce((s,e)=>s+e.amount,0)) }}</span>
+                            <span class="text-xs font-bold text-[#00A09D]">→ Total: ₦{{ formatMoney(bankBalances[selectedBank]||0) }}</span>
                         </div>
                         <!-- Selected Bank Transactions -->
                         <div v-if="selectedBank" class="border-t border-gray-100 overflow-x-auto">
@@ -1488,7 +1465,7 @@
 
                     <!-- Add Purchase Button -->
                     <div class="flex justify-end">
-                        <button @click="purchaseModal = { show: true, description: '', vendor: '', amount: 0, date: localDateStr(), cashAmount: 0, bankAmounts: {}, notes: '' }" class="bg-orange-500 hover:bg-orange-600 text-white px-5 py-2.5 rounded-lg font-bold text-sm flex items-center gap-2 shadow">
+                        <button @click="purchaseModal = { show: true, description: '', vendor: '', amount: 0, date: localDateStr(), fundedFrom: 'bank', bankName: banks[0]?.name || '', notes: '' }" class="bg-orange-500 hover:bg-orange-600 text-white px-5 py-2.5 rounded-lg font-bold text-sm flex items-center gap-2 shadow">
                             <i class="fas fa-plus"></i> New Purchase Order
                         </button>
                     </div>
@@ -1519,14 +1496,8 @@
                                         <td class="p-4 font-medium text-gray-700">{{ p.vendor || '—' }}</td>
                                         <td class="p-4 text-gray-600">{{ p.description }}</td>
                                         <td class="p-4">
-                                            <div v-if="p.bankBreakdown && Object.keys(p.bankBreakdown).length" class="space-y-1">
-                                                <span v-for="(amt, bn) in p.bankBreakdown" :key="bn" class="inline-block mr-1 px-2 py-0.5 bg-blue-100 text-blue-700 rounded text-[10px] font-bold uppercase"><i class="fas fa-university mr-1"></i>{{ bn }}: ₦{{ formatMoney(amt) }}</span>
-                                                <span v-if="p.cashAmount > 0" class="inline-block mr-1 px-2 py-0.5 bg-green-100 text-green-700 rounded text-[10px] font-bold uppercase"><i class="fas fa-money-bill mr-1"></i>Cash: ₦{{ formatMoney(p.cashAmount) }}</span>
-                                            </div>
-                                            <div v-else>
-                                                <span v-if="p.fundedFrom==='bank'" class="px-2 py-1 bg-blue-100 text-blue-700 rounded text-[10px] font-bold uppercase"><i class="fas fa-university mr-1"></i>{{ p.bankName }}</span>
-                                                <span v-else class="px-2 py-1 bg-green-100 text-green-700 rounded text-[10px] font-bold uppercase"><i class="fas fa-money-bill mr-1"></i>Cash Drawer</span>
-                                            </div>
+                                            <span v-if="p.fundedFrom==='bank'" class="px-2 py-1 bg-blue-100 text-blue-700 rounded text-[10px] font-bold uppercase"><i class="fas fa-university mr-1"></i>{{ p.bankName }}</span>
+                                            <span v-else class="px-2 py-1 bg-green-100 text-green-700 rounded text-[10px] font-bold uppercase"><i class="fas fa-money-bill mr-1"></i>Cash Drawer</span>
                                         </td>
                                         <td class="p-4 text-right font-mono font-bold text-orange-600">₦{{ formatMoney(p.amount) }}</td>
                                         <td class="p-4 text-center"><button @click="deletePurchase(idx)" class="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded transition"><i class="fas fa-trash-alt"></i></button></td>
@@ -1968,7 +1939,7 @@
                 <h3 class="font-bold text-sm flex items-center gap-2"><i class="fas fa-shopping-basket"></i> New Purchase Order</h3>
                 <button @click="purchaseModal.show = false" class="text-white/70 hover:text-white"><i class="fas fa-times"></i></button>
             </div>
-            <div class="p-6 space-y-4 max-h-[82vh] overflow-y-auto">
+            <div class="p-6 space-y-4">
                 <div class="grid grid-cols-2 gap-4">
                     <div class="col-span-2">
                         <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Description *</label>
@@ -1983,52 +1954,30 @@
                         <input v-model="purchaseModal.date" type="date" class="w-full border border-gray-300 p-3 rounded-lg bg-gray-50 focus:ring-2 focus:ring-orange-400 outline-none text-sm">
                     </div>
                     <div class="col-span-2">
-                        <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Total Amount (₦) *</label>
+                        <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Amount (₦) *</label>
                         <input v-model.number="purchaseModal.amount" type="number" min="0" class="w-full border border-gray-300 p-3 rounded-lg bg-gray-50 focus:ring-2 focus:ring-orange-400 outline-none text-sm" placeholder="0">
                     </div>
                 </div>
-
-                <!-- Multi-Source Funding -->
+                <!-- Fund From -->
                 <div>
-                    <div class="flex items-center justify-between mb-2">
-                        <label class="block text-[10px] font-bold text-gray-500 uppercase">Fund From (split across sources) *</label>
-                        <span class="text-[10px] font-bold" :class="purchaseModalFundingTotal === purchaseModal.amount ? 'text-green-600' : 'text-orange-500'">
-                            Allocated: ₦{{ formatMoney(purchaseModalFundingTotal) }} / ₦{{ formatMoney(purchaseModal.amount||0) }}
-                        </span>
+                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-2">Fund From *</label>
+                    <div class="grid grid-cols-2 gap-2 mb-3">
+                        <button @click="purchaseModal.fundedFrom='bank'" :class="purchaseModal.fundedFrom==='bank'?'bg-blue-600 text-white border-blue-600':'bg-white text-gray-600 border-gray-300'" class="p-3 border rounded-lg text-xs font-bold transition text-center"><i class="fas fa-university block text-xl mb-1"></i>Bank Account</button>
+                        <button @click="purchaseModal.fundedFrom='cash'" :class="purchaseModal.fundedFrom==='cash'?'bg-green-600 text-white border-green-600':'bg-white text-gray-600 border-gray-300'" class="p-3 border rounded-lg text-xs font-bold transition text-center"><i class="fas fa-money-bill block text-xl mb-1"></i>Cash Drawer</button>
                     </div>
-
-                    <!-- Cash Drawer source -->
-                    <div class="mb-2 p-3 bg-green-50 border border-green-200 rounded-lg">
-                        <div class="flex items-center justify-between mb-1">
-                            <div class="flex items-center gap-2">
-                                <i class="fas fa-money-bill text-green-600"></i>
-                                <span class="text-xs font-bold text-green-800">Cash Drawer</span>
-                                <span class="text-[10px] text-green-600">(Balance: ₦{{ formatMoney(drawerBalance) }})</span>
-                            </div>
+                    <div v-if="purchaseModal.fundedFrom==='bank'">
+                        <label class="block text-[10px] font-bold text-gray-500 uppercase mb-2">Select Bank</label>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button v-for="b in banks" :key="b.name" @click="purchaseModal.bankName=b.name" :class="purchaseModal.bankName===b.name?'bg-blue-600 text-white border-blue-600':'bg-white text-gray-600 border-gray-200'" class="p-2 border rounded-lg text-xs font-bold transition text-left">
+                                <p class="font-bold">{{ b.name }}</p>
+                                <p class="text-[9px] opacity-70 font-mono">Balance: ₦{{ formatMoney(bankBalances[b.name]||0) }}</p>
+                            </button>
                         </div>
-                        <input v-model.number="purchaseModal.cashAmount" @input="autoDistributePurchase" type="number" min="0" :max="drawerBalance" class="w-full border border-green-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-400 bg-white" placeholder="Amount from cash drawer (0 if not using)">
                     </div>
-
-                    <!-- Bank sources -->
-                    <div v-for="b in banks" :key="b.name" class="mb-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                        <div class="flex items-center gap-2 mb-1">
-                            <i class="fas fa-university text-blue-600"></i>
-                            <span class="text-xs font-bold text-blue-800">{{ b.name }}</span>
-                            <span class="text-[10px] text-blue-600">(Balance: ₦{{ formatMoney(bankBalances[b.name]||0) }})</span>
-                        </div>
-                        <input v-model.number="purchaseModal.bankAmounts[b.name]" type="number" min="0" class="w-full border border-blue-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white" :placeholder="'Amount from ' + b.name + ' (0 if not using)'">
-                    </div>
-
-                    <!-- Validation note -->
-                    <div v-if="purchaseModal.amount > 0 && purchaseModalFundingTotal !== purchaseModal.amount" class="p-2 bg-amber-50 border border-amber-300 rounded-lg text-xs text-amber-700 font-bold">
-                        <i class="fas fa-exclamation-triangle mr-1"></i>
-                        Total allocated (₦{{ formatMoney(purchaseModalFundingTotal) }}) must equal the purchase amount (₦{{ formatMoney(purchaseModal.amount||0) }}).
-                    </div>
-                    <div v-else-if="purchaseModal.amount > 0 && purchaseModalFundingTotal === purchaseModal.amount" class="p-2 bg-green-50 border border-green-300 rounded-lg text-xs text-green-700 font-bold">
-                        <i class="fas fa-check-circle mr-1"></i> Funding fully allocated. Ready to save.
+                    <div v-if="purchaseModal.fundedFrom==='cash'" class="p-3 bg-green-50 border border-green-200 rounded-lg text-xs text-green-700">
+                        <i class="fas fa-info-circle mr-1"></i> Current Drawer Balance: <strong>₦{{ formatMoney(drawerBalance) }}</strong>
                     </div>
                 </div>
-
                 <div>
                     <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Notes (Optional)</label>
                     <textarea v-model="purchaseModal.notes" class="w-full border border-gray-300 p-3 rounded-lg bg-gray-50 focus:ring-2 focus:ring-orange-400 outline-none text-sm" rows="2" placeholder="Additional notes..."></textarea>
@@ -2362,7 +2311,7 @@ createApp({
             showChat: false,
             newMessage: '',
 
-            viewTitles: { dashboard: 'Dashboard', sales: 'Sales Orders', inventory: 'Stock', expenses: 'Expenses', users: 'User Management', customers: 'Customers', payments: 'Payments', reports: 'Reports', financials: 'Financials', purchases: 'Purchases' },
+            viewTitles: { dashboard: 'Dashboard', sales: 'Sales Orders', inventory: 'Inventory', expenses: 'Expenses', users: 'User Management', customers: 'Customers', payments: 'Payments', reports: 'Reports', financials: 'Financials', purchases: 'Purchases' },
 
             customerTabs: [
                 { key: 'overview', label: 'Overview', icon: 'fas fa-home' },
@@ -2501,14 +2450,11 @@ createApp({
             },
 
             // ---- Purchases ----
-            bankEditOpening: 0,
-            bankTopUpAmount: 0,
-            bankTopUpNote: '',
             purchases: [
                 { id: 'PO001', description: 'Restock Dangote Cement (200 bags)', vendor: 'Dangote Industries', amount: 1600000, date: '2026-02-10', fundedFrom: 'bank', bankName: 'Zenith Bank', notes: 'Urgent restock' },
                 { id: 'PO002', description: 'Steel Rods 10mm x 10 bundles', vendor: 'Steel World Ltd', amount: 6800000, date: '2026-02-15', fundedFrom: 'cash', bankName: '', notes: '' }
             ],
-            purchaseModal: { show: false, description: '', vendor: '', amount: 0, date: '', cashAmount: 0, bankAmounts: {}, notes: '' },
+            purchaseModal: { show: false, description: '', vendor: '', amount: 0, date: '', fundedFrom: 'bank', bankName: '', notes: '' },
             purchaseFilters: { search: '', dateFrom: '', dateTo: '', fundedFrom: '' },
 
             // ---- Reports ----
@@ -2532,15 +2478,9 @@ createApp({
                     balances[entry.bankName] += entry.amount;
                 }
             });
-            // Deduct bank-funded purchases (supports both old single-bank and new multi-bank breakdown)
+            // Deduct bank-funded purchases
             this.purchases.forEach(p => {
-                if (p.bankBreakdown) {
-                    // New multi-source format
-                    Object.entries(p.bankBreakdown).forEach(([bankName, amt]) => {
-                        if (balances.hasOwnProperty(bankName)) balances[bankName] -= (Number(amt) || 0);
-                    });
-                } else if (p.fundedFrom === 'bank' && p.bankName && balances.hasOwnProperty(p.bankName)) {
-                    // Legacy single-bank format
+                if (p.fundedFrom === 'bank' && p.bankName && balances.hasOwnProperty(p.bankName)) {
                     balances[p.bankName] -= p.amount;
                 }
             });
@@ -2553,11 +2493,7 @@ createApp({
             return this.bankLedger.filter(e => e.method === 'cash').reduce((s, e) => s + e.amount, 0);
         },
         drawerBalance() {
-            const cashPurchases = this.purchases.reduce((s, p) => {
-                // New format has cashAmount, old format uses fundedFrom==='cash'
-                if (p.cashAmount !== undefined) return s + (Number(p.cashAmount) || 0);
-                return s + (p.fundedFrom === 'cash' ? p.amount : 0);
-            }, 0);
+            const cashPurchases = this.purchases.filter(p => p.fundedFrom === 'cash').reduce((s, p) => s + p.amount, 0);
             return this.initialCash + this.cashReceived - cashPurchases;
         },
         bankBalance() {
@@ -2601,8 +2537,7 @@ createApp({
             return this.purchases.reduce((s, p) => s + p.amount, 0);
         },
         totalAssets() {
-            // Total Assets = All bank balances (already net of bank-funded purchases) + Cash Drawer (already net of cash purchases) + Stock Value
-            return this.totalBankBalance + this.drawerBalance + this.stockValue;
+            return this.totalBankBalance + this.drawerBalance + this.stockValue + this.totalOutstandingDebts - this.totalExpenses - this.totalPurchases;
         },
         todayExpenses() {
             const today = this.localDateStr();
@@ -2826,11 +2761,8 @@ createApp({
             else if (f.sort === 'customer') result.sort((a,b) => (a.customerName||a.customer||'').localeCompare(b.customerName||b.customer||''));
             return result;
         },
-        purchaseModalFundingTotal() {
-            const bankTotal = Object.values(this.purchaseModal.bankAmounts || {}).reduce((s, v) => s + (Number(v) || 0), 0);
-            return bankTotal + (Number(this.purchaseModal.cashAmount) || 0);
-        },
-        filteredPurchases() {            let result = this.purchases.slice();
+        filteredPurchases() {
+            let result = this.purchases.slice();
             if (this.purchaseFilters.search) {
                 const q = this.purchaseFilters.search.toLowerCase();
                 result = result.filter(p => p.description.toLowerCase().includes(q) || (p.vendor||'').toLowerCase().includes(q) || p.id.toLowerCase().includes(q));
@@ -3527,9 +3459,7 @@ ${order.items.map(i => `<tr><td>${i.name}</td><td style="text-align:center">${i.
             this.addPDFFooter(doc);
             doc.save('ExpenseReport-' + this.localDateStr() + '.pdf');
         },
-                autoDistributePurchase() {
-            // No-op: user fills manually. Just here for @input hook if needed in future.
-        },,
+                confirmPayment(order) { this.openStaffPaymentModal(order); },
         openStaffPaymentModal(order) {
             this.staffPayModal = { show: true, order, mode: 'bank', selectedBank: this.banks[0]?.name || '', bankAmount: Math.max(0, order.total - (order.amountPaid||0)), cashAmount: 0, reference: order.id + '-PAY' };
         },
@@ -3554,47 +3484,10 @@ ${order.items.map(i => `<tr><td>${i.name}</td><td style="text-align:center">${i.
         submitPurchase() {
             const m = this.purchaseModal;
             if (!m.description || !m.amount || m.amount <= 0 || !m.date) { alert('Please fill description, amount and date.'); return; }
-            const bankTotal = Object.values(m.bankAmounts || {}).reduce((s, v) => s + (Number(v) || 0), 0);
-            const cashAmt = Number(m.cashAmount) || 0;
-            const totalAllocated = bankTotal + cashAmt;
-            if (Math.abs(totalAllocated - Number(m.amount)) > 0.01) {
-                alert('Total funding allocated (₦' + this.formatMoney(totalAllocated) + ') must equal the purchase amount (₦' + this.formatMoney(m.amount) + ').');
-                return;
-            }
-
+            if (m.fundedFrom === 'bank' && !m.bankName) { alert('Please select a bank.'); return; }
             const id = 'PO' + String(this.purchases.length + 1).padStart(3, '0');
-            const date = m.date;
-            const fundingSummary = [];
-
-            // Deduct from each bank
-            Object.entries(m.bankAmounts || {}).forEach(([bankName, amt]) => {
-                const amount = Number(amt) || 0;
-                if (amount > 0) {
-                    fundingSummary.push(bankName + ': ₦' + this.formatMoney(amount));
-                    // Bank deduction is handled via purchases array in bankBalances computed
-                }
-            });
-            if (cashAmt > 0) fundingSummary.push('Cash: ₦' + this.formatMoney(cashAmt));
-
-            // Determine primary fund source for display
-            const bankEntries = Object.entries(m.bankAmounts || {}).filter(([,v]) => (Number(v)||0) > 0);
-            let fundedFrom = 'mixed';
-            let bankName = '';
-            if (cashAmt > 0 && bankTotal === 0) { fundedFrom = 'cash'; bankName = ''; }
-            else if (cashAmt === 0 && bankEntries.length === 1) { fundedFrom = 'bank'; bankName = bankEntries[0][0]; }
-            else if (cashAmt === 0 && bankEntries.length > 1) { fundedFrom = 'bank_multi'; bankName = bankEntries.map(e=>e[0]).join(', '); }
-
-            // Store split details in the purchase record
-            const bankBreakdown = {};
-            bankEntries.forEach(([bn, amt]) => { bankBreakdown[bn] = Number(amt); });
-
-            this.purchases.push({
-                id, description: m.description, vendor: m.vendor || '', amount: Number(m.amount), date,
-                fundedFrom, bankName, cashAmount: cashAmt, bankBreakdown,
-                fundingSummary: fundingSummary.join(' | '), notes: m.notes || ''
-            });
-
-            this.notifs.unshift({ title: 'Purchase Recorded', msg: id + ' — ₦' + this.formatMoney(m.amount) + ' | ' + fundingSummary.join(' | ') });
+            this.purchases.push({ id, description: m.description, vendor: m.vendor || '', amount: Number(m.amount), date: m.date, fundedFrom: m.fundedFrom, bankName: m.fundedFrom === 'bank' ? m.bankName : '', notes: m.notes || '' });
+            this.notifs.unshift({ title: 'Purchase Recorded', msg: id + ' — ₦' + this.formatMoney(m.amount) + ' recorded (' + (m.fundedFrom === 'bank' ? m.bankName : 'Cash Drawer') + ')' });
             this.purchaseModal.show = false;
         },
         deletePurchase(idx) {
@@ -3608,25 +3501,12 @@ ${order.items.map(i => `<tr><td>${i.name}</td><td style="text-align:center">${i.
             this.initialCash = Number(this.newInitialCash); this.showCashSetup = false; this.newInitialCash = 0;
             this.notifs.unshift({ title: 'Drawer Setup', msg: 'Initial drawer cash set to ₦'+this.formatMoney(this.initialCash) });
         },
-        confirmEditBankOpening(bankName) {
-            if (!this.bankEditOpening && this.bankEditOpening !== 0) { alert('Please enter a valid amount'); return; }
+        updateBankOpening(bankName, val) {
             const b = this.banks.find(x => x.name === bankName);
-            if (!b) return;
-            const confirmed = confirm(`Are you sure you want to update the opening balance for ${bankName} to ₦${this.formatMoney(this.bankEditOpening)}?\n\nThis will affect the bank's total balance.`);
-            if (!confirmed) return;
-            b.openingBalance = Number(this.bankEditOpening) || 0;
-            this.bankEditOpening = 0;
-            this.notifs.unshift({ title: 'Opening Balance Updated', msg: bankName + ' opening balance set to ₦' + this.formatMoney(b.openingBalance) });
-        },
-        submitBankTopUp(bankName) {
-            const amt = Number(this.bankTopUpAmount) || 0;
-            if (amt <= 0) { alert('Enter a valid top-up amount'); return; }
-            const note = this.bankTopUpNote.trim() || 'Bank Top-Up';
-            const date = this.localDateStr();
-            this.bankLedger.push({ date, ref: 'TOPUP-' + bankName.replace(/\s/g,'').toUpperCase(), customerName: '—', description: note, amount: amt, method: 'bank', bankName, runningBalance: 0 });
-            this.notifs.unshift({ title: 'Bank Topped Up', msg: bankName + ': +₦' + this.formatMoney(amt) + ' (' + note + ')' });
-            this.bankTopUpAmount = 0;
-            this.bankTopUpNote = '';
+            if (b) {
+                b.openingBalance = Number(val) || 0;
+                this.notifs.unshift({ title: 'Bank Updated', msg: bankName + ' opening balance set to ₦' + this.formatMoney(b.openingBalance) });
+            }
         },
         viewCustomerHistory(c) {
             const cOrders = this.orders.filter(o => o.customerId === c.customerId);
