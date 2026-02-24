@@ -371,24 +371,20 @@
                     </button>
                 </div>
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-                    <div v-for="p in products" :key="p.name" :class="p.stock <= 0 ? 'opacity-75 ring-2 ring-red-300' : ''" class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-md transition relative">
-                        <!-- Out of Stock Overlay Badge -->
-                        <div v-if="p.stock <= 0" class="absolute top-3 right-3 z-10 bg-red-600 text-white text-[10px] font-black uppercase px-3 py-1 rounded-full tracking-wider shadow-lg">
-                            <i class="fas fa-ban mr-1"></i> OUT OF STOCK
-                        </div>
-                        <div :class="p.stock <= 0 ? 'bg-gradient-to-br from-red-50 to-red-100' : 'bg-gradient-to-br from-gray-50 to-gray-100'" class="h-24 flex items-center justify-center text-5xl">
-                            <i :class="p.stock <= 0 ? 'fas fa-times-circle text-red-200' : 'fas fa-box text-gray-200'"></i>
+                    <div v-for="p in products" :key="p.name" class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-md transition">
+                        <div class="bg-gradient-to-br from-gray-50 to-gray-100 h-24 flex items-center justify-center text-5xl text-gray-200">
+                            <i class="fas fa-box"></i>
                         </div>
                         <div class="p-4">
                             <span class="text-[10px] bg-gray-100 text-gray-500 px-2 py-0.5 rounded font-bold uppercase">{{ p.category }}</span>
                             <h4 class="font-bold text-gray-800 mt-2 mb-1">{{ p.name }}</h4>
                             <p class="text-[#00A09D] font-black text-lg">₦{{ formatMoney(p.price) }}<span class="text-xs text-gray-400 font-normal">/{{ p.unit }}</span></p>
                             <div class="flex items-center gap-2 mt-2 mb-4">
-                                <div class="w-2 h-2 rounded-full" :class="p.stock <= 0 ? 'bg-red-700' : p.stock < 20 ? 'bg-orange-500' : 'bg-green-500'"></div>
-                                <span class="text-xs" :class="p.stock <= 0 ? 'text-red-600 font-black' : p.stock < 20 ? 'text-orange-500 font-bold' : 'text-gray-500'">{{ p.stock <= 0 ? '0 ' + p.unit + ' — Currently Unavailable' : p.stock + ' ' + p.unit + ' available' + (p.stock < 20 ? ' ⚠' : '') }}</span>
+                                <div class="w-2 h-2 rounded-full" :class="p.stock < 20 ? 'bg-red-500' : 'bg-green-500'"></div>
+                                <span class="text-xs text-gray-500">{{ p.stock }} {{ p.unit }} available</span>
                             </div>
-                            <button @click="addToCartAndOpen(p)" :disabled="p.stock <= 0" class="w-full bg-[#00A09D] hover:bg-teal-700 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed text-white font-bold py-2.5 rounded-lg text-sm transition">
-                                <i :class="p.stock <= 0 ? 'fas fa-ban mr-2' : 'fas fa-cart-plus mr-2'"></i> {{ p.stock <= 0 ? 'Not Available' : 'Add to Order' }}
+                            <button @click="addToCartAndOpen(p)" :disabled="p.stock < 1" class="w-full bg-[#00A09D] hover:bg-teal-700 disabled:bg-gray-200 disabled:text-gray-400 text-white font-bold py-2.5 rounded-lg text-sm transition">
+                                <i class="fas fa-cart-plus mr-2"></i> {{ p.stock < 1 ? 'Out of Stock' : 'Add to Order' }}
                             </button>
                         </div>
                     </div>
@@ -545,15 +541,15 @@
             </div>
             <nav class="flex-1 overflow-y-auto py-6 px-3 space-y-1">
                 <a href="#" @click.prevent="view = 'dashboard'; sidebarOpen = false" :class="navClass('dashboard')"><i class="fas fa-th-large w-8 text-center"></i> Dashboard</a>
-                <a v-if="session.role === 'Admin'" href="#" @click.prevent="view = 'purchases'; sidebarOpen = false" :class="navClass('purchases')"><i class="fas fa-shopping-basket w-8 text-center"></i> Purchases</a>
+                <a v-if="session.role === 'Admin'" href="#" @click.prevent="view = 'purchases'; sidebarOpen = false" :class="navClass('purchases')"><i class="fas fa-shopping-bag w-8 text-center"></i> Purchases</a>
                 <a v-if="['Admin','Store'].includes(session.role)" href="#" @click.prevent="view = 'inventory'; sidebarOpen = false" :class="navClass('inventory')"><i class="fas fa-boxes w-8 text-center"></i> Stock</a>
                 <a v-if="['Admin','Sales'].includes(session.role)" href="#" @click.prevent="view = 'sales'; sidebarOpen = false" :class="navClass('sales')"><i class="fas fa-shopping-cart w-8 text-center"></i> Sales Orders</a>
                 <a v-if="['Admin','Sales'].includes(session.role)" href="#" @click.prevent="view = 'customers'; sidebarOpen = false" :class="navClass('customers')"><i class="fas fa-address-book w-8 text-center"></i> Customers</a>
-                <a v-if="session.role === 'Admin'" href="#" @click.prevent="view = 'financials'; sidebarOpen = false" :class="navClass('financials')"><i class="fas fa-landmark w-8 text-center"></i> Financials</a>
-                <a v-if="['Admin','Sales'].includes(session.role)" href="#" @click.prevent="view = 'payments'; sidebarOpen = false" :class="navClass('payments')"><i class="fas fa-money-check-alt w-8 text-center"></i> Payments</a>
-                <a v-if="['Admin','Sales'].includes(session.role)" href="#" @click.prevent="view = 'reports'; sidebarOpen = false" :class="navClass('reports')"><i class="fas fa-chart-pie w-8 text-center"></i> Reports</a>
+                <a v-if="session.role === 'Admin'" href="#" @click.prevent="view = 'financials'; sidebarOpen = false" :class="navClass('financials')"><i class="fas fa-landmark w-8 text-center"></i> Financial</a>
                 <a v-if="session.role === 'Admin'" href="#" @click.prevent="view = 'expenses'; sidebarOpen = false" :class="navClass('expenses')"><i class="fas fa-receipt w-8 text-center"></i> Expenses</a>
                 <a v-if="session.role === 'Admin'" href="#" @click.prevent="view = 'users'; sidebarOpen = false" :class="navClass('users')"><i class="fas fa-users-cog w-8 text-center"></i> User Management</a>
+                <a v-if="['Admin','Sales'].includes(session.role)" href="#" @click.prevent="view = 'payments'; sidebarOpen = false" :class="navClass('payments')"><i class="fas fa-money-check-alt w-8 text-center"></i> Payments</a>
+                <a v-if="['Admin','Sales'].includes(session.role)" href="#" @click.prevent="view = 'reports'; sidebarOpen = false" :class="navClass('reports')"><i class="fas fa-chart-pie w-8 text-center"></i> Reports</a>
             </nav>
             <div class="p-4 bg-black/20 border-t border-white/5">
                 <div class="flex items-center gap-3 mb-3">
@@ -686,14 +682,6 @@
                                 <p class="text-xs text-white/60 mb-1">Total Expenses</p>
                                 <p class="font-black text-lg text-red-300">- ₦{{ formatMoney(totalExpenses) }}</p>
                             </div>
-                            <div class="bg-white/10 rounded-lg p-3">
-                                <p class="text-xs text-white/60 mb-1">Purchases</p>
-                                <p class="font-black text-lg text-orange-300">- ₦{{ formatMoney(totalPurchases) }}</p>
-                            </div>
-                            <div class="bg-white/10 rounded-lg p-3">
-                                <p class="text-xs text-white/60 mb-1">Outstanding</p>
-                                <p class="font-black text-lg text-yellow-300">+ ₦{{ formatMoney(totalOutstandingDebts) }}</p>
-                            </div>
                             <div class="bg-white/20 rounded-lg p-3 border border-white/30">
                                 <p class="text-xs text-white/60 mb-1">Net Total Assets</p>
                                 <p class="font-black text-2xl text-[#00FFF5]">₦{{ formatMoney(totalAssets) }}</p>
@@ -735,24 +723,98 @@
                             </table>
                         </div>
                     </div>
+
+                    <!-- Recent Activities -->
+                    <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+                        <div class="p-5 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                            <h3 class="font-bold text-gray-700">Recent Activities & Transactions</h3>
+                        </div>
+                        <div class="divide-y divide-gray-100">
+                            <div v-for="(tx, idx) in recentActivities.slice(0, showAllActivities ? recentActivities.length : 4)" :key="idx" class="p-4 hover:bg-gray-50 transition">
+                                <div class="flex items-start justify-between gap-3">
+                                    <div class="flex-1">
+                                        <p class="font-medium text-gray-800 text-sm">{{ tx.title }}</p>
+                                        <p class="text-xs text-gray-500 mt-1">{{ tx.description }}</p>
+                                        <p class="text-[10px] text-gray-400 mt-1">{{ formatDate(tx.date) }}</p>
+                                    </div>
+                                    <div class="text-right">
+                                        <p class="font-bold text-gray-800">{{ tx.type === 'credit' ? '+' : '-' }} ₦{{ formatMoney(tx.amount) }}</p>
+                                        <span :class="tx.type === 'credit' ? 'text-green-600 bg-green-50' : 'text-red-600 bg-red-50'" class="text-[10px] font-bold px-2 py-1 rounded inline-block mt-1">{{ tx.type }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div v-if="recentActivities.length > 4" class="p-4 border-t border-gray-100 text-center">
+                            <button @click="showAllActivities = !showAllActivities" class="text-xs font-bold text-[#00A09D] hover:underline">
+                                {{ showAllActivities ? '↑ Show Less' : '↓ Show More (' + (recentActivities.length - 4) + ' more)' }}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PURCHASES -->
+                <div v-if="view === 'purchases'" class="space-y-4">
+                    <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+                        <div class="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
+                            <h3 class="font-bold text-gray-700">Purchase Management</h3>
+                            <div class="flex gap-2 flex-wrap w-full sm:w-auto">
+                                <div class="relative flex-1 sm:flex-initial">
+                                    <i class="fas fa-search absolute left-3 top-2.5 text-gray-400 text-sm"></i>
+                                    <input v-model="purchaseFilters.search" type="text" placeholder="Search purchases..." class="w-full sm:w-48 pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-xs focus:ring-2 focus:ring-[#714B67] outline-none bg-gray-50">
+                                </div>
+                                <input v-model="purchaseFilters.dateFrom" type="date" class="border border-gray-200 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-[#714B67] outline-none bg-gray-50">
+                                <input v-model="purchaseFilters.dateTo" type="date" class="border border-gray-200 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-[#714B67] outline-none bg-gray-50">
+                                <button @click="openAddPurchaseModal" class="bg-[#00A09D] hover:bg-teal-700 text-white px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-2">
+                                    <i class="fas fa-plus"></i> Add Purchase
+                                </button>
+                                <button @click="downloadPurchaseReport" class="bg-[#714B67] hover:bg-purple-800 text-white px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-2">
+                                    <i class="fas fa-download"></i> Download Report
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left">
+                                <thead class="bg-gray-50 text-xs font-bold uppercase text-gray-400">
+                                    <tr><th class="p-4">Reference</th><th class="p-4">Items</th><th class="p-4">Amount</th><th class="p-4">Payment Source</th><th class="p-4">Date</th><th class="p-4">Status</th><th class="p-4 text-center">Actions</th></tr>
+                                </thead>
+                                <tbody class="text-sm divide-y divide-gray-100">
+                                    <tr v-if="filteredPurchases.length === 0"><td colspan="7" class="p-8 text-center text-gray-400 italic">No purchases found</td></tr>
+                                    <tr v-for="(p, idx) in filteredPurchases" :key="idx" class="hover:bg-gray-50 transition">
+                                        <td class="p-4 font-bold text-[#714B67]">{{ p.id }}</td>
+                                        <td class="p-4">
+                                            <div v-for="item in p.items" :key="item.name" class="text-xs text-gray-600 leading-5">
+                                                {{ item.name }} <span class="font-bold text-[#714B67]">×{{ item.qty }}</span>
+                                            </div>
+                                        </td>
+                                        <td class="p-4 font-bold text-gray-800">₦{{ formatMoney(p.amount) }}</td>
+                                        <td class="p-4">
+                                            <div class="text-xs">
+                                                <span v-if="p.paymentMode === 'bank'" class="text-blue-700 font-bold"><i class="fas fa-university mr-1"></i>{{ p.bankName }}</span>
+                                                <span v-else-if="p.paymentMode === 'cash'" class="text-green-700 font-bold"><i class="fas fa-money-bill mr-1"></i>Cash Drawer</span>
+                                                <span v-else-if="p.paymentMode === 'mixed'" class="text-purple-700 font-bold"><i class="fas fa-layer-group mr-1"></i>Mixed</span>
+                                                <span v-else class="text-gray-400">{{ p.source }}</span>
+                                            </div>
+                                        </td>
+                                        <td class="p-4 text-gray-500 text-xs">{{ formatDate(p.date) }}</td>
+                                        <td class="p-4"><span :class="p.status === 'arrived' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'" class="px-2 py-1 rounded-full text-[10px] font-black uppercase tracking-wide">{{ p.status }}</span></td>
+                                        <td class="p-4 text-center">
+                                            <div class="flex items-center justify-center gap-2">
+                                                <button v-if="p.status === 'pending'" @click="markPurchaseArrived(idx)" class="text-[10px] bg-green-600 text-white px-2 py-1 rounded font-bold hover:bg-green-700"><i class="fas fa-check mr-1"></i>Arrived</button>
+                                                <button @click="viewPurchaseReceipt(p)" class="text-[10px] bg-gray-100 text-gray-600 px-2 py-1 rounded font-bold hover:bg-gray-200"><i class="fas fa-file-alt mr-1"></i>Receipt</button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- INVENTORY -->
                 <div v-if="view === 'inventory'" class="space-y-4">
-                    <!-- Out of Stock Alert Banner -->
-                    <div v-if="outOfStockProducts.length > 0" class="bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-3">
-                        <div class="p-2 bg-red-100 rounded-lg text-red-600 flex-shrink-0"><i class="fas fa-ban text-lg"></i></div>
-                        <div class="flex-1">
-                            <p class="font-black text-red-700 text-sm uppercase tracking-wide mb-1">⚠ OUT OF STOCK — {{ outOfStockProducts.length }} Item(s) Cannot Be Ordered</p>
-                            <div class="flex flex-wrap gap-2 mt-2">
-                                <span v-for="p in outOfStockProducts" :key="p.name" class="bg-red-200 text-red-800 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wide border border-red-300">
-                                    <i class="fas fa-times-circle mr-1"></i>{{ p.name }}
-                                </span>
-                            </div>
-                            <p class="text-xs text-red-500 mt-2">These items are blocked for customers and sales. Admin can still raise a quotation for them. Restock via <strong>Purchases</strong>.</p>
-                        </div>
-                    </div>
-
                     <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
                         <div class="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
                             <h3 class="font-bold text-gray-700">Inventory Management</h3>
@@ -767,7 +829,6 @@
                                 </select>
                                 <select v-model="inventoryFilters.stockLevel" class="border border-gray-200 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-[#00A09D] outline-none bg-gray-50">
                                     <option value="">All Stock Levels</option>
-                                    <option value="out">Out of Stock (= 0)</option>
                                     <option value="low">Low Stock (< 20)</option>
                                     <option value="normal">Normal Stock (≥ 20)</option>
                                 </select>
@@ -791,27 +852,19 @@
                                 </thead>
                                 <tbody class="text-sm divide-y divide-gray-100">
                                     <tr v-if="filteredInventory.length === 0"><td colspan="5" class="p-8 text-center text-gray-400 italic">No products found</td></tr>
-                                    <tr v-for="(p, index) in filteredInventory" :key="p.name" :class="p.stock <= 0 ? 'bg-red-50 border-l-4 border-red-500' : ''" class="hover:bg-gray-50 transition">
-                                        <td class="p-4">
-                                            <div class="flex items-center gap-2">
-                                                <span class="font-bold text-gray-800">{{ p.name }}</span>
-                                                <span v-if="p.stock <= 0" class="bg-red-600 text-white text-[9px] font-black uppercase px-2 py-0.5 rounded-full tracking-wider">OUT OF STOCK</span>
-                                            </div>
-                                        </td>
+                                    <tr v-for="(p, index) in filteredInventory" :key="p.name" class="hover:bg-gray-50 transition">
+                                        <td class="p-4 font-bold text-gray-800">{{ p.name }}</td>
                                         <td class="p-4"><span class="px-2 py-1 bg-gray-100 rounded text-xs font-bold text-gray-500 uppercase">{{ p.category }}</span></td>
                                         <td class="p-4">
                                             <div class="flex items-center gap-2">
-                                                <div class="w-2 h-2 rounded-full" :class="p.stock <= 0 ? 'bg-red-700 animate-pulse' : p.stock < 20 ? 'bg-orange-500 animate-pulse' : 'bg-green-500'"></div>
-                                                <span :class="p.stock <= 0 ? 'text-red-700 font-black' : p.stock < 20 ? 'text-orange-600 font-bold' : 'text-gray-700 font-medium'">
-                                                    {{ p.stock <= 0 ? '0 ' + p.unit + ' — BLOCKED' : p.stock + ' ' + p.unit + (p.stock < 20 ? ' ⚠ LOW' : '') }}
-                                                </span>
+                                                <div class="w-2 h-2 rounded-full" :class="p.stock < 20 ? 'bg-red-500 animate-pulse' : 'bg-green-500'"></div>
+                                                <span :class="p.stock < 20 ? 'text-red-600 font-bold' : 'text-gray-700 font-medium'">{{ p.stock }} {{ p.unit }}</span>
                                             </div>
                                         </td>
                                         <td class="p-4 text-right font-mono text-gray-600">₦{{ formatMoney(p.price) }}</td>
                                         <td class="p-4 text-center">
                                             <div class="flex items-center justify-center gap-2">
                                                 <button @click="editProduct(p)" class="p-2 text-[#00A09D] hover:bg-teal-50 rounded transition" title="Edit"><i class="fas fa-edit"></i></button>
-                                                <button v-if="session.role === 'Admin'" @click="view='purchases'" class="p-2 text-orange-500 hover:bg-orange-50 rounded transition" title="Restock via Purchases"><i class="fas fa-shopping-basket"></i></button>
                                                 <button v-if="['Admin', 'Store'].includes(session.role)" @click="deleteProduct(products.indexOf(p))" class="p-2 text-red-500 hover:bg-red-50 rounded transition" title="Delete"><i class="fas fa-trash-alt"></i></button>
                                             </div>
                                         </td>
@@ -1110,7 +1163,7 @@
                         <div class="overflow-x-auto">
                             <table class="w-full text-left">
                                 <thead class="bg-gray-50 text-xs font-bold uppercase text-gray-400">
-                                    <tr><th class="p-4">Order Ref</th><th class="p-4">Customer</th><th class="p-4">Items</th><th class="p-4">Total</th><th class="p-4">Paid</th><th class="p-4">Balance</th><th class="p-4">Method</th><th class="p-4">Date</th><th class="p-4">Confirmed By</th><th class="p-4">Status</th><th class="p-4 text-center">Actions</th></tr>
+                                    <tr><th class="p-4">Order Ref</th><th class="p-4">Customer</th><th class="p-4">Items</th><th class="p-4">Total</th><th class="p-4">Paid</th><th class="p-4">Balance</th><th class="p-4">Method</th><th class="p-4">Date</th><th class="p-4">Status</th><th class="p-4 text-center">Actions</th></tr>
                                 </thead>
                                 <tbody class="text-sm divide-y divide-gray-100">
                                     <tr v-if="filteredPayments.length === 0"><td colspan="10" class="p-8 text-center text-gray-400 italic">No payment records found</td></tr>
@@ -1133,9 +1186,6 @@
                                             <span v-if="o.bankName" class="block text-gray-400 text-[10px]">{{ o.bankName }}</span>
                                         </td>
                                         <td class="p-4 text-gray-500 text-xs">{{ formatDate(o.created_at) }}</td>
-                                        <td class="p-4 text-xs text-gray-600">
-                                            <span v-if="o.confirmedBy" class="font-bold text-[#714B67]">{{ o.confirmedBy }}</span><span v-else class="text-gray-300">—</span><span v-if="o.confirmedById" class="block text-[10px] text-gray-400">{{ o.confirmedById }}</span>
-                                        </td>
                                         <td class="p-4">
                                             <span v-if="o.paymentStatus === 'paid'" class="text-green-600 font-bold text-xs flex items-center gap-1"><i class="fas fa-check-circle"></i> Paid</span>
                                             <span v-else-if="o.paymentStatus === 'partial'" class="text-blue-500 font-bold text-xs flex items-center gap-1"><i class="fas fa-adjust"></i> Partial</span>
@@ -1295,45 +1345,37 @@
                 <!-- FINANCIALS (Admin Only) -->
                 <div v-if="view === 'financials' && session.role === 'Admin'" class="space-y-6">
                     <!-- Summary Cards -->
-                    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-                        <div class="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
-                            <div class="flex justify-between items-start mb-3"><div class="p-2 bg-teal-50 rounded-lg text-[#00A09D]"><i class="fas fa-university"></i></div><span class="text-[10px] font-bold uppercase text-gray-400 bg-gray-50 px-1 py-0.5 rounded">Banks</span></div>
-                            <h3 class="text-lg font-black text-gray-800">₦{{ formatMoney(totalBankBalance) }}</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                        <div class="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
+                            <div class="flex justify-between items-start mb-3"><div class="p-2 bg-teal-50 rounded-lg text-[#00A09D]"><i class="fas fa-university"></i></div><span class="text-[10px] font-bold uppercase text-gray-400 bg-gray-50 px-2 py-1 rounded">Banks</span></div>
+                            <h3 class="text-xl font-black text-gray-800">₦{{ formatMoney(totalBankBalance) }}</h3>
                             <p class="text-xs text-gray-500 mt-1">Total in all banks</p>
                         </div>
-                        <div class="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+                        <div class="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
                             <div class="flex justify-between items-start mb-3"><div class="p-2 bg-green-50 rounded-lg text-green-600"><i class="fas fa-money-bill-wave"></i></div>
-                                <button @click="showCashSetup=!showCashSetup" class="text-[10px] font-bold uppercase text-[#00A09D] bg-teal-50 px-1 py-0.5 rounded hover:bg-teal-100">Setup / Top Up</button>
+                                <button @click="showCashSetup=!showCashSetup" class="text-[10px] font-bold uppercase text-[#00A09D] bg-teal-50 px-2 py-1 rounded hover:bg-teal-100">Setup</button>
                             </div>
-                            <h3 class="text-lg font-black text-gray-800">₦{{ formatMoney(drawerBalance) }}</h3>
-                            <p class="text-xs text-gray-500 mt-1">Cash drawer</p>
-                            <div v-if="showCashSetup" class="mt-3 space-y-2">
-                                <p class="text-[10px] font-bold text-gray-500 uppercase">Edit Initial Float</p>
-                                <div class="flex gap-2">
-                                    <input type="number" v-model.number="newInitialCash" placeholder="New initial cash" class="flex-1 border border-gray-200 rounded px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-[#00A09D]">
-                                    <button @click="setInitialCash()" class="bg-[#00A09D] text-white text-xs px-3 py-1 rounded font-bold">Set</button>
-                                </div>
+                            <h3 class="text-xl font-black text-gray-800">₦{{ formatMoney(drawerBalance) }}</h3>
+                            <p class="text-xs text-gray-500 mt-1">Cash drawer (Initial: ₦{{ formatMoney(initialCash) }})</p>
+                            <div v-if="showCashSetup" class="mt-3 flex gap-2">
+                                <input type="number" v-model.number="newInitialCash" placeholder="New initial cash" class="flex-1 border border-gray-200 rounded px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-[#00A09D]">
+                                <button @click="setInitialCash()" class="bg-[#00A09D] text-white text-xs px-3 py-1 rounded font-bold">Set</button>
                             </div>
                         </div>
-                        <div class="bg-white p-4 rounded-xl border border-yellow-200 shadow-sm">
-                            <div class="flex justify-between items-start mb-3"><div class="p-2 bg-yellow-50 rounded-lg text-yellow-600"><i class="fas fa-user-clock"></i></div><span class="text-[10px] font-bold uppercase text-yellow-500 bg-yellow-50 px-1 py-0.5 rounded">Outstanding</span></div>
-                            <h3 class="text-lg font-black text-yellow-600">₦{{ formatMoney(totalOutstandingDebts) }}</h3>
+                        <div class="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
+                            <div class="flex justify-between items-start mb-3"><div class="p-2 bg-red-50 rounded-lg text-red-500"><i class="fas fa-user-clock"></i></div><span class="text-[10px] font-bold uppercase text-gray-400 bg-gray-50 px-2 py-1 rounded">Debts</span></div>
+                            <h3 class="text-xl font-black text-red-600">₦{{ formatMoney(totalOutstandingDebts) }}</h3>
                             <p class="text-xs text-gray-500 mt-1">{{ debtorCount }} customers owing</p>
                         </div>
-                        <div class="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
-                            <div class="flex justify-between items-start mb-3"><div class="p-2 bg-blue-50 rounded-lg text-blue-500"><i class="fas fa-boxes"></i></div><span class="text-[10px] font-bold uppercase text-gray-400 bg-gray-50 px-1 py-0.5 rounded">Stock</span></div>
-                            <h3 class="text-lg font-black text-gray-800">₦{{ formatMoney(stockValue) }}</h3>
+                        <div class="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
+                            <div class="flex justify-between items-start mb-3"><div class="p-2 bg-blue-50 rounded-lg text-blue-500"><i class="fas fa-boxes"></i></div><span class="text-[10px] font-bold uppercase text-gray-400 bg-gray-50 px-2 py-1 rounded">Stock</span></div>
+                            <h3 class="text-xl font-black text-gray-800">₦{{ formatMoney(stockValue) }}</h3>
                             <p class="text-xs text-gray-500 mt-1">Inventory value</p>
                         </div>
-                        <div class="bg-white p-4 rounded-xl border border-orange-200 shadow-sm cursor-pointer hover:border-orange-400 transition" @click="view='purchases'">
-                            <div class="flex justify-between items-start mb-3"><div class="p-2 bg-orange-50 rounded-lg text-orange-500"><i class="fas fa-shopping-basket"></i></div><span class="text-[10px] font-bold uppercase text-orange-400 bg-orange-50 px-1 py-0.5 rounded">Purchases</span></div>
-                            <h3 class="text-lg font-black text-orange-600">- ₦{{ formatMoney(totalPurchases) }}</h3>
-                            <p class="text-xs text-gray-500 mt-1">{{ purchases.length }} orders ↗ View</p>
-                        </div>
-                        <div class="bg-gradient-to-br from-[#714B67] to-[#2A1B26] p-4 rounded-xl shadow-lg">
-                            <div class="flex justify-between items-start mb-3"><div class="p-2 bg-white/20 rounded-lg text-white"><i class="fas fa-chart-line"></i></div><span class="text-[10px] font-bold uppercase text-white/50 bg-white/10 px-1 py-0.5 rounded">Total Assets</span></div>
-                            <h3 class="text-lg font-black text-white">₦{{ formatMoney(totalAssets) }}</h3>
-                            <p class="text-xs text-white/60 mt-1">Banks + Drawer + Stock Value</p>
+                        <div class="bg-gradient-to-br from-[#714B67] to-[#2A1B26] p-5 rounded-xl shadow-lg">
+                            <div class="flex justify-between items-start mb-3"><div class="p-2 bg-white/20 rounded-lg text-white"><i class="fas fa-chart-line"></i></div><span class="text-[10px] font-bold uppercase text-white/50 bg-white/10 px-2 py-1 rounded">Net</span></div>
+                            <h3 class="text-xl font-black text-white">₦{{ formatMoney(totalAssets) }}</h3>
+                            <p class="text-xs text-white/60 mt-1">Net Assets</p>
                         </div>
                     </div>
 
@@ -1350,44 +1392,35 @@
                                 <p class="text-lg font-black" :class="selectedBank===bank.name?'text-[#00A09D]':'text-gray-800'">₦{{ formatMoney(bankBalances[bank.name]||0) }}</p>
                                 <div class="text-[10px] text-gray-400 mt-1">
                                     <span class="block">Opening: ₦{{ formatMoney(bank.openingBalance||0) }}</span>
-                                    <span class="block">Deposits: ₦{{ formatMoney(bankLedger.filter(e=>e.bankName===bank.name&&e.method==='bank').reduce((s,e)=>s+e.amount,0)) }}</span>
+                                    <span class="block">Deposits: ₦{{ formatMoney(bankLedger.filter(e=>e.bankName===bank.name&&e.method==='bank'&&e.amount>0).reduce((s,e)=>s+e.amount,0)) }}</span>
                                     <span class="block">{{ bankLedger.filter(e=>e.bankName===bank.name).length }} transactions</span>
+                                </div>
+                            </div>
+                            <!-- Cash Drawer as selectable bank -->
+                            <div @click="selectedBank = (selectedBank==='__cash__'?null:'__cash__')" class="p-4 cursor-pointer hover:bg-gray-50 transition" :class="selectedBank==='__cash__'?'bg-green-50 border-b-2 border-green-500':''">
+                                <p class="text-xs font-bold text-gray-500 mb-1"><i class="fas fa-money-bill-wave mr-1 text-green-500"></i>Cash Drawer</p>
+                                <p class="text-sm font-mono text-gray-400 mb-2">Physical Cash</p>
+                                <p class="text-lg font-black" :class="selectedBank==='__cash__'?'text-green-600':'text-gray-800'">₦{{ formatMoney(drawerBalance) }}</p>
+                                <div class="text-[10px] text-gray-400 mt-1">
+                                    <span class="block">Float: ₦{{ formatMoney(initialCash) }}</span>
+                                    <span class="block">Cash in: ₦{{ formatMoney(bankLedger.filter(e=>e.method==='cash'&&e.amount>0).reduce((s,e)=>s+e.amount,0)) }}</span>
+                                    <span class="block">{{ bankLedger.filter(e=>e.method==='cash').length }} transactions</span>
                                 </div>
                             </div>
                         </div>
                         <!-- Edit Opening Balance for selected bank -->
-                        <div v-if="selectedBank" class="border-t border-gray-100 p-4 bg-amber-50 flex flex-col gap-3">
-                            <div class="flex items-center gap-2">
-                                <i class="fas fa-exclamation-triangle text-amber-600"></i>
-                                <span class="text-xs font-bold text-amber-800">{{ selectedBank }} — Balance Management</span>
-                            </div>
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                <!-- Edit Opening Balance -->
-                                <div class="bg-white border border-amber-200 rounded-lg p-3">
-                                    <p class="text-[10px] font-bold text-amber-700 uppercase mb-2"><i class="fas fa-edit mr-1"></i>Edit Opening Balance</p>
-                                    <input type="number" v-model.number="bankEditOpening" class="w-full border border-amber-300 rounded px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-amber-400 mb-2" :placeholder="'Current: ₦' + formatMoney(banks.find(b=>b.name===selectedBank)?.openingBalance||0)">
-                                    <button @click="confirmEditBankOpening(selectedBank)" class="w-full bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold py-1.5 rounded transition"><i class="fas fa-save mr-1"></i>Update Opening Balance</button>
-                                </div>
-                                <!-- Top Up (direct bank deposit) -->
-                                <div class="bg-white border border-teal-200 rounded-lg p-3">
-                                    <p class="text-[10px] font-bold text-teal-700 uppercase mb-2"><i class="fas fa-plus-circle mr-1"></i>Top Up (Add Deposit)</p>
-                                    <input type="number" v-model.number="bankTopUpAmount" class="w-full border border-teal-300 rounded px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-teal-400 mb-2" placeholder="Amount to top up">
-                                    <input type="text" v-model="bankTopUpNote" class="w-full border border-teal-300 rounded px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-teal-400 mb-2" placeholder="Note / Reference">
-                                    <button @click="submitBankTopUp(selectedBank)" class="w-full bg-[#00A09D] hover:bg-teal-700 text-white text-xs font-bold py-1.5 rounded transition"><i class="fas fa-arrow-up mr-1"></i>Top Up Bank</button>
-                                </div>
-                            </div>
-                            <div class="flex flex-wrap gap-3 text-xs text-gray-600">
-                                <span>Opening: <strong>₦{{ formatMoney(banks.find(b=>b.name===selectedBank)?.openingBalance||0) }}</strong></span>
-                                <span>Deposits in: <strong class="text-green-600">₦{{ formatMoney(bankLedger.filter(e=>e.bankName===selectedBank&&e.method==='bank').reduce((s,e)=>s+e.amount,0)) }}</strong></span>
-                                <span>→ Total: <strong class="text-[#00A09D]">₦{{ formatMoney(bankBalances[selectedBank]||0) }}</strong></span>
-                            </div>
+                        <div v-if="selectedBank && selectedBank !== '__cash__'" class="border-t border-gray-100 p-4 bg-amber-50 flex items-center gap-3 flex-wrap">
+                            <span class="text-xs font-bold text-amber-800">{{ selectedBank }} — Opening Balance:</span>
+                            <input type="number" :value="banks.find(b=>b.name===selectedBank)?.openingBalance||0" @change="updateBankOpening(selectedBank, $event.target.value)" class="border border-amber-300 rounded px-2 py-1 text-xs w-36 focus:outline-none focus:ring-1 focus:ring-amber-400" placeholder="Opening balance">
+                            <span class="text-xs text-amber-700">Deposits in: ₦{{ formatMoney(bankLedger.filter(e=>e.bankName===selectedBank&&e.method==='bank'&&e.amount>0).reduce((s,e)=>s+e.amount,0)) }}</span>
+                            <span class="text-xs font-bold text-[#00A09D]">→ Total: ₦{{ formatMoney(bankBalances[selectedBank]||0) }}</span>
                         </div>
                         <!-- Selected Bank Transactions -->
-                        <div v-if="selectedBank" class="border-t border-gray-100 overflow-x-auto">
+                        <div v-if="selectedBank && selectedBank !== '__cash__'" class="border-t border-gray-100 overflow-x-auto">
                             <div class="p-4 bg-teal-50 text-sm font-bold text-[#00A09D]">{{ selectedBank }} — Transaction History</div>
                             <table class="w-full text-left">
                                 <thead class="bg-gray-50 text-xs font-bold uppercase text-gray-400">
-                                    <tr><th class="p-3">Date</th><th class="p-3">Ref</th><th class="p-3">Customer</th><th class="p-3">Description</th><th class="p-3 text-right">Amount</th></tr>
+                                    <tr><th class="p-3">Date</th><th class="p-3">Ref</th><th class="p-3">Party</th><th class="p-3">Description</th><th class="p-3 text-right">Amount</th></tr>
                                 </thead>
                                 <tbody class="text-sm divide-y divide-gray-100">
                                     <tr v-if="bankLedger.filter(e=>e.bankName===selectedBank).length===0"><td colspan="5" class="p-6 text-center text-gray-400 italic">No transactions for this bank</td></tr>
@@ -1396,7 +1429,32 @@
                                         <td class="p-3 font-mono text-xs text-[#714B67]">{{ entry.ref }}</td>
                                         <td class="p-3 text-xs text-gray-600">{{ entry.customerName }}</td>
                                         <td class="p-3 text-gray-700">{{ entry.description }}</td>
-                                        <td class="p-3 text-right font-bold text-green-600">₦{{ formatMoney(entry.amount) }}</td>
+                                        <td class="p-3 text-right font-bold" :class="entry.amount>=0?'text-green-600':'text-red-500'">{{ entry.amount>=0?'+':'' }}₦{{ formatMoney(Math.abs(entry.amount)) }}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <!-- Cash Drawer Transactions -->
+                        <div v-if="selectedBank === '__cash__'" class="border-t border-gray-100 overflow-x-auto">
+                            <div class="p-4 bg-green-50 text-sm font-bold text-green-700"><i class="fas fa-money-bill-wave mr-2"></i>Cash Drawer — Transaction History</div>
+                            <table class="w-full text-left">
+                                <thead class="bg-gray-50 text-xs font-bold uppercase text-gray-400">
+                                    <tr><th class="p-3">Date</th><th class="p-3">Ref</th><th class="p-3">Party</th><th class="p-3">Description</th><th class="p-3 text-right">Amount</th></tr>
+                                </thead>
+                                <tbody class="text-sm divide-y divide-gray-100">
+                                    <tr class="bg-green-50 font-bold">
+                                        <td class="p-3 text-gray-600 text-xs">System Setup</td>
+                                        <td class="p-3 text-gray-500 font-mono text-xs">CASH-INIT</td>
+                                        <td class="p-3 text-gray-500 text-xs">—</td>
+                                        <td class="p-3 text-gray-700">Initial Cash Float</td>
+                                        <td class="p-3 text-right font-bold text-green-600">+₦{{ formatMoney(initialCash) }}</td>
+                                    </tr>
+                                    <tr v-for="(entry,idx) in bankLedger.filter(e=>e.method==='cash')" :key="idx" class="hover:bg-gray-50">
+                                        <td class="p-3 text-xs text-gray-500">{{ formatDate(entry.date) }}</td>
+                                        <td class="p-3 font-mono text-xs text-[#714B67]">{{ entry.ref }}</td>
+                                        <td class="p-3 text-xs text-gray-600">{{ entry.customerName }}</td>
+                                        <td class="p-3 text-gray-700">{{ entry.description }}</td>
+                                        <td class="p-3 text-right font-bold" :class="entry.amount>=0?'text-green-600':'text-red-500'">{{ entry.amount>=0?'+':'' }}₦{{ formatMoney(Math.abs(entry.amount)) }}</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -1465,110 +1523,149 @@
                     </div>
                 </div>
 
-                <!-- PURCHASES (Admin Only) -->
-                <div v-if="view === 'purchases' && session.role === 'Admin'" class="space-y-6">
-                    <!-- Summary Cards -->
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        <div class="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
-                            <div class="flex justify-between items-start mb-3"><div class="p-2 bg-orange-50 rounded-lg text-orange-500"><i class="fas fa-shopping-basket"></i></div><span class="text-[10px] font-bold uppercase text-gray-400 bg-gray-50 px-2 py-1 rounded">Total Spent</span></div>
-                            <h3 class="text-xl font-black text-gray-800">₦{{ formatMoney(totalPurchases) }}</h3>
-                            <p class="text-xs text-gray-500 mt-1">All purchase orders</p>
-                        </div>
-                        <div class="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
-                            <div class="flex justify-between items-start mb-3"><div class="p-2 bg-blue-50 rounded-lg text-blue-500"><i class="fas fa-university"></i></div><span class="text-[10px] font-bold uppercase text-gray-400 bg-gray-50 px-2 py-1 rounded">From Banks</span></div>
-                            <h3 class="text-xl font-black text-gray-800">₦{{ formatMoney(purchases.filter(p=>p.fundedFrom==='bank').reduce((s,p)=>s+p.amount,0)) }}</h3>
-                            <p class="text-xs text-gray-500 mt-1">Funded from bank accounts</p>
-                        </div>
-                        <div class="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
-                            <div class="flex justify-between items-start mb-3"><div class="p-2 bg-green-50 rounded-lg text-green-500"><i class="fas fa-money-bill-wave"></i></div><span class="text-[10px] font-bold uppercase text-gray-400 bg-gray-50 px-2 py-1 rounded">From Cash</span></div>
-                            <h3 class="text-xl font-black text-gray-800">₦{{ formatMoney(purchases.filter(p=>p.fundedFrom==='cash').reduce((s,p)=>s+p.amount,0)) }}</h3>
-                            <p class="text-xs text-gray-500 mt-1">Funded from cash drawer</p>
-                        </div>
-                    </div>
+            </div>
+        </main>
+    </div>
 
-                    <!-- Add Purchase Button -->
-                    <div class="flex justify-end">
-                        <button @click="purchaseModal = { show: true, description: '', vendor: '', amount: 0, date: localDateStr(), cashAmount: 0, bankAmounts: {}, notes: '' }" class="bg-orange-500 hover:bg-orange-600 text-white px-5 py-2.5 rounded-lg font-bold text-sm flex items-center gap-2 shadow">
-                            <i class="fas fa-plus"></i> New Purchase Order
-                        </button>
+    <!-- ADD PURCHASE MODAL -->
+    <div v-if="purchaseModal.show" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4" @click.self="purchaseModal.show=false">
+        <div class="bg-white w-full max-w-2xl rounded-xl shadow-2xl overflow-hidden animate-fade-in-up">
+            <div class="p-5 bg-[#714B67] text-white flex justify-between items-center">
+                <div><h3 class="font-bold text-sm flex items-center gap-2"><i class="fas fa-shopping-bag"></i> Add New Purchase</h3><p class="text-white/70 text-xs mt-0.5">Record what Ladu Investment bought from a supplier</p></div>
+                <button @click="purchaseModal.show=false" class="text-white/70 hover:text-white"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="p-6 space-y-5 max-h-[85vh] overflow-y-auto">
+                <!-- Supplier & Date -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Supplier / Source *</label>
+                        <input v-model="purchaseModal.supplier" type="text" placeholder="e.g. Dangote Industries" class="w-full border border-gray-300 p-2.5 rounded-lg bg-gray-50 focus:ring-2 focus:ring-[#714B67] outline-none text-sm">
                     </div>
-
-                    <!-- Purchase Orders Table -->
-                    <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-                        <div class="p-5 border-b border-gray-100 bg-gray-50/50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-                            <h3 class="font-bold text-gray-700">Purchase Orders ({{ purchases.length }})</h3>
-                            <div class="flex gap-2 flex-wrap">
-                                <input v-model="purchaseFilters.search" type="text" placeholder="Search purchases..." class="border border-gray-200 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-orange-400 outline-none bg-gray-50 w-44">
-                                <select v-model="purchaseFilters.fundedFrom" class="border border-gray-200 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-orange-400 outline-none bg-gray-50">
-                                    <option value="">All Funding</option>
-                                    <option value="bank">Bank</option>
-                                    <option value="cash">Cash Drawer</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-left">
-                                <thead class="bg-gray-50 text-xs font-bold uppercase text-gray-400">
-                                    <tr><th class="p-4">PO#</th><th class="p-4">Date</th><th class="p-4">Vendor</th><th class="p-4">Description</th><th class="p-4">Funded From</th><th class="p-4 text-right">Amount</th><th class="p-4 text-center">Action</th></tr>
-                                </thead>
-                                <tbody class="text-sm divide-y divide-gray-100">
-                                    <tr v-if="filteredPurchases.length === 0"><td colspan="7" class="p-8 text-center text-gray-400 italic">No purchase orders found</td></tr>
-                                    <tr v-for="(p, idx) in filteredPurchases" :key="p.id" class="hover:bg-gray-50 transition">
-                                        <td class="p-4 font-mono text-xs text-orange-600 font-bold">{{ p.id }}</td>
-                                        <td class="p-4 text-xs text-gray-500">{{ formatDate(p.date) }}</td>
-                                        <td class="p-4 font-medium text-gray-700">{{ p.vendor || '—' }}</td>
-                                        <td class="p-4 text-gray-600">{{ p.description }}</td>
-                                        <td class="p-4">
-                                            <div v-if="p.bankBreakdown && Object.keys(p.bankBreakdown).length" class="space-y-1">
-                                                <span v-for="(amt, bn) in p.bankBreakdown" :key="bn" class="inline-block mr-1 px-2 py-0.5 bg-blue-100 text-blue-700 rounded text-[10px] font-bold uppercase"><i class="fas fa-university mr-1"></i>{{ bn }}: ₦{{ formatMoney(amt) }}</span>
-                                                <span v-if="p.cashAmount > 0" class="inline-block mr-1 px-2 py-0.5 bg-green-100 text-green-700 rounded text-[10px] font-bold uppercase"><i class="fas fa-money-bill mr-1"></i>Cash: ₦{{ formatMoney(p.cashAmount) }}</span>
-                                            </div>
-                                            <div v-else>
-                                                <span v-if="p.fundedFrom==='bank'" class="px-2 py-1 bg-blue-100 text-blue-700 rounded text-[10px] font-bold uppercase"><i class="fas fa-university mr-1"></i>{{ p.bankName }}</span>
-                                                <span v-else class="px-2 py-1 bg-green-100 text-green-700 rounded text-[10px] font-bold uppercase"><i class="fas fa-money-bill mr-1"></i>Cash Drawer</span>
-                                            </div>
-                                        </td>
-                                        <td class="p-4 text-right font-mono font-bold text-orange-600">₦{{ formatMoney(p.amount) }}</td>
-                                        <td class="p-4 text-center"><button @click="deletePurchase(idx)" class="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded transition"><i class="fas fa-trash-alt"></i></button></td>
-                                    </tr>
-                                </tbody>
-                                <tfoot>
-                                    <tr class="bg-orange-50">
-                                        <td colspan="5" class="p-4 text-right text-xs font-bold text-orange-700 uppercase tracking-wider">Grand Total Purchases</td>
-                                        <td class="p-4 text-right font-black text-orange-700 text-base">₦{{ formatMoney(totalPurchases) }}</td>
-                                        <td></td>
-                                    </tr>
-                                </tfoot>
-                            </table>
-                        </div>
-                    </div>
-
-                    <!-- Financial Impact Summary -->
-                    <div class="bg-gradient-to-r from-[#2A1B26] to-[#714B67] p-6 rounded-xl text-white shadow-lg">
-                        <h3 class="font-bold uppercase tracking-widest text-xs text-white/60 mb-4">Total Financial Position (Inclusive)</h3>
-                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                            <div class="bg-white/10 rounded-lg p-3">
-                                <p class="text-[10px] text-white/50 mb-1">Banks + Drawer</p>
-                                <p class="font-black text-sm">₦{{ formatMoney(totalBankBalance + drawerBalance) }}</p>
-                            </div>
-                            <div class="bg-white/10 rounded-lg p-3">
-                                <p class="text-[10px] text-white/50 mb-1">Customer Outstanding</p>
-                                <p class="font-black text-sm text-yellow-300">+ ₦{{ formatMoney(totalOutstandingDebts) }}</p>
-                            </div>
-                            <div class="bg-white/10 rounded-lg p-3">
-                                <p class="text-[10px] text-white/50 mb-1">Purchases Spent</p>
-                                <p class="font-black text-sm text-orange-300">- ₦{{ formatMoney(totalPurchases) }}</p>
-                            </div>
-                            <div class="bg-white/20 rounded-lg p-3 border border-white/30">
-                                <p class="text-[10px] text-white/60 mb-1">Net Position</p>
-                                <p class="font-black text-xl text-[#00FFF5]">₦{{ formatMoney(totalAssets) }}</p>
-                            </div>
-                        </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Purchase Date *</label>
+                        <input v-model="purchaseModal.date" type="date" class="w-full border border-gray-300 p-2.5 rounded-lg bg-gray-50 focus:ring-2 focus:ring-[#714B67] outline-none text-sm">
                     </div>
                 </div>
 
+                <!-- Items Section -->
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <label class="text-[10px] font-bold text-gray-500 uppercase">Items Purchased *</label>
+                        <button @click="addPurchaseLine" class="text-[10px] font-bold text-[#714B67] hover:underline flex items-center gap-1"><i class="fas fa-plus-circle"></i> Add Item</button>
+                    </div>
+                    <div class="space-y-2">
+                        <div v-for="(line, idx) in purchaseModal.lines" :key="idx" class="bg-gray-50 border border-gray-200 rounded-lg p-3">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-[10px] font-bold uppercase text-gray-400">Item {{ idx + 1 }}</span>
+                                <button v-if="purchaseModal.lines.length > 1" @click="purchaseModal.lines.splice(idx,1)" class="text-red-400 hover:text-red-600 text-xs transition"><i class="fas fa-times-circle mr-1"></i>Remove</button>
+                            </div>
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                                <div class="sm:col-span-1">
+                                    <label class="text-[9px] font-bold text-gray-400 uppercase block mb-1">Product</label>
+                                    <select v-model="line.name" @change="autoPurchasePrice(line)" class="w-full border border-gray-200 p-2 rounded-lg bg-white text-xs focus:ring-2 focus:ring-[#714B67] outline-none">
+                                        <option value="" disabled>Select product</option>
+                                        <option v-for="p in products" :key="p.name" :value="p.name">{{ p.name }}</option>
+                                        <option value="__custom__">Other (specify below)</option>
+                                    </select>
+                                    <input v-if="line.name === '__custom__'" v-model="line.customName" type="text" placeholder="Product name" class="w-full border border-gray-200 p-2 rounded-lg bg-white text-xs mt-1 focus:ring-2 focus:ring-[#714B67] outline-none">
+                                </div>
+                                <div>
+                                    <label class="text-[9px] font-bold text-gray-400 uppercase block mb-1">Qty</label>
+                                    <input v-model.number="line.qty" @input="recalcPurchaseLine(line)" type="number" min="1" class="w-full border border-gray-200 p-2 rounded-lg bg-white text-xs focus:ring-2 focus:ring-[#714B67] outline-none">
+                                </div>
+                                <div>
+                                    <label class="text-[9px] font-bold text-gray-400 uppercase block mb-1">Unit Cost (₦)</label>
+                                    <input v-model.number="line.unitCost" @input="recalcPurchaseLine(line)" type="number" min="0" class="w-full border border-gray-200 p-2 rounded-lg bg-white text-xs focus:ring-2 focus:ring-[#714B67] outline-none">
+                                </div>
+                            </div>
+                            <div class="mt-2 text-right text-xs font-bold text-[#714B67]">Subtotal: ₦{{ formatMoney(line.amount || 0) }}</div>
+                        </div>
+                    </div>
+                    <div class="mt-3 bg-[#714B67]/10 border border-[#714B67]/20 rounded-lg p-3 flex justify-between items-center">
+                        <span class="text-xs font-bold text-[#714B67]">Total Purchase Amount</span>
+                        <span class="text-xl font-black text-[#714B67]">₦{{ formatMoney(purchaseModal.lines.reduce((s,l)=>s+(l.amount||0),0)) }}</span>
+                    </div>
+                </div>
+
+                <!-- Payment Section — multi-bank + cash drawer -->
+                <div>
+                    <div class="flex items-center justify-between mb-3">
+                        <label class="text-[10px] font-bold text-gray-500 uppercase">Payment Sources *</label>
+                        <div class="flex gap-2">
+                            <button @click="addPurchaseBankRow" class="text-[10px] font-bold text-blue-600 hover:underline flex items-center gap-1"><i class="fas fa-plus-circle"></i> Add Bank</button>
+                            <button @click="purchaseModal.useCash = !purchaseModal.useCash; if(!purchaseModal.useCash) purchaseModal.cashAmount=0" :class="purchaseModal.useCash?'bg-green-600 text-white':'bg-white text-green-700 border-green-300'" class="border text-[10px] font-bold px-2 py-1 rounded transition"><i class="fas fa-money-bill mr-1"></i>Cash Drawer</button>
+                        </div>
+                    </div>
+
+                    <!-- Bank rows -->
+                    <div class="space-y-2 mb-2">
+                        <div v-if="purchaseModal.bankRows.length === 0 && !purchaseModal.useCash" class="text-xs text-gray-400 italic p-3 bg-gray-50 rounded-lg border border-dashed border-gray-300 text-center">
+                            Click "Add Bank" or enable "Cash Drawer" to add payment source
+                        </div>
+                        <div v-for="(row, idx) in purchaseModal.bankRows" :key="idx" class="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-[10px] font-bold text-blue-700 uppercase"><i class="fas fa-university mr-1"></i>Bank Payment {{ idx + 1 }}</span>
+                                <button @click="purchaseModal.bankRows.splice(idx,1)" class="text-red-400 hover:text-red-600 text-xs"><i class="fas fa-times-circle mr-1"></i>Remove</button>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label class="text-[9px] font-bold text-blue-600 uppercase block mb-1">Bank</label>
+                                    <select v-model="row.bankName" class="w-full border border-blue-200 p-2 rounded-lg bg-white text-xs focus:ring-2 focus:ring-blue-400 outline-none">
+                                        <option value="">-- Select Bank --</option>
+                                        <option v-for="b in banks" :key="b.name" :value="b.name">{{ b.name }}</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="text-[9px] font-bold text-blue-600 uppercase block mb-1">Amount (₦)</label>
+                                    <input v-model.number="row.amount" type="number" min="0" placeholder="0" class="w-full border border-blue-200 p-2 rounded-lg bg-white text-xs focus:ring-2 focus:ring-blue-400 outline-none">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Cash drawer row -->
+                        <div v-if="purchaseModal.useCash" class="bg-green-50 border border-green-200 rounded-lg p-3">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-[10px] font-bold text-green-700 uppercase"><i class="fas fa-money-bill-wave mr-1"></i>Cash Drawer</span>
+                                <button @click="purchaseModal.useCash=false; purchaseModal.cashAmount=0" class="text-red-400 hover:text-red-600 text-xs"><i class="fas fa-times-circle mr-1"></i>Remove</button>
+                            </div>
+                            <div>
+                                <label class="text-[9px] font-bold text-green-600 uppercase block mb-1">Amount (₦)</label>
+                                <input v-model.number="purchaseModal.cashAmount" type="number" min="0" placeholder="0" class="w-full border border-green-200 p-2 rounded-lg bg-white text-xs focus:ring-2 focus:ring-green-400 outline-none">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Payment summary -->
+                    <div v-if="purchaseModal.bankRows.length > 0 || purchaseModal.useCash" class="bg-gray-100 rounded-lg p-3 text-xs space-y-1">
+                        <div v-for="(row,i) in purchaseModal.bankRows" :key="i" class="flex justify-between text-blue-700">
+                            <span><i class="fas fa-university mr-1"></i>{{ row.bankName || 'Bank '+(i+1) }}</span>
+                            <span class="font-bold">₦{{ formatMoney(row.amount||0) }}</span>
+                        </div>
+                        <div v-if="purchaseModal.useCash" class="flex justify-between text-green-700">
+                            <span><i class="fas fa-money-bill mr-1"></i>Cash Drawer</span>
+                            <span class="font-bold">₦{{ formatMoney(purchaseModal.cashAmount||0) }}</span>
+                        </div>
+                        <div class="border-t border-gray-300 pt-1 flex justify-between font-bold text-gray-700">
+                            <span>Total Paying</span>
+                            <span :class="Math.abs((purchaseModal.bankRows.reduce((s,r)=>s+(r.amount||0),0))+(purchaseModal.cashAmount||0) - purchaseModal.lines.reduce((s,l)=>s+(l.amount||0),0)) < 0.01 ? 'text-green-600' : 'text-orange-500'">
+                                ₦{{ formatMoney((purchaseModal.bankRows.reduce((s,r)=>s+(r.amount||0),0))+(purchaseModal.cashAmount||0)) }}
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Reference -->
+                    <div class="mt-3">
+                        <label class="text-[9px] font-bold text-gray-400 uppercase block mb-1">Reference / Invoice No. (Optional)</label>
+                        <input v-model="purchaseModal.reference" type="text" placeholder="e.g. INV-2026-001" class="w-full border border-gray-300 p-2.5 rounded-lg bg-gray-50 text-sm focus:ring-2 focus:ring-[#714B67] outline-none">
+                    </div>
+                </div>
+
+                <div v-if="purchaseModal.error" class="p-3 bg-red-50 text-red-600 text-xs font-bold rounded flex items-center gap-2"><i class="fas fa-exclamation-circle"></i> {{ purchaseModal.error }}</div>
+                <button @click="submitPurchase" class="w-full py-3 bg-[#714B67] hover:bg-purple-800 text-white rounded-lg font-bold uppercase tracking-widest shadow-lg transition transform active:scale-95">
+                    <i class="fas fa-save mr-2"></i> Record Purchase
+                </button>
             </div>
-        </main>
+        </div>
     </div>
 
     <!-- CHAT WIDGET -->
@@ -1721,10 +1818,6 @@
                                     <option value="" disabled>Select product</option>
                                     <option v-for="p in products" :key="p.name" :value="p.name" :disabled="p.stock <= 0 && session.role !== 'Admin'">{{ p.name }} (₦{{ formatMoney(p.price) }}/{{ p.unit }}){{ p.stock <= 0 ? ' — OUT OF STOCK' : '' }}</option>
                                 </select>
-                                <!-- Admin override note for out-of-stock -->
-                                <div v-if="line.name && products.find(p=>p.name===line.name)?.stock <= 0 && session.role === 'Admin'" class="mb-2 p-2 bg-amber-50 border border-amber-200 rounded text-[10px] text-amber-700 font-bold">
-                                    <i class="fas fa-exclamation-triangle mr-1"></i> ADMIN OVERRIDE: This item is out of stock. You can still create a quotation/order for future fulfillment.
-                                </div>
                                 <div class="grid grid-cols-3 gap-2">
                                     <div>
                                         <label class="block text-[9px] font-bold text-gray-400 uppercase mb-1">Qty</label>
@@ -1741,6 +1834,11 @@
                                 </div>
                             </div>
                         </div>
+                    </div>
+
+                    <!-- Out of stock notice for non-Admin -->
+                    <div v-if="session.role !== 'Admin'" class="p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-700 flex items-center gap-2">
+                        <i class="fas fa-exclamation-triangle"></i> Out-of-stock products are disabled. Only Admin can create quotations for out-of-stock items.
                     </div>
 
                     <!-- Order Total -->
@@ -1961,85 +2059,6 @@
         </div>
     </div>
 
-    <!-- PURCHASE ORDER MODAL -->
-    <div v-if="purchaseModal.show" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
-        <div class="bg-white w-full max-w-lg rounded-xl shadow-2xl overflow-hidden animate-fade-in-up">
-            <div class="p-5 bg-orange-500 text-white flex justify-between items-center">
-                <h3 class="font-bold text-sm flex items-center gap-2"><i class="fas fa-shopping-basket"></i> New Purchase Order</h3>
-                <button @click="purchaseModal.show = false" class="text-white/70 hover:text-white"><i class="fas fa-times"></i></button>
-            </div>
-            <div class="p-6 space-y-4 max-h-[82vh] overflow-y-auto">
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="col-span-2">
-                        <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Description *</label>
-                        <input v-model="purchaseModal.description" type="text" class="w-full border border-gray-300 p-3 rounded-lg bg-gray-50 focus:ring-2 focus:ring-orange-400 outline-none text-sm" placeholder="e.g. Restock Dangote Cement 200 bags">
-                    </div>
-                    <div>
-                        <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Vendor / Supplier</label>
-                        <input v-model="purchaseModal.vendor" type="text" class="w-full border border-gray-300 p-3 rounded-lg bg-gray-50 focus:ring-2 focus:ring-orange-400 outline-none text-sm" placeholder="Supplier name">
-                    </div>
-                    <div>
-                        <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Date *</label>
-                        <input v-model="purchaseModal.date" type="date" class="w-full border border-gray-300 p-3 rounded-lg bg-gray-50 focus:ring-2 focus:ring-orange-400 outline-none text-sm">
-                    </div>
-                    <div class="col-span-2">
-                        <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Total Amount (₦) *</label>
-                        <input v-model.number="purchaseModal.amount" type="number" min="0" class="w-full border border-gray-300 p-3 rounded-lg bg-gray-50 focus:ring-2 focus:ring-orange-400 outline-none text-sm" placeholder="0">
-                    </div>
-                </div>
-
-                <!-- Multi-Source Funding -->
-                <div>
-                    <div class="flex items-center justify-between mb-2">
-                        <label class="block text-[10px] font-bold text-gray-500 uppercase">Fund From (split across sources) *</label>
-                        <span class="text-[10px] font-bold" :class="purchaseModalFundingTotal === purchaseModal.amount ? 'text-green-600' : 'text-orange-500'">
-                            Allocated: ₦{{ formatMoney(purchaseModalFundingTotal) }} / ₦{{ formatMoney(purchaseModal.amount||0) }}
-                        </span>
-                    </div>
-
-                    <!-- Cash Drawer source -->
-                    <div class="mb-2 p-3 bg-green-50 border border-green-200 rounded-lg">
-                        <div class="flex items-center justify-between mb-1">
-                            <div class="flex items-center gap-2">
-                                <i class="fas fa-money-bill text-green-600"></i>
-                                <span class="text-xs font-bold text-green-800">Cash Drawer</span>
-                                <span class="text-[10px] text-green-600">(Balance: ₦{{ formatMoney(drawerBalance) }})</span>
-                            </div>
-                        </div>
-                        <input v-model.number="purchaseModal.cashAmount" @input="autoDistributePurchase" type="number" min="0" :max="drawerBalance" class="w-full border border-green-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-400 bg-white" placeholder="Amount from cash drawer (0 if not using)">
-                    </div>
-
-                    <!-- Bank sources -->
-                    <div v-for="b in banks" :key="b.name" class="mb-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                        <div class="flex items-center gap-2 mb-1">
-                            <i class="fas fa-university text-blue-600"></i>
-                            <span class="text-xs font-bold text-blue-800">{{ b.name }}</span>
-                            <span class="text-[10px] text-blue-600">(Balance: ₦{{ formatMoney(bankBalances[b.name]||0) }})</span>
-                        </div>
-                        <input v-model.number="purchaseModal.bankAmounts[b.name]" type="number" min="0" class="w-full border border-blue-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white" :placeholder="'Amount from ' + b.name + ' (0 if not using)'">
-                    </div>
-
-                    <!-- Validation note -->
-                    <div v-if="purchaseModal.amount > 0 && purchaseModalFundingTotal !== purchaseModal.amount" class="p-2 bg-amber-50 border border-amber-300 rounded-lg text-xs text-amber-700 font-bold">
-                        <i class="fas fa-exclamation-triangle mr-1"></i>
-                        Total allocated (₦{{ formatMoney(purchaseModalFundingTotal) }}) must equal the purchase amount (₦{{ formatMoney(purchaseModal.amount||0) }}).
-                    </div>
-                    <div v-else-if="purchaseModal.amount > 0 && purchaseModalFundingTotal === purchaseModal.amount" class="p-2 bg-green-50 border border-green-300 rounded-lg text-xs text-green-700 font-bold">
-                        <i class="fas fa-check-circle mr-1"></i> Funding fully allocated. Ready to save.
-                    </div>
-                </div>
-
-                <div>
-                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Notes (Optional)</label>
-                    <textarea v-model="purchaseModal.notes" class="w-full border border-gray-300 p-3 rounded-lg bg-gray-50 focus:ring-2 focus:ring-orange-400 outline-none text-sm" rows="2" placeholder="Additional notes..."></textarea>
-                </div>
-                <button @click="submitPurchase" class="w-full py-3 bg-orange-500 hover:bg-orange-600 text-white rounded-lg font-bold transition shadow-lg">
-                    <i class="fas fa-save mr-2"></i> Save Purchase — ₦{{ formatMoney(purchaseModal.amount||0) }}
-                </button>
-            </div>
-        </div>
-    </div>
-
     <!-- CUSTOMER HISTORY MODAL -->
     <div v-if="customerHistoryModal.show" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
         <div class="bg-white w-full max-w-4xl rounded-xl shadow-2xl overflow-hidden animate-fade-in-up flex flex-col max-h-[92vh]">
@@ -2110,7 +2129,6 @@
                                 <th class="p-3 text-right">Total</th>
                                 <th class="p-3 text-right">Paid</th>
                                 <th class="p-3 text-right">Balance</th>
-                                <th class="p-3">Confirmed By</th>
                                 <th class="p-3">Status</th>
                                 <th class="p-3 text-center">Action</th>
                             </tr>
@@ -2124,7 +2142,6 @@
                                 <td class="p-3 text-right font-mono text-xs text-gray-700">₦{{ formatMoney(o.total) }}</td>
                                 <td class="p-3 text-right font-mono text-xs text-green-600 font-bold">₦{{ formatMoney(o.amountPaid||0) }}</td>
                                 <td class="p-3 text-right font-mono text-xs font-bold" :class="Math.max(0,o.total-(o.amountPaid||0))>0?'text-red-500':'text-gray-300'">₦{{ formatMoney(Math.max(0,o.total-(o.amountPaid||0))) }}</td>
-                                <td class="p-3 text-xs text-gray-600"><span v-if="o.confirmedBy" class="font-bold text-[#714B67]">{{ o.confirmedBy }}</span><span v-else class="text-gray-300">—</span><span v-if="o.confirmedById" class="block text-[10px] text-gray-400">{{ o.confirmedById }}</span></td>
                                 <td class="p-3">
                                     <span class="text-[10px] font-bold capitalize px-2 py-0.5 rounded-full" :class="o.paymentStatus==='paid'?'bg-green-100 text-green-700':o.paymentStatus==='partial'?'bg-blue-100 text-blue-700':o.paymentStatus==='pending_confirmation'?'bg-orange-100 text-orange-700':'bg-gray-100 text-gray-500'">{{ o.paymentStatus }}</span>
                                 </td>
@@ -2217,7 +2234,6 @@
                             <th class="p-3 text-right">Paid</th>
                             <th class="p-3 text-right">Balance</th>
                             <th class="p-3">Payment</th>
-                            <th class="p-3">Confirmed By</th>
                             <th class="p-3">Status</th>
                         </tr>
                     </thead>
@@ -2235,7 +2251,6 @@
                             <td class="p-3 text-right font-mono text-xs text-green-600 font-bold">₦{{ formatMoney(o.amountPaid||0) }}</td>
                             <td class="p-3 text-right font-mono text-xs font-bold" :class="Math.max(0,o.total-(o.amountPaid||0))>0?'text-red-500':'text-gray-300'">₦{{ formatMoney(Math.max(0,o.total-(o.amountPaid||0))) }}</td>
                             <td class="p-3 text-xs text-gray-500 capitalize">{{ o.paymentMethod||'—' }}<span v-if="o.bankName" class="block text-[10px] text-gray-400">{{ o.bankName }}</span></td>
-                            <td class="p-3 text-xs text-gray-600"><span v-if="o.confirmedBy" class="font-bold text-[#714B67]">{{ o.confirmedBy }}</span><span v-else class="text-gray-300">—</span><span v-if="o.confirmedById" class="block text-[10px] text-gray-400">{{ o.confirmedById }}</span></td>
                             <td class="p-3">
                                 <span class="text-[10px] font-bold capitalize px-2 py-0.5 rounded-full" :class="o.paymentStatus==='paid'?'bg-green-100 text-green-700':o.paymentStatus==='partial'?'bg-blue-100 text-blue-700':o.paymentStatus==='pending_confirmation'?'bg-orange-100 text-orange-700':'bg-gray-100 text-gray-500'">{{ o.paymentStatus }}</span>
                             </td>
@@ -2281,10 +2296,11 @@
                             </div>
                             <select v-model="line.name" @change="autoFillCustLine(line)" class="w-full border border-gray-200 p-2.5 rounded-lg bg-white focus:ring-2 focus:ring-[#00A09D] outline-none text-sm mb-2">
                                 <option value="" disabled>Select a product</option>
-                                <option v-for="p in products" :key="p.name" :value="p.name" :disabled="p.stock <= 0">
-                                    {{ p.name }} — ₦{{ formatMoney(p.price) }}/{{ p.unit }} ({{ p.stock <= 0 ? 'OUT OF STOCK' : p.stock + ' available' }})
+                                <option v-for="p in products" :key="p.name" :value="p.name" :disabled="p.stock < 1 && session.role !== 'Admin'">
+                                    {{ p.name }} — ₦{{ formatMoney(p.price) }}/{{ p.unit }} ({{ p.stock }} available) {{ p.stock < 1 && session.role !== 'Admin' ? '(Out of Stock)' : '' }}
                                 </option>
                             </select>
+                            <div v-if="products.find(p => p.name === line.name)?.stock < 1 && session.role !== 'Admin'" class="text-[10px] text-red-600 font-bold"><i class="fas fa-exclamation-circle mr-1"></i>This product is out of stock. Only Admin can place special orders.</div>
                             <div class="grid grid-cols-3 gap-2">
                                 <div>
                                     <label class="block text-[9px] font-bold text-gray-400 uppercase mb-1">Quantity</label>
@@ -2362,7 +2378,7 @@ createApp({
             showChat: false,
             newMessage: '',
 
-            viewTitles: { dashboard: 'Dashboard', sales: 'Sales Orders', inventory: 'Stock', expenses: 'Expenses', users: 'User Management', customers: 'Customers', payments: 'Payments', reports: 'Reports', financials: 'Financials', purchases: 'Purchases' },
+            viewTitles: { dashboard: 'Dashboard', purchases: 'Purchases', sales: 'Sales Orders', inventory: 'Stock', expenses: 'Expenses', users: 'User Management', customers: 'Customers', payments: 'Payments', reports: 'Reports', financials: 'Financial' },
 
             customerTabs: [
                 { key: 'overview', label: 'Overview', icon: 'fas fa-home' },
@@ -2445,6 +2461,15 @@ createApp({
             newInitialCash: 0,
             selectedBank: null,
 
+            // ---- Purchases ----
+            purchases: [
+                { id: 'PO001', items: [{ name: 'Dangote Cement (50kg)', qty: 500, price: 7500 }], amount: 3750000, source: 'Touch Bank', date: '2026-02-15', status: 'arrived' },
+                { id: 'PO002', items: [{ name: '10mm Steel Rod', qty: 50, price: 650000 }], amount: 32500000, source: 'Zenith Bank', date: '2026-02-18', status: 'pending' },
+                { id: 'PO003', items: [{ name: 'River Sand (per ton)', qty: 100, price: 16000 }], amount: 1600000, source: 'Cash Drawer', date: '2026-02-19', status: 'pending' }
+            ],
+            purchaseFilters: { search: '', dateFrom: '', dateTo: '' },
+            showAllActivities: false,
+
             // ---- Orders ----
             orders: [
                 { id: 'SO001', customer: 'Julius Berger Nigeria (Julius Berger) — CUST-10001', customerName: 'Julius Berger (Julius Berger Nigeria)', customerId: 'CUST-10001', items: [{ name: 'Dangote Cement (50kg)', qty: 150, amount: 1275000 }], total: 1275000, amountPaid: 1275000, status: 'confirmed', paymentStatus: 'paid', paymentRef: 'SO001-PAY', paymentMethod: 'bank', bankName: 'Zenith Bank', paymentDate: '2026-02-12', created_at: '2026-02-10' },
@@ -2479,6 +2504,7 @@ createApp({
             modal: { show: false, isEdit: false, activeIndex: null, userError: '' },
             paymentModal: { show: false, order: null, mode: 'bank', selectedBank: '', bankAmount: 0, cashAmount: 0, reference: '' },
             staffPayModal: { show: false, order: null, mode: 'bank', selectedBank: '', bankAmount: 0, cashAmount: 0, reference: '' },
+            purchaseModal: { show: false, supplier: '', date: '', lines: [{ name: '', customName: '', qty: 1, unitCost: 0, amount: 0 }], bankRows: [{ bankName: '', amount: 0 }], useCash: false, cashAmount: 0, reference: '', error: '' },
             custOrderModal: { show: false, cartLines: [{ name: '', qty: 1, unitPrice: 0, amount: 0 }], type: 'quotation' },
             customerHistoryModal: { show: false, customer: null, orders: [], totalPurchases: 0, totalPaid: 0, outstanding: 0, histFilter: { status: '', dateFrom: '', dateTo: '', sort: 'date_new' } },
             generalHistoryModal: { show: false, search: '', status: '', dateFrom: '', dateTo: '', customer: '', sort: 'date_new' },
@@ -2499,17 +2525,6 @@ createApp({
                 expCategory: '', expDescription: '', expAmount: 0, expDate: today,
                 custType: 'regular', custFullname: '', custCompany: '', custPhone: '', custEmail: '', custAddress: '', custState: '', custUsername: '', custPassword: ''
             },
-
-            // ---- Purchases ----
-            bankEditOpening: 0,
-            bankTopUpAmount: 0,
-            bankTopUpNote: '',
-            purchases: [
-                { id: 'PO001', description: 'Restock Dangote Cement (200 bags)', vendor: 'Dangote Industries', amount: 1600000, date: '2026-02-10', fundedFrom: 'bank', bankName: 'Zenith Bank', notes: 'Urgent restock' },
-                { id: 'PO002', description: 'Steel Rods 10mm x 10 bundles', vendor: 'Steel World Ltd', amount: 6800000, date: '2026-02-15', fundedFrom: 'cash', bankName: '', notes: '' }
-            ],
-            purchaseModal: { show: false, description: '', vendor: '', amount: 0, date: '', cashAmount: 0, bankAmounts: {}, notes: '' },
-            purchaseFilters: { search: '', dateFrom: '', dateTo: '', fundedFrom: '' },
 
             // ---- Reports ----
             report: { product: '__all__', method: '__all__', date_from: '', date_to: '' },
@@ -2532,18 +2547,6 @@ createApp({
                     balances[entry.bankName] += entry.amount;
                 }
             });
-            // Deduct bank-funded purchases (supports both old single-bank and new multi-bank breakdown)
-            this.purchases.forEach(p => {
-                if (p.bankBreakdown) {
-                    // New multi-source format
-                    Object.entries(p.bankBreakdown).forEach(([bankName, amt]) => {
-                        if (balances.hasOwnProperty(bankName)) balances[bankName] -= (Number(amt) || 0);
-                    });
-                } else if (p.fundedFrom === 'bank' && p.bankName && balances.hasOwnProperty(p.bankName)) {
-                    // Legacy single-bank format
-                    balances[p.bankName] -= p.amount;
-                }
-            });
             return balances;
         },
         totalBankBalance() {
@@ -2553,12 +2556,7 @@ createApp({
             return this.bankLedger.filter(e => e.method === 'cash').reduce((s, e) => s + e.amount, 0);
         },
         drawerBalance() {
-            const cashPurchases = this.purchases.reduce((s, p) => {
-                // New format has cashAmount, old format uses fundedFrom==='cash'
-                if (p.cashAmount !== undefined) return s + (Number(p.cashAmount) || 0);
-                return s + (p.fundedFrom === 'cash' ? p.amount : 0);
-            }, 0);
-            return this.initialCash + this.cashReceived - cashPurchases;
+            return this.initialCash + this.cashReceived;
         },
         bankBalance() {
             // Legacy computed kept for compatibility
@@ -2597,12 +2595,9 @@ createApp({
         totalExpenses() {
             return this.expenses.reduce((s, e) => s + e.amount, 0);
         },
-        totalPurchases() {
-            return this.purchases.reduce((s, p) => s + p.amount, 0);
-        },
         totalAssets() {
-            // Total Assets = All bank balances (already net of bank-funded purchases) + Cash Drawer (already net of cash purchases) + Stock Value
-            return this.totalBankBalance + this.drawerBalance + this.stockValue;
+            const pendingPurchasesValue = this.purchases.filter(p => p.status === 'pending').reduce((s, p) => s + p.amount, 0);
+            return this.totalBankBalance + this.drawerBalance + this.stockValue + pendingPurchasesValue - this.totalExpenses;
         },
         todayExpenses() {
             const today = this.localDateStr();
@@ -2610,9 +2605,6 @@ createApp({
         },
         lowStockProducts() {
             return this.products.filter(p => p.stock < 20);
-        },
-        outOfStockProducts() {
-            return this.products.filter(p => p.stock <= 0);
         },
         todaySales() {
             const today = this.localDateStr();
@@ -2731,9 +2723,7 @@ createApp({
                 result = result.filter(p => p.category === this.inventoryFilters.category);
             }
             // Stock level filter
-            if (this.inventoryFilters.stockLevel === 'out') {
-                result = result.filter(p => p.stock <= 0);
-            } else if (this.inventoryFilters.stockLevel === 'low') {
+            if (this.inventoryFilters.stockLevel === 'low') {
                 result = result.filter(p => p.stock < 20);
             } else if (this.inventoryFilters.stockLevel === 'normal') {
                 result = result.filter(p => p.stock >= 20);
@@ -2753,6 +2743,50 @@ createApp({
                 result.sort((a, b) => b.price - a.price);
             }
             return result;
+        },
+
+        // ---- Purchases Filters & Sort ----
+        filteredPurchases() {
+            let result = this.purchases.slice();
+            if (this.purchaseFilters.search) {
+                const q = this.purchaseFilters.search.toLowerCase();
+                result = result.filter(p =>
+                    p.id.toLowerCase().includes(q) ||
+                    p.source.toLowerCase().includes(q) ||
+                    p.items.some(i => i.name.toLowerCase().includes(q))
+                );
+            }
+            const dateFrom = this.purchaseFilters.dateFrom ? this.purchaseFilters.dateFrom.slice(0,10) : null;
+            const dateTo = this.purchaseFilters.dateTo ? this.purchaseFilters.dateTo.slice(0,10) : null;
+            result = result.filter(p => {
+                const pDate = (p.date || '').slice(0,10);
+                if (dateFrom && pDate < dateFrom) return false;
+                if (dateTo && pDate > dateTo) return false;
+                return true;
+            });
+            return result.sort((a, b) => new Date(b.date) - new Date(a.date));
+        },
+        recentActivities() {
+            const activities = [];
+            this.transactions.forEach(t => {
+                activities.push({
+                    date: t.date,
+                    title: 'Payment: ' + t.ref,
+                    description: t.description,
+                    amount: t.amount,
+                    type: 'credit'
+                });
+            });
+            this.expenses.forEach(e => {
+                activities.push({
+                    date: e.date,
+                    title: 'Expense: ' + e.category,
+                    description: e.description,
+                    amount: e.amount,
+                    type: 'debit'
+                });
+            });
+            return activities.sort((a, b) => new Date(b.date) - new Date(a.date));
         },
 
         // ---- Sales Orders Filters & Sort ----
@@ -2825,20 +2859,6 @@ createApp({
             else if (f.sort === 'amount_low') result.sort((a,b) => a.total-b.total);
             else if (f.sort === 'customer') result.sort((a,b) => (a.customerName||a.customer||'').localeCompare(b.customerName||b.customer||''));
             return result;
-        },
-        purchaseModalFundingTotal() {
-            const bankTotal = Object.values(this.purchaseModal.bankAmounts || {}).reduce((s, v) => s + (Number(v) || 0), 0);
-            return bankTotal + (Number(this.purchaseModal.cashAmount) || 0);
-        },
-        filteredPurchases() {            let result = this.purchases.slice();
-            if (this.purchaseFilters.search) {
-                const q = this.purchaseFilters.search.toLowerCase();
-                result = result.filter(p => p.description.toLowerCase().includes(q) || (p.vendor||'').toLowerCase().includes(q) || p.id.toLowerCase().includes(q));
-            }
-            if (this.purchaseFilters.fundedFrom) result = result.filter(p => p.fundedFrom === this.purchaseFilters.fundedFrom);
-            if (this.purchaseFilters.dateFrom) result = result.filter(p => p.date >= this.purchaseFilters.dateFrom);
-            if (this.purchaseFilters.dateTo) result = result.filter(p => p.date <= this.purchaseFilters.dateTo);
-            return result.sort((a,b) => new Date(b.date)-new Date(a.date));
         },
         // ---- Expenses Filters & Sort ----
         filteredExpenses() {
@@ -3028,6 +3048,10 @@ createApp({
             order.status = next;
             this.notifs.unshift({ title: 'Order Updated', msg: `${order.id} is now ${next}` });
         },
+        confirmPayment(order) {
+            // Open the staff payment modal to confirm payment and move to confirmed
+            this.openStaffPaymentModal(order);
+        },
         // ---- Customer Order (Multi-Product Cart) ----
         openFreshCart() {
             this.custOrderModal = {
@@ -3075,11 +3099,11 @@ createApp({
             const validLines = this.custOrderModal.cartLines.filter(l => l.name && l.qty > 0);
             if (validLines.length === 0) { alert('Please add at least one product with a valid quantity.'); return; }
 
-            // Validate stock
+            // Validate stock — customers cannot order out-of-stock items
             for (const line of validLines) {
                 const prod = this.products.find(x => x.name === line.name);
                 if (!prod) { alert(`Product "${line.name}" not found.`); return; }
-                if (prod.stock <= 0) { alert(`"${line.name}" is out of stock and cannot be ordered.`); return; }
+                if (prod.stock <= 0) { alert(`"${line.name}" is currently out of stock. Please contact us for more information.`); return; }
                 if (line.qty > prod.stock) { alert(`"${line.name}" only has ${prod.stock} ${prod.unit} in stock.`); return; }
             }
 
@@ -3170,7 +3194,7 @@ td{padding:12px;border-bottom:1px solid #ddd;}
 <div style="text-align:center;margin:30px 0"><h2 style="color:#714B67;margin:0">OFFICIAL RECEIPT</h2><p style="color:#666;margin:5px 0">Receipt No: ${order.id}</p><span class="badge">PAID</span></div>
 <div class="receipt-info">
 <div><strong>Customer:</strong><p>${order.customerName || order.customer}</p><p style="font-size:12px;color:#999">ID: ${order.customerId || 'Walk-in'}</p><p style="font-size:12px;color:#999">${(order.customerName && order.customer !== order.customerName) ? order.customer.replace(order.customerName, '').replace('—','').trim() : ''}</p></div>
-<div style="text-align:right"><strong>Date:</strong><p>${this.formatDate(order.paymentDate || order.created_at)}</p><strong>Payment Method:</strong><p style="text-transform:capitalize">${order.paymentMethod || 'N/A'}</p>${order.confirmedBy ? '<p style="margin:4px 0"><strong>Confirmed By:</strong> ' + order.confirmedBy + ' <span style="font-size:11px;color:#888">(Staff ID: ' + (order.confirmedById || 'N/A') + ')</span></p>' : ''}</div>
+<div style="text-align:right"><strong>Date:</strong><p>${this.formatDate(order.paymentDate || order.created_at)}</p><strong>Payment Method:</strong><p style="text-transform:capitalize">${order.paymentMethod || 'N/A'}</p></div>
 </div>
 <table><thead><tr><th>Item Description</th><th style="text-align:center">Qty</th><th style="text-align:right">Amount (₦)</th></tr></thead>
 <tbody>
@@ -3219,12 +3243,8 @@ ${order.items.map(i => `<tr><td>${i.name}</td><td style="text-align:center">${i.
 
         // ---- Alerts ----
         checkStockAlerts() {
-            this.outOfStockProducts.forEach(p => {
-                const exists = this.notifs.find(n => n.msg.includes(p.name) && n.title === 'Out of Stock Alert');
-                if (!exists) this.notifs.unshift({ title: 'Out of Stock Alert', msg: `${p.name} is OUT OF STOCK — customers cannot order!` });
-            });
-            this.lowStockProducts.filter(p => p.stock > 0).forEach(p => {
-                const exists = this.notifs.find(n => n.msg.includes(p.name) && n.title === 'Low Stock Alert');
+            this.lowStockProducts.forEach(p => {
+                const exists = this.notifs.find(n => n.msg.includes(p.name));
                 if (!exists) this.notifs.unshift({ title: 'Low Stock Alert', msg: `${p.name} only has ${p.stock} remaining!` });
             });
         },
@@ -3268,11 +3288,14 @@ ${order.items.map(i => `<tr><td>${i.name}</td><td style="text-align:center">${i.
 
                 const validLines = (this.form.orderLines || []).filter(l => l.name && l.qty > 0);
                 if (validLines.length === 0) { alert('Add at least one product line with a quantity.'); return; }
-                // Check stock for non-admin roles
+                // Out-of-stock restriction: only Admin can create quotations for out-of-stock items
                 if (this.session.role !== 'Admin') {
                     for (const line of validLines) {
-                        const prod = this.products.find(x => x.name === line.name);
-                        if (prod && prod.stock <= 0) { alert('"' + line.name + '" is out of stock. Only Admin can create orders for out-of-stock items.'); return; }
+                        const prod = this.products.find(p => p.name === line.name);
+                        if (!prod || prod.stock <= 0) {
+                            alert(`"${line.name}" is out of stock. Only Admin can create quotations for out-of-stock items.`);
+                            return;
+                        }
                     }
                 }
                 const id = 'SO' + Math.floor(1000 + Math.random() * 9000);
@@ -3440,10 +3463,9 @@ ${order.items.map(i => `<tr><td>${i.name}</td><td style="text-align:center">${i.
                 this.pdfMoney(o.total),
                 this.pdfMoney(o.amountPaid||0),
                 this.pdfMoney(Math.max(0, o.total-(o.amountPaid||0))),
-                (o.paymentStatus||'').toUpperCase(),
-                (o.confirmedBy || '-') + (o.confirmedById ? ' (' + o.confirmedById + ')' : '')
+                (o.paymentStatus||'').toUpperCase()
             ]);
-            doc.autoTable({ startY: y, head: [['Order','Date','Items','Total (NGN)','Paid (NGN)','Balance (NGN)','Status','Confirmed By']], body: rows, styles: { fontSize: 7.5, cellPadding: 2 }, headStyles: { fillColor: [42,27,38] }, alternateRowStyles: { fillColor: [248,248,248] }, theme: 'grid', margin: { left: 14, right: 14 } });
+            doc.autoTable({ startY: y, head: [['Order','Date','Items','Total (NGN)','Paid (NGN)','Balance (NGN)','Status']], body: rows, styles: { fontSize: 7.5, cellPadding: 2 }, headStyles: { fillColor: [42,27,38] }, alternateRowStyles: { fillColor: [248,248,248] }, theme: 'grid', margin: { left: 14, right: 14 } });
             y = doc.lastAutoTable.finalY + 8;
             const txns = this.transactions.filter(t=>t.customerId===m.customer?.customerId).slice().sort((a,b)=>new Date(b.date)-new Date(a.date));
             if (txns.length) {
@@ -3469,7 +3491,7 @@ ${order.items.map(i => `<tr><td>${i.name}</td><td style="text-align:center">${i.
             doc.autoTable({ startY: y, head: [['Total Purchases (NGN)','Total Paid (NGN)','Outstanding Balance (NGN)']], body: [[this.pdfMoney(tp), this.pdfMoney(paid), this.pdfMoney(tp-paid)]], styles: { fontSize: 9 }, headStyles: { fillColor: [0,160,157] }, theme: 'grid', margin: { left: 14, right: 14 } });
             y = doc.lastAutoTable.finalY + 8;
             doc.setFontSize(9); doc.setFont(undefined,'bold'); doc.text('ORDER HISTORY', 14, y); y += 4;
-            doc.autoTable({ startY: y, head: [['Order','Date','Items','Total (NGN)','Paid (NGN)','Balance (NGN)','Status','Confirmed By']], body: orders.map(o=>[o.id, this.formatDate(o.created_at), o.items.map(i=>i.name+' x'+i.qty).join(', '), this.pdfMoney(o.total), this.pdfMoney(o.amountPaid||0), this.pdfMoney(Math.max(0,o.total-(o.amountPaid||0))), (o.paymentStatus||'').toUpperCase(), (o.confirmedBy||'-')+(o.confirmedById?' ('+o.confirmedById+')':'')]), styles: { fontSize: 7.5, cellPadding: 2 }, headStyles: { fillColor: [42,27,38] }, alternateRowStyles: { fillColor: [248,248,248] }, theme: 'grid', margin: { left: 14, right: 14 } });
+            doc.autoTable({ startY: y, head: [['Order','Date','Items','Total (NGN)','Paid (NGN)','Balance (NGN)','Status']], body: orders.map(o=>[o.id, this.formatDate(o.created_at), o.items.map(i=>i.name+' x'+i.qty).join(', '), this.pdfMoney(o.total), this.pdfMoney(o.amountPaid||0), this.pdfMoney(Math.max(0,o.total-(o.amountPaid||0))), (o.paymentStatus||'').toUpperCase()]), styles: { fontSize: 7.5, cellPadding: 2 }, headStyles: { fillColor: [42,27,38] }, alternateRowStyles: { fillColor: [248,248,248] }, theme: 'grid', margin: { left: 14, right: 14 } });
             this.addPDFFooter(doc);
             doc.save('MyStatement-' + cust.fullname.replace(/\s+/g,'_') + '-' + this.localDateStr() + '.pdf');
         },
@@ -3501,7 +3523,7 @@ ${order.items.map(i => `<tr><td>${i.name}</td><td style="text-align:center">${i.
             let y = 52;
             doc.setFontSize(8); doc.setFont(undefined,'normal'); doc.setTextColor(80,80,80);
             doc.text('Total Orders: ' + f.length + '  |  Total Value: NGN ' + this.formatMoney(f.reduce((s,o)=>s+o.total,0)) + '  |  Outstanding: NGN ' + this.formatMoney(f.reduce((s,o)=>s+Math.max(0,o.total-(o.amountPaid||0)),0)), 14, y); y += 8;
-            doc.autoTable({ startY: y, head: [['Order','Customer','Date','Items','Total (NGN)','Paid (NGN)','Balance (NGN)','Method','Status','Confirmed By']], body: f.map(o=>[o.id, o.customerName||o.customer, this.formatDate(o.created_at), o.items.map(i=>i.name.substring(0,14)+' x'+i.qty).join(', '), this.pdfMoney(o.total), this.pdfMoney(o.amountPaid||0), this.pdfMoney(Math.max(0,o.total-(o.amountPaid||0))), o.paymentMethod||'-', (o.paymentStatus||'').toUpperCase(), (o.confirmedBy||'-')+(o.confirmedById?' ('+o.confirmedById+')':'')]), styles: { fontSize: 6.5, cellPadding: 1.5 }, headStyles: { fillColor: [42,27,38] }, alternateRowStyles: { fillColor: [248,248,248] }, theme: 'grid', margin: { left: 14, right: 14 } });
+            doc.autoTable({ startY: y, head: [['Order','Customer','Date','Items','Total (NGN)','Paid (NGN)','Balance (NGN)','Method','Status']], body: f.map(o=>[o.id, o.customerName||o.customer, this.formatDate(o.created_at), o.items.map(i=>i.name.substring(0,14)+' x'+i.qty).join(', '), this.pdfMoney(o.total), this.pdfMoney(o.amountPaid||0), this.pdfMoney(Math.max(0,o.total-(o.amountPaid||0))), o.paymentMethod||'-', (o.paymentStatus||'').toUpperCase()]), styles: { fontSize: 6.5, cellPadding: 1.5 }, headStyles: { fillColor: [42,27,38] }, alternateRowStyles: { fillColor: [248,248,248] }, theme: 'grid', margin: { left: 14, right: 14 } });
             this.addPDFFooter(doc);
             doc.save('GeneralHistory-' + this.localDateStr() + '.pdf');
         },
@@ -3527,10 +3549,7 @@ ${order.items.map(i => `<tr><td>${i.name}</td><td style="text-align:center">${i.
             this.addPDFFooter(doc);
             doc.save('ExpenseReport-' + this.localDateStr() + '.pdf');
         },
-                autoDistributePurchase() {
-            // No-op: user fills manually. Just here for @input hook if needed in future.
-        },,
-        openStaffPaymentModal(order) {
+                openStaffPaymentModal(order) {
             this.staffPayModal = { show: true, order, mode: 'bank', selectedBank: this.banks[0]?.name || '', bankAmount: Math.max(0, order.total - (order.amountPaid||0)), cashAmount: 0, reference: order.id + '-PAY' };
         },
         submitStaffPayment() {
@@ -3542,7 +3561,7 @@ ${order.items.map(i => `<tr><td>${i.name}</td><td style="text-align:center">${i.
             const newPaid = (o.amountPaid||0) + totalPaying; const newOutstanding = Math.max(0, o.total - newPaid);
             const date = this.localDateStr();
             o.amountPaid = newPaid; o.paymentMethod = this.staffPayModal.mode; o.bankName = this.staffPayModal.mode !== 'cash' ? this.staffPayModal.selectedBank : ''; o.paymentRef = this.staffPayModal.reference || (o.id+'-PAY'); o.paymentDate = date;
-            if (newOutstanding <= 0.01) { o.paymentStatus = 'paid'; o.status = 'confirmed'; o.amountPaid = o.total; o.confirmedBy = this.session.fullname; o.confirmedById = this.session.username; o.confirmedAt = date; o.items.forEach(it => { const p = this.products.find(x => x.name === it.name); if (p) p.stock = Math.max(0, p.stock - it.qty); }); } else { o.paymentStatus = 'partial'; o.confirmedBy = this.session.fullname; o.confirmedById = this.session.username; o.confirmedAt = date; }
+            if (newOutstanding <= 0.01) { o.paymentStatus = 'paid'; o.status = 'confirmed'; o.amountPaid = o.total; o.items.forEach(it => { const p = this.products.find(x => x.name === it.name); if (p) p.stock = Math.max(0, p.stock - it.qty); }); } else { o.paymentStatus = 'partial'; o.status = 'confirmed'; }
             if (bankAmt > 0) this.bankLedger.push({ date, ref: o.id, customerName: o.customerName, description: 'Bank payment - '+o.customerName, amount: bankAmt, method: 'bank', bankName: this.staffPayModal.selectedBank, runningBalance: 0 });
             if (cashAmt > 0) this.bankLedger.push({ date, ref: o.id, customerName: o.customerName, description: 'Cash payment - '+o.customerName, amount: cashAmt, method: 'cash', bankName: '', runningBalance: 0 });
             const txnId = 'TXN'+String(this.transactions.length+1).padStart(3,'0');
@@ -3551,82 +3570,17 @@ ${order.items.map(i => `<tr><td>${i.name}</td><td style="text-align:center">${i.
             this.staffPayModal.show = false;
             this.checkStockAlerts();
         },
-        submitPurchase() {
-            const m = this.purchaseModal;
-            if (!m.description || !m.amount || m.amount <= 0 || !m.date) { alert('Please fill description, amount and date.'); return; }
-            const bankTotal = Object.values(m.bankAmounts || {}).reduce((s, v) => s + (Number(v) || 0), 0);
-            const cashAmt = Number(m.cashAmount) || 0;
-            const totalAllocated = bankTotal + cashAmt;
-            if (Math.abs(totalAllocated - Number(m.amount)) > 0.01) {
-                alert('Total funding allocated (₦' + this.formatMoney(totalAllocated) + ') must equal the purchase amount (₦' + this.formatMoney(m.amount) + ').');
-                return;
-            }
-
-            const id = 'PO' + String(this.purchases.length + 1).padStart(3, '0');
-            const date = m.date;
-            const fundingSummary = [];
-
-            // Deduct from each bank
-            Object.entries(m.bankAmounts || {}).forEach(([bankName, amt]) => {
-                const amount = Number(amt) || 0;
-                if (amount > 0) {
-                    fundingSummary.push(bankName + ': ₦' + this.formatMoney(amount));
-                    // Bank deduction is handled via purchases array in bankBalances computed
-                }
-            });
-            if (cashAmt > 0) fundingSummary.push('Cash: ₦' + this.formatMoney(cashAmt));
-
-            // Determine primary fund source for display
-            const bankEntries = Object.entries(m.bankAmounts || {}).filter(([,v]) => (Number(v)||0) > 0);
-            let fundedFrom = 'mixed';
-            let bankName = '';
-            if (cashAmt > 0 && bankTotal === 0) { fundedFrom = 'cash'; bankName = ''; }
-            else if (cashAmt === 0 && bankEntries.length === 1) { fundedFrom = 'bank'; bankName = bankEntries[0][0]; }
-            else if (cashAmt === 0 && bankEntries.length > 1) { fundedFrom = 'bank_multi'; bankName = bankEntries.map(e=>e[0]).join(', '); }
-
-            // Store split details in the purchase record
-            const bankBreakdown = {};
-            bankEntries.forEach(([bn, amt]) => { bankBreakdown[bn] = Number(amt); });
-
-            this.purchases.push({
-                id, description: m.description, vendor: m.vendor || '', amount: Number(m.amount), date,
-                fundedFrom, bankName, cashAmount: cashAmt, bankBreakdown,
-                fundingSummary: fundingSummary.join(' | '), notes: m.notes || ''
-            });
-
-            this.notifs.unshift({ title: 'Purchase Recorded', msg: id + ' — ₦' + this.formatMoney(m.amount) + ' | ' + fundingSummary.join(' | ') });
-            this.purchaseModal.show = false;
-        },
-        deletePurchase(idx) {
-            if (!confirm('Delete this purchase order?')) return;
-            const p = this.filteredPurchases[idx];
-            const realIdx = this.purchases.findIndex(x => x.id === p.id);
-            if (realIdx !== -1) this.purchases.splice(realIdx, 1);
-        },
         setInitialCash() {
             if (!this.newInitialCash || this.newInitialCash < 0) { alert('Enter a valid amount'); return; }
             this.initialCash = Number(this.newInitialCash); this.showCashSetup = false; this.newInitialCash = 0;
             this.notifs.unshift({ title: 'Drawer Setup', msg: 'Initial drawer cash set to ₦'+this.formatMoney(this.initialCash) });
         },
-        confirmEditBankOpening(bankName) {
-            if (!this.bankEditOpening && this.bankEditOpening !== 0) { alert('Please enter a valid amount'); return; }
+        updateBankOpening(bankName, val) {
             const b = this.banks.find(x => x.name === bankName);
-            if (!b) return;
-            const confirmed = confirm(`Are you sure you want to update the opening balance for ${bankName} to ₦${this.formatMoney(this.bankEditOpening)}?\n\nThis will affect the bank's total balance.`);
-            if (!confirmed) return;
-            b.openingBalance = Number(this.bankEditOpening) || 0;
-            this.bankEditOpening = 0;
-            this.notifs.unshift({ title: 'Opening Balance Updated', msg: bankName + ' opening balance set to ₦' + this.formatMoney(b.openingBalance) });
-        },
-        submitBankTopUp(bankName) {
-            const amt = Number(this.bankTopUpAmount) || 0;
-            if (amt <= 0) { alert('Enter a valid top-up amount'); return; }
-            const note = this.bankTopUpNote.trim() || 'Bank Top-Up';
-            const date = this.localDateStr();
-            this.bankLedger.push({ date, ref: 'TOPUP-' + bankName.replace(/\s/g,'').toUpperCase(), customerName: '—', description: note, amount: amt, method: 'bank', bankName, runningBalance: 0 });
-            this.notifs.unshift({ title: 'Bank Topped Up', msg: bankName + ': +₦' + this.formatMoney(amt) + ' (' + note + ')' });
-            this.bankTopUpAmount = 0;
-            this.bankTopUpNote = '';
+            if (b) {
+                b.openingBalance = Number(val) || 0;
+                this.notifs.unshift({ title: 'Bank Updated', msg: bankName + ' opening balance set to ₦' + this.formatMoney(b.openingBalance) });
+            }
         },
         viewCustomerHistory(c) {
             const cOrders = this.orders.filter(o => o.customerId === c.customerId);
@@ -3644,6 +3598,135 @@ ${order.items.map(i => `<tr><td>${i.name}</td><td style="text-align:center">${i.
             const tp = this.orders.filter(o=>o.customerId===c.customerId).reduce((s,o)=>s+o.total,0);
             const paid = this.orders.filter(o=>o.customerId===c.customerId).reduce((s,o)=>s+(o.amountPaid||0),0);
             this.customerHistoryModal = { show: true, customer: c, orders: this.orders.filter(o=>o.customerId===c.customerId), totalPurchases: tp, totalPaid: paid, outstanding: tp-paid, payMode: true, histFilter: { status: '', dateFrom: '', dateTo: '', sort: 'date_new' } };
+        },
+        // ---- Purchase Methods ----
+        markPurchaseArrived(idx) {
+            const p = this.purchases[idx];
+            if (!confirm('Mark purchase ' + p.id + ' as arrived? The money will be set to zero and you can edit quantities/prices.')) return;
+            p.status = 'arrived';
+            p.amount = 0; // Reset amount to zero
+            this.notifs.unshift({ title: 'Purchase Arrived', msg: p.id + ' has arrived. You can now edit quantities and prices.' });
+        },
+        editPurchase(idx) {
+            const p = this.purchases[idx];
+            this.purchaseModal = {
+                show: true, supplier: p.source, date: p.date,
+                lines: p.items.map(i => ({ name: i.name, customName: '', qty: i.qty, unitCost: i.price || 0, amount: (i.qty * (i.price||0)) })),
+                bankRows: p.bankRows ? p.bankRows.map(r => ({ ...r })) : [],
+                useCash: (p.cashPaid || 0) > 0, cashAmount: p.cashPaid || 0,
+                reference: p.paymentRef || p.id, error: '', editIdx: idx
+            };
+        },
+        openAddPurchaseModal() {
+            this.purchaseModal = { show: true, supplier: '', date: this.localDateStr(), lines: [{ name: '', customName: '', qty: 1, unitCost: 0, amount: 0 }], bankRows: [], useCash: false, cashAmount: 0, reference: '', error: '', editIdx: null };
+        },
+        addPurchaseBankRow() {
+            this.purchaseModal.bankRows.push({ bankName: this.banks[0]?.name || '', amount: 0 });
+        },
+        addPurchaseLine() {
+            this.purchaseModal.lines.push({ name: '', customName: '', qty: 1, unitCost: 0, amount: 0 });
+        },
+        autoPurchasePrice(line) {
+            if (line.name === '__custom__') { line.unitCost = 0; line.amount = 0; return; }
+            const p = this.products.find(x => x.name === line.name);
+            if (p) { line.unitCost = p.price; }
+            this.recalcPurchaseLine(line);
+        },
+        recalcPurchaseLine(line) {
+            line.amount = (line.qty || 0) * (line.unitCost || 0);
+        },
+        submitPurchase() {
+            const pm = this.purchaseModal;
+            pm.error = '';
+            if (!pm.supplier.trim()) { pm.error = 'Enter a supplier name.'; return; }
+            if (!pm.date) { pm.error = 'Select a date.'; return; }
+            const validLines = pm.lines.filter(l => (l.name && l.name !== '__custom__' || l.customName) && l.qty > 0);
+            if (validLines.length === 0) { pm.error = 'Add at least one item with quantity.'; return; }
+
+            // Validate payment
+            const cashAmt = pm.useCash ? (Number(pm.cashAmount) || 0) : 0;
+            const validBankRows = pm.bankRows.filter(r => r.amount > 0);
+            const totalBankAmt = validBankRows.reduce((s, r) => s + (r.amount || 0), 0);
+            const totalPaying = totalBankAmt + cashAmt;
+            if (totalPaying <= 0) { pm.error = 'Add at least one payment source with an amount.'; return; }
+            for (const row of validBankRows) {
+                if (!row.bankName) { pm.error = 'Select a bank for each bank payment row.'; return; }
+            }
+
+            const date = pm.date;
+            const poId = 'PO' + String(this.purchases.length + 1).padStart(3, '0') + '-' + Math.floor(100 + Math.random() * 900);
+            const totalAmt = pm.lines.reduce((s, l) => s + (l.amount || 0), 0);
+            const items = validLines.map(l => ({ name: l.name === '__custom__' ? l.customName : l.name, qty: l.qty, price: l.unitCost }));
+
+            // Determine paymentMode label for display
+            const paymentMode = validBankRows.length > 0 && cashAmt > 0 ? 'mixed' : validBankRows.length > 0 ? 'bank' : 'cash';
+            const primaryBank = validBankRows.length > 0 ? validBankRows.map(r => r.bankName).join(', ') : '';
+
+            // Add to purchases
+            this.purchases.unshift({ id: poId, items, amount: totalAmt, source: pm.supplier, date, status: 'arrived', paymentMode, bankName: primaryBank, paymentRef: pm.reference, bankRows: validBankRows.map(r => ({ ...r })), cashPaid: cashAmt });
+
+            // Update stock for arrived items
+            items.forEach(it => { const p = this.products.find(x => x.name === it.name); if (p) p.stock += it.qty; });
+
+            // Record bank ledger entries (negative = money going out for purchase)
+            validBankRows.forEach(row => {
+                if (row.amount > 0) {
+                    this.bankLedger.push({ date, ref: poId, customerName: pm.supplier, description: 'Purchase from ' + pm.supplier, amount: -row.amount, method: 'bank', bankName: row.bankName, runningBalance: 0 });
+                }
+            });
+            if (cashAmt > 0) {
+                this.bankLedger.push({ date, ref: poId, customerName: pm.supplier, description: 'Purchase from ' + pm.supplier, amount: -cashAmt, method: 'cash', bankName: '', runningBalance: 0 });
+            }
+            this.notifs.unshift({ title: 'Purchase Recorded', msg: poId + ' — ₦' + this.formatMoney(totalAmt) + ' from ' + pm.supplier });
+            pm.show = false;
+        },
+        viewPurchaseReceipt(p) {
+            const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Purchase Receipt - ${p.id}</title>
+<style>body{font-family:Arial,sans-serif;padding:40px;max-width:800px;margin:0 auto;}.header{text-align:center;border-bottom:3px solid #714B67;padding-bottom:20px;margin-bottom:30px;}.header h1{color:#714B67;margin:0;}table{width:100%;border-collapse:collapse;margin:20px 0;}th{background:#714B67;color:white;padding:12px;text-align:left;}td{padding:12px;border-bottom:1px solid #ddd;}.total{font-weight:bold;font-size:18px;}.footer{margin-top:40px;padding-top:20px;border-top:2px solid #ddd;text-align:center;color:#666;font-size:12px;}</style></head><body>
+<div class="header"><h1>LADU INVESTMENT</h1><p>Purchase Record</p></div>
+<h2 style="color:#714B67">Purchase Receipt — ${p.id}</h2>
+<p><strong>Supplier:</strong> ${p.source}</p>
+<p><strong>Date:</strong> ${new Date(p.date).toLocaleDateString('en-GB', {day:'numeric',month:'short',year:'numeric'})}</p>
+<p><strong>Payment:</strong> ${p.paymentMode || 'N/A'}${p.bankName ? ' — ' + p.bankName : ''}</p>
+<table><thead><tr><th>Item</th><th>Qty</th><th>Unit Cost</th><th>Subtotal</th></tr></thead><tbody>
+${p.items.map(i=>`<tr><td>${i.name}</td><td>${i.qty}</td><td>₦${Number(i.price||0).toLocaleString()}</td><td>₦${(i.qty*(i.price||0)).toLocaleString()}</td></tr>`).join('')}
+<tr class="total"><td colspan="3" style="text-align:right">TOTAL:</td><td>₦${Number(p.amount||0).toLocaleString()}</td></tr></tbody></table>
+<div class="footer"><p>Generated: ${new Date().toLocaleString()}</p></div></body></html>`;
+            const w = window.open('', '_blank');
+            w.document.write(html);
+            w.document.close();
+            setTimeout(() => w.print(), 500);
+        },
+        downloadPurchaseReport() {
+            const { doc, lw } = this.createPDFDoc('PURCHASE REPORT');
+            let y = 52;
+            doc.setFontSize(8); doc.setFont(undefined,'normal'); doc.setTextColor(80,80,80);
+            doc.text('Date Range: ' + (this.purchaseFilters.dateFrom || 'All') + ' to ' + (this.purchaseFilters.dateTo || 'All'), 14, y); y += 8;
+            const purchases = this.filteredPurchases;
+            const rows = purchases.map(p => [
+                p.id, this.formatDate(p.date), p.source,
+                p.items.map(i => i.name + ' x' + i.qty).join('; '),
+                this.pdfMoney(p.amount), p.status.toUpperCase()
+            ]);
+            doc.autoTable({ startY: y, head: [['Reference','Date','Source','Items','Amount (NGN)','Status']], body: rows, styles: { fontSize: 7.5, cellPadding: 2 }, headStyles: { fillColor: [113,75,103] }, alternateRowStyles: { fillColor: [248,248,248] }, theme: 'grid', margin: { left: 14, right: 14 } });
+            y = doc.lastAutoTable.finalY + 8;
+            const total = purchases.reduce((s,p) => s + p.amount, 0);
+            doc.setFontSize(10); doc.setFont(undefined,'bold');
+            doc.text('TOTAL PURCHASES: ₦' + this.formatMoney(total), 14, y);
+            this.addPDFFooter(doc);
+            doc.save('PurchaseReport-' + this.localDateStr() + '.pdf');
+        },
+        // ---- Stock Management: Block orders when stock is zero ----
+        canPlaceOrder(productName) {
+            const prod = this.products.find(p => p.name === productName);
+            return prod && prod.stock > 0;
+        },
+        checkStockAvailability(productName) {
+            if (!this.canPlaceOrder(productName)) {
+                alert('This product is out of stock. Only Admin can place special orders.');
+                return false;
+            }
+            return true;
         },
     }
 }).mount('#app');
