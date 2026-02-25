@@ -967,14 +967,40 @@
                                         <span v-if="o.items.length === 1">{{ o.items[0].name }}</span>
                                         <span v-else><i class="fas fa-layer-group mr-1"></i>{{ o.items.length }} products</span>
                                     </div>
-                                    <div v-if="o.paymentStatus === 'paid'" class="text-[10px] text-green-600 font-bold mb-1"><i class="fas fa-check-circle mr-1"></i>Payment Confirmed</div>
-                                    <div v-else-if="o.paymentStatus === 'pending_confirmation'" class="text-[10px] text-orange-500 font-bold mb-1"><i class="fas fa-clock mr-1"></i>Payment Awaiting Confirmation</div>
-                                    <div class="flex justify-between items-end mt-3">
+
+                                    <!-- Payment info block — always visible when any payment info exists -->
+                                    <div class="mt-2 mb-2 rounded-lg overflow-hidden border" :class="o.paymentStatus==='paid'?'border-green-200 bg-green-50':o.paymentStatus==='partial'?'border-blue-200 bg-blue-50':o.paymentStatus==='pending_confirmation'?'border-orange-200 bg-orange-50':'border-gray-100 bg-gray-50'">
+                                        <div class="px-2 py-1.5">
+                                            <!-- Payment status badge -->
+                                            <div class="flex items-center gap-1 mb-1">
+                                                <span v-if="o.paymentStatus==='paid'" class="text-[10px] text-green-700 font-black flex items-center gap-1"><i class="fas fa-check-circle"></i> PAID IN FULL</span>
+                                                <span v-else-if="o.paymentStatus==='partial'" class="text-[10px] text-blue-700 font-black flex items-center gap-1"><i class="fas fa-adjust"></i> PARTIAL PAYMENT</span>
+                                                <span v-else-if="o.paymentStatus==='pending_confirmation'" class="text-[10px] text-orange-600 font-black flex items-center gap-1"><i class="fas fa-clock"></i> AWAITING CONFIRMATION</span>
+                                                <span v-else class="text-[10px] text-gray-400 font-black flex items-center gap-1"><i class="fas fa-circle"></i> UNPAID</span>
+                                            </div>
+                                            <!-- Method + Bank -->
+                                            <div v-if="o.paymentMethod" class="flex items-center gap-1 flex-wrap">
+                                                <span class="text-[9px] font-bold capitalize px-1.5 py-0.5 rounded"
+                                                    :class="o.paymentMethod==='cash'?'bg-green-200 text-green-800':o.paymentMethod==='bank'?'bg-blue-200 text-blue-800':'bg-purple-200 text-purple-800'">
+                                                    <i :class="o.paymentMethod==='cash'?'fas fa-money-bill':'fas fa-university'" class="mr-0.5"></i>
+                                                    {{ o.paymentMethod }}
+                                                </span>
+                                                <span v-if="o.bankName" class="text-[9px] font-bold text-gray-600 bg-gray-200 px-1.5 py-0.5 rounded"><i class="fas fa-building mr-0.5"></i>{{ o.bankName }}</span>
+                                            </div>
+                                            <!-- Amount paid vs total -->
+                                            <div v-if="o.amountPaid > 0" class="mt-1 flex items-center justify-between text-[9px]">
+                                                <span class="text-gray-500">Paid: <span class="font-bold text-green-700">₦{{ formatMoney(o.amountPaid) }}</span></span>
+                                                <span v-if="o.total - o.amountPaid > 0" class="text-gray-500">Bal: <span class="font-bold text-red-600">₦{{ formatMoney(o.total - o.amountPaid) }}</span></span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="flex justify-between items-end mt-2">
                                         <span class="font-black text-[#714B67]">₦{{ formatMoney(o.total) }}</span>
                                         <div class="flex gap-1 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <!-- Staff can confirm payment on any quotation (unpaid, pending, or direct) -->
-                                            <button v-if="o.status === 'quotation' && o.paymentStatus !== 'paid'" @click.stop="confirmPayment(o)" class="text-[10px] bg-green-600 text-white px-2 py-1 rounded font-bold hover:bg-green-700">
-                                                <i class="fas fa-check mr-1"></i>{{ o.paymentStatus === 'pending_confirmation' ? 'Confirm Pay' : 'Mark Paid' }}
+                                            <!-- Confirm button: just moves quotation to confirmed for delivery -->
+                                            <button v-if="o.status === 'quotation'" @click.stop="updateOrderStatus(o,'confirmed')" class="text-[10px] bg-green-600 text-white px-2 py-1 rounded font-bold hover:bg-green-700">
+                                                <i class="fas fa-check mr-1"></i>Confirm
                                             </button>
                                             <button v-if="o.status === 'confirmed'" @click.stop="updateOrderStatus(o,'delivered')" class="text-[10px] bg-[#714B67] text-white px-2 py-1 rounded font-bold hover:bg-purple-800">Deliver</button>
                                             <button v-if="o.paymentStatus === 'paid'" @click.stop="downloadReceipt(o)" class="text-[10px] bg-gray-100 text-gray-600 px-2 py-1 rounded font-bold hover:bg-gray-200"><i class="fas fa-file-download"></i></button>
@@ -1438,7 +1464,7 @@
                             <button @click="selectedBank=null" v-if="selectedBank" class="text-xs text-[#00A09D] hover:underline">Show All</button>
                         </div>
                         <div class="grid grid-cols-2 sm:grid-cols-4 gap-0 divide-x divide-gray-100">
-                            <div v-for="bank in banks" :key="bank.name" @click="selectedBank = (selectedBank===bank.name?null:bank.name)" class="p-4 cursor-pointer hover:bg-gray-50 transition" :class="selectedBank===bank.name?'bg-teal-50 border-b-2 border-[#00A09D]':''">
+                            <div v-for="bank in banks" :key="bank.name" @click="selectedBank = (selectedBank===bank.name?null:bank.name); editingOpeningBalance=false" class="p-4 cursor-pointer hover:bg-gray-50 transition" :class="selectedBank===bank.name?'bg-teal-50 border-b-2 border-[#00A09D]':''">
                                 <p class="text-xs font-bold text-gray-500 mb-1">{{ bank.name }}</p>
                                 <p class="text-sm font-mono text-gray-400 mb-2">{{ bank.accountNumber }}</p>
                                 <p class="text-lg font-black" :class="selectedBank===bank.name?'text-[#00A09D]':'text-gray-800'">₦{{ formatMoney(bankBalances[bank.name]||0) }}</p>
@@ -1463,8 +1489,16 @@
                         <!-- Edit Opening Balance for selected bank -->
                         <div v-if="selectedBank && selectedBank !== '__cash__'" class="border-t border-gray-100 p-4 bg-amber-50 flex items-center gap-3 flex-wrap">
                             <span class="text-xs font-bold text-amber-800">{{ selectedBank }} — Opening Balance:</span>
-                            <input type="number" :value="banks.find(b=>b.name===selectedBank)?.openingBalance||0" @change="updateBankOpening(selectedBank, $event.target.value)" class="border border-amber-300 rounded px-2 py-1 text-xs w-36 focus:outline-none focus:ring-1 focus:ring-amber-400" placeholder="Opening balance">
-                            <span class="text-xs text-amber-700">Deposits in: ₦{{ formatMoney(bankLedger.filter(e=>e.bankName===selectedBank&&e.method==='bank'&&e.amount>0).reduce((s,e)=>s+e.amount,0)) }}</span>
+                            <template v-if="!editingOpeningBalance">
+                                <span class="text-sm font-black text-amber-900">₦{{ formatMoney(banks.find(b=>b.name===selectedBank)?.openingBalance||0) }}</span>
+                                <button @click="editingOpeningBalance=true; tempOpeningBalance=banks.find(b=>b.name===selectedBank)?.openingBalance||0" class="text-[10px] font-bold bg-amber-200 hover:bg-amber-300 text-amber-800 px-2 py-1 rounded transition"><i class="fas fa-pencil-alt mr-1"></i>Edit</button>
+                            </template>
+                            <template v-else>
+                                <input type="number" v-model.number="tempOpeningBalance" @focus="$event.target.select()" class="border border-amber-400 rounded px-2 py-1 text-xs w-40 focus:outline-none focus:ring-2 focus:ring-amber-500 bg-white font-bold" placeholder="Opening balance">
+                                <button @click="updateBankOpening(selectedBank, tempOpeningBalance); editingOpeningBalance=false" class="text-[10px] font-bold bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded transition"><i class="fas fa-save mr-1"></i>Save</button>
+                                <button @click="editingOpeningBalance=false" class="text-[10px] font-bold bg-gray-200 hover:bg-gray-300 text-gray-700 px-2 py-1 rounded transition">Cancel</button>
+                            </template>
+                            <span class="text-xs text-amber-700">Deposits: ₦{{ formatMoney(bankLedger.filter(e=>e.bankName===selectedBank&&e.method==='bank'&&e.amount>0).reduce((s,e)=>s+e.amount,0)) }}</span>
                             <span class="text-xs font-bold text-[#00A09D]">→ Total: ₦{{ formatMoney(bankBalances[selectedBank]||0) }}</span>
                         </div>
                         <!-- Selected Bank Transactions -->
@@ -2511,6 +2545,8 @@ createApp({
             initialCash: 2000000,
             showCashSetup: false,
             newInitialCash: 0,
+            editingOpeningBalance: false,
+            tempOpeningBalance: 0,
             selectedBank: null,
 
             // ---- Purchases ----
@@ -2709,14 +2745,16 @@ createApp({
                 if (this.custOrderFilter.status && o.status !== this.custOrderFilter.status) return false;
                 if (this.custOrderFilter.payStatus && o.paymentStatus !== this.custOrderFilter.payStatus) return false;
                 if (this.custOrderFilter.payMethod && o.paymentMethod !== this.custOrderFilter.payMethod) return false;
-                const oDate = (o.created_at||'').slice(0,10);
-                if (this.custOrderFilter.dateFrom && oDate < this.custOrderFilter.dateFrom.slice(0,10)) return false;
-                if (this.custOrderFilter.dateTo && oDate > this.custOrderFilter.dateTo.slice(0,10)) return false;
+                const d = parseInt((o.created_at||'').slice(0,10).replace(/-/g,''));
+                const df = this.custOrderFilter.dateFrom ? parseInt(this.custOrderFilter.dateFrom.replace(/-/g,'')) : null;
+                const dt = this.custOrderFilter.dateTo ? parseInt(this.custOrderFilter.dateTo.replace(/-/g,'')) : null;
+                if (df && d < df) return false;
+                if (dt && d > dt) return false;
                 return true;
             });
             const s = this.custOrderFilter.sort;
-            if (s === 'date_new') result.sort((a,b) => new Date(b.created_at)-new Date(a.created_at));
-            else if (s === 'date_old') result.sort((a,b) => new Date(a.created_at)-new Date(b.created_at));
+            if (s === 'date_new') result.sort((a,b) => String(b.created_at).localeCompare(String(a.created_at)));
+            else if (s === 'date_old') result.sort((a,b) => String(a.created_at).localeCompare(String(b.created_at)));
             else if (s === 'amount_high') result.sort((a,b) => b.total-a.total);
             else if (s === 'amount_low') result.sort((a,b) => a.total-b.total);
             return result;
@@ -2724,11 +2762,13 @@ createApp({
         filteredMyTransactions() {
             return this.myTransactions.filter(t => {
                 if (this.txnFilter.method && t.method !== this.txnFilter.method) return false;
-                const tDate = (t.date||'').slice(0,10);
-                if (this.txnFilter.dateFrom && tDate < this.txnFilter.dateFrom.slice(0,10)) return false;
-                if (this.txnFilter.dateTo && tDate > this.txnFilter.dateTo.slice(0,10)) return false;
+                const d = parseInt((t.date||'').slice(0,10).replace(/-/g,''));
+                const df = this.txnFilter.dateFrom ? parseInt(this.txnFilter.dateFrom.replace(/-/g,'')) : null;
+                const dt = this.txnFilter.dateTo ? parseInt(this.txnFilter.dateTo.replace(/-/g,'')) : null;
+                if (df && d < df) return false;
+                if (dt && d > dt) return false;
                 return true;
-            }).slice().sort((a,b) => new Date(b.date)-new Date(a.date));
+            }).slice().sort((a,b) => String(b.date).localeCompare(String(a.date)));
         },
 
         // ---- Order Builder Totals ----
@@ -2808,15 +2848,15 @@ createApp({
                     p.items.some(i => i.name.toLowerCase().includes(q))
                 );
             }
-            const dateFrom = this.purchaseFilters.dateFrom ? this.purchaseFilters.dateFrom.slice(0,10) : null;
-            const dateTo = this.purchaseFilters.dateTo ? this.purchaseFilters.dateTo.slice(0,10) : null;
+            const dateFrom = this.purchaseFilters.dateFrom ? parseInt(this.purchaseFilters.dateFrom.replace(/-/g,'')) : null;
+            const dateTo = this.purchaseFilters.dateTo ? parseInt(this.purchaseFilters.dateTo.replace(/-/g,'')) : null;
             result = result.filter(p => {
-                const pDate = (p.date || '').slice(0,10);
+                const pDate = parseInt(String(p.date || '').slice(0,10).replace(/-/g,''));
                 if (dateFrom && pDate < dateFrom) return false;
                 if (dateTo && pDate > dateTo) return false;
                 return true;
             });
-            return result.sort((a, b) => new Date(b.date) - new Date(a.date));
+            return result.sort((a, b) => String(b.date).localeCompare(String(a.date)));
         },
         recentActivities() {
             const activities = [];
@@ -2855,9 +2895,9 @@ createApp({
             }
             // Sort
             if (this.salesFilters.sortBy === 'date_new') {
-                result.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+                result.sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)));
             } else if (this.salesFilters.sortBy === 'date_old') {
-                result.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+                result.sort((a, b) => String(a.created_at).localeCompare(String(b.created_at)));
             } else if (this.salesFilters.sortBy === 'amount_high') {
                 result.sort((a, b) => b.total - a.total);
             } else if (this.salesFilters.sortBy === 'amount_low') {
@@ -2874,20 +2914,19 @@ createApp({
             let result = (this.customerHistoryModal.orders || []).slice();
             if (f.status) result = result.filter(o => o.paymentStatus === f.status);
             if (f.dateFrom) {
-                const from = f.dateFrom.slice(0,10);
-                result = result.filter(o => (o.created_at||'').slice(0,10) >= from);
+                const df = parseInt(f.dateFrom.replace(/-/g,''));
+                result = result.filter(o => parseInt((o.created_at||'').slice(0,10).replace(/-/g,'')) >= df);
             }
             if (f.dateTo) {
-                const to = f.dateTo.slice(0,10);
-                result = result.filter(o => (o.created_at||'').slice(0,10) <= to);
+                const dt = parseInt(f.dateTo.replace(/-/g,''));
+                result = result.filter(o => parseInt((o.created_at||'').slice(0,10).replace(/-/g,'')) <= dt);
             }
-            if (f.sort === 'date_new') result.sort((a,b) => new Date(b.created_at)-new Date(a.created_at));
-            else if (f.sort === 'date_old') result.sort((a,b) => new Date(a.created_at)-new Date(b.created_at));
+            if (f.sort === 'date_new') result.sort((a,b) => String(b.created_at).localeCompare(String(a.created_at)));
+            else if (f.sort === 'date_old') result.sort((a,b) => String(a.created_at).localeCompare(String(b.created_at)));
             else if (f.sort === 'amount_high') result.sort((a,b) => b.total-a.total);
             else if (f.sort === 'amount_low') result.sort((a,b) => a.total-b.total);
             return result;
         },
-        // ---- General History Modal Filter ----
         filteredGeneralHistory() {
             const f = this.generalHistoryModal;
             let result = this.orders.slice();
@@ -2898,15 +2937,15 @@ createApp({
             if (f.customer) result = result.filter(o => o.customerId === f.customer);
             if (f.status) result = result.filter(o => o.paymentStatus === f.status);
             if (f.dateFrom) {
-                const from = f.dateFrom.slice(0,10);
-                result = result.filter(o => (o.created_at||'').slice(0,10) >= from);
+                const df = parseInt(f.dateFrom.replace(/-/g,''));
+                result = result.filter(o => parseInt((o.created_at||'').slice(0,10).replace(/-/g,'')) >= df);
             }
             if (f.dateTo) {
-                const to = f.dateTo.slice(0,10);
-                result = result.filter(o => (o.created_at||'').slice(0,10) <= to);
+                const dt = parseInt(f.dateTo.replace(/-/g,''));
+                result = result.filter(o => parseInt((o.created_at||'').slice(0,10).replace(/-/g,'')) <= dt);
             }
-            if (f.sort === 'date_new') result.sort((a,b) => new Date(b.created_at)-new Date(a.created_at));
-            else if (f.sort === 'date_old') result.sort((a,b) => new Date(a.created_at)-new Date(b.created_at));
+            if (f.sort === 'date_new') result.sort((a,b) => String(b.created_at).localeCompare(String(a.created_at)));
+            else if (f.sort === 'date_old') result.sort((a,b) => String(a.created_at).localeCompare(String(b.created_at)));
             else if (f.sort === 'amount_high') result.sort((a,b) => b.total-a.total);
             else if (f.sort === 'amount_low') result.sort((a,b) => a.total-b.total);
             else if (f.sort === 'customer') result.sort((a,b) => (a.customerName||a.customer||'').localeCompare(b.customerName||b.customer||''));
@@ -2929,9 +2968,9 @@ createApp({
             }
             // Sort
             if (this.expenseFilters.sortBy === 'date_new') {
-                result.sort((a, b) => new Date(b.date) - new Date(a.date));
+                result.sort((a, b) => String(b.date).localeCompare(String(a.date)));
             } else if (this.expenseFilters.sortBy === 'date_old') {
-                result.sort((a, b) => new Date(a.date) - new Date(b.date));
+                result.sort((a, b) => String(a.date).localeCompare(String(b.date)));
             } else if (this.expenseFilters.sortBy === 'amount_high') {
                 result.sort((a, b) => b.amount - a.amount);
             } else if (this.expenseFilters.sortBy === 'amount_low') {
@@ -3039,7 +3078,15 @@ createApp({
 
         // ---- Formatting ----
         formatMoney(val) { if (!val && val !== 0) return '0'; return Number(val).toLocaleString(); },
-        formatDate(d) { if (!d) return ''; return new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }); },
+        formatDate(d) {
+            if (!d) return '';
+            // Parse YYYY-MM-DD as local date (not UTC) to avoid off-by-one in UTC+ timezones
+            const s = String(d).slice(0, 10);
+            const [y, m, day] = s.split('-').map(Number);
+            if (!y || !m || !day) return s;
+            const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+            return day + ' ' + (months[m-1] || m) + ' ' + y;
+        },
         statusClass(s) {
             const map = { quotation: 'bg-gray-100 text-gray-500', confirmed: 'bg-blue-100 text-blue-600', delivered: 'bg-green-100 text-green-600' };
             return map[s] || 'bg-gray-100 text-gray-500';
@@ -3407,15 +3454,15 @@ ${order.items.map(i => `<tr><td>${i.name}</td><td style="text-align:center">${i.
 
         // ---- Reports ----
         generateReport() {
-            const from = this.report.date_from ? this.report.date_from.slice(0,10) : null;
-            const to = this.report.date_to ? this.report.date_to.slice(0,10) : null;
+            const fromInt = this.report.date_from ? parseInt(this.report.date_from.replace(/-/g,'')) : null;
+            const toInt = this.report.date_to ? parseInt(this.report.date_to.replace(/-/g,'')) : null;
             const aggr = {};
             let totalQty = 0, totalAmount = 0, totalBankAmt = 0, totalCashAmt = 0, totalOutstanding = 0;
             this.orders.forEach(o => {
                 if ((o.amountPaid||0) <= 0 && o.paymentStatus === 'unpaid') return;
-                const d = (o.created_at||'').slice(0,10);
-                if (from && d < from) return;
-                if (to && d > to) return;
+                const d = parseInt((o.created_at||'').slice(0,10).replace(/-/g,''));
+                if (fromInt && d < fromInt) return;
+                if (toInt && d > toInt) return;
                 if (this.report.method !== '__all__' && o.paymentMethod !== this.report.method) return;
                 o.items.forEach(it => {
                     if (this.report.product !== '__all__' && it.name !== this.report.product) return;
@@ -3438,12 +3485,12 @@ ${order.items.map(i => `<tr><td>${i.name}</td><td style="text-align:center">${i.
             this.reportResults.outstanding = totalOutstanding;
         },
         generateExpenseReport() {
-            const from = this.expenseReport.date_from ? this.expenseReport.date_from.slice(0,10) : null;
-            const to = this.expenseReport.date_to ? this.expenseReport.date_to.slice(0,10) : null;
+            const fromInt = this.expenseReport.date_from ? parseInt(this.expenseReport.date_from.replace(/-/g,'')) : null;
+            const toInt = this.expenseReport.date_to ? parseInt(this.expenseReport.date_to.replace(/-/g,'')) : null;
             const filtered = this.expenses.filter(e => {
-                const d = (e.date||'').slice(0,10);
-                if (from && d < from) return false;
-                if (to && d > to) return false;
+                const d = parseInt((e.date||'').slice(0,10).replace(/-/g,''));
+                if (fromInt && d < fromInt) return false;
+                if (toInt && d > toInt) return false;
                 if (this.expenseReport.category !== '__all__' && e.category !== this.expenseReport.category) return false;
                 return true;
             });
@@ -3654,10 +3701,14 @@ ${order.items.map(i => `<tr><td>${i.name}</td><td style="text-align:center">${i.
         // ---- Purchase Methods ----
         markPurchaseArrived(idx) {
             const p = this.purchases[idx];
-            if (!confirm('Mark purchase ' + p.id + ' as arrived? The money will be set to zero and you can edit quantities/prices.')) return;
+            if (!confirm('Mark ' + p.id + ' as arrived? Stock will be updated for all items.')) return;
             p.status = 'arrived';
-            p.amount = 0; // Reset amount to zero
-            this.notifs.unshift({ title: 'Purchase Arrived', msg: p.id + ' has arrived. You can now edit quantities and prices.' });
+            // Increment stock now that goods have physically arrived
+            (p.items || []).forEach(it => {
+                const prod = this.products.find(x => x.name === it.name);
+                if (prod) prod.stock += it.qty;
+            });
+            this.notifs.unshift({ title: 'Purchase Arrived', msg: p.id + ' marked as arrived. Stock updated.' });
         },
         editPurchase(idx) {
             const p = this.purchases[idx];
@@ -3714,11 +3765,10 @@ ${order.items.map(i => `<tr><td>${i.name}</td><td style="text-align:center">${i.
             const paymentMode = validBankRows.length > 0 && cashAmt > 0 ? 'mixed' : validBankRows.length > 0 ? 'bank' : 'cash';
             const primaryBank = validBankRows.length > 0 ? validBankRows.map(r => r.bankName).join(', ') : '';
 
-            // Add to purchases
-            this.purchases.unshift({ id: poId, items, amount: totalAmt, source: pm.supplier, date, status: 'arrived', paymentMode, bankName: primaryBank, paymentRef: pm.reference, bankRows: validBankRows.map(r => ({ ...r })), cashPaid: cashAmt });
+            // Add to purchases — status is pending until goods physically arrive
+            this.purchases.unshift({ id: poId, items, amount: totalAmt, source: pm.supplier, date, status: 'pending', paymentMode, bankName: primaryBank, paymentRef: pm.reference, bankRows: validBankRows.map(r => ({ ...r })), cashPaid: cashAmt });
 
-            // Update stock for arrived items
-            items.forEach(it => { const p = this.products.find(x => x.name === it.name); if (p) p.stock += it.qty; });
+            // NOTE: Stock is NOT incremented here — it increments when Admin clicks "Arrived"
 
             // Record bank ledger entries (negative = money going out for purchase)
             validBankRows.forEach(row => {
