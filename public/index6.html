@@ -407,11 +407,11 @@
                             <h4 class="font-bold text-gray-800 mt-2 mb-1">{{ p.name }}</h4>
                             <p class="text-[#00A09D] font-black text-lg">₦{{ formatMoney(p.price) }}<span class="text-xs text-gray-400 font-normal">/{{ p.unit }}</span></p>
                             <div class="flex items-center gap-2 mt-2 mb-4">
-                                <div class="w-2 h-2 rounded-full" :class="(effectiveStock[p.name]||0) < 1 ? 'bg-red-500' : (effectiveStock[p.name]||0) < 20 ? 'bg-amber-500' : 'bg-green-500'"></div>
-                                <span class="text-xs text-gray-500">{{ effectiveStock[p.name] !== undefined ? effectiveStock[p.name] : p.stock }} {{ p.unit }} available</span>
+                                <div class="w-2 h-2 rounded-full" :class="p.stock < 20 ? 'bg-red-500' : 'bg-green-500'"></div>
+                                <span class="text-xs text-gray-500">{{ p.stock }} {{ p.unit }} available</span>
                             </div>
-                            <button @click="addToCartAndOpen(p)" :disabled="(effectiveStock[p.name]||0) < 1" class="w-full bg-[#00A09D] hover:bg-teal-700 disabled:bg-gray-200 disabled:text-gray-400 text-white font-bold py-2.5 rounded-lg text-sm transition">
-                                <i class="fas fa-cart-plus mr-2"></i> {{ (effectiveStock[p.name]||0) < 1 ? 'Out of Stock' : 'Add to Order' }}
+                            <button @click="addToCartAndOpen(p)" :disabled="p.stock < 1" class="w-full bg-[#00A09D] hover:bg-teal-700 disabled:bg-gray-200 disabled:text-gray-400 text-white font-bold py-2.5 rounded-lg text-sm transition">
+                                <i class="fas fa-cart-plus mr-2"></i> {{ p.stock < 1 ? 'Out of Stock' : 'Add to Order' }}
                             </button>
                         </div>
                     </div>
@@ -485,11 +485,8 @@
                                     <td class="p-4 text-gray-500 text-xs">{{ formatDate(o.created_at) }}</td>
                                     <td class="p-4"><span :class="statusClass(o.status)" class="px-2 py-1 rounded-full text-[10px] font-black uppercase">{{ o.status }}</span></td>
                                     <td class="p-4 text-center">
-                                        <div class="flex flex-col items-center gap-1">
-                                            <span v-if="o.paymentStatus === 'paid'" class="text-green-600 font-bold text-xs"><i class="fas fa-check-circle mr-1"></i>Paid</span>
-                                            <button v-else @click="openPaymentModal(o)" class="text-xs bg-[#00A09D] hover:bg-teal-700 text-white px-3 py-1 rounded font-bold transition">Pay Now</button>
-                                            <button v-if="o.paymentStatus === 'paid'" @click="downloadReceipt(o)" class="text-xs bg-purple-100 hover:bg-purple-200 text-purple-700 px-2 py-1 rounded font-bold transition flex items-center gap-1"><i class="fas fa-download text-[9px]"></i>Receipt</button>
-                                        </div>
+                                        <span v-if="o.paymentStatus === 'paid'" class="text-green-600 font-bold text-xs"><i class="fas fa-check-circle mr-1"></i>Paid</span>
+                                        <button v-else @click="openPaymentModal(o)" class="text-xs bg-[#00A09D] hover:bg-teal-700 text-white px-3 py-1 rounded font-bold transition">Pay Now</button>
                                     </td>
                                 </tr>
                             </tbody>
@@ -643,7 +640,7 @@
                 <a v-if="session.role === 'Admin'" href="#" @click.prevent="view = 'central_account'; sidebarOpen = false" :class="navClass('central_account')"><i class="fas fa-building-columns w-8 text-center"></i> Central Account</a>
                 <a v-if="session.role === 'Admin'" href="#" @click.prevent="view = 'expenses'; sidebarOpen = false" :class="navClass('expenses')"><i class="fas fa-receipt w-8 text-center"></i> Expenses</a>
                 <a v-if="session.role === 'Admin'" href="#" @click.prevent="view = 'users'; sidebarOpen = false" :class="navClass('users')"><i class="fas fa-users-cog w-8 text-center"></i> User Management</a>
-                <a v-if="['Admin','Sales','Store'].includes(session.role)" href="#" @click.prevent="view = 'payments'; sidebarOpen = false" :class="navClass('payments')"><i class="fas fa-money-check-alt w-8 text-center"></i> Payments</a>
+                <a v-if="['Admin','Sales'].includes(session.role)" href="#" @click.prevent="view = 'payments'; sidebarOpen = false" :class="navClass('payments')"><i class="fas fa-money-check-alt w-8 text-center"></i> Payments</a>
                 <a v-if="['Admin','Sales'].includes(session.role)" href="#" @click.prevent="view = 'reports'; sidebarOpen = false" :class="navClass('reports')"><i class="fas fa-chart-pie w-8 text-center"></i> Reports</a>
             </nav>
             <div class="p-4 bg-black/20 border-t border-white/5">
@@ -976,164 +973,62 @@
 
                 <!-- INVENTORY -->
                 <div v-if="view === 'inventory'" class="space-y-4">
-                    <!-- Tabs: Stock / History -->
-                    <div class="flex gap-2">
-                        <button @click="inventoryTab='stock'" :class="inventoryTab==='stock'?'bg-[#00A09D] text-white':'bg-white text-gray-600 border border-gray-200'" class="px-4 py-2 rounded-lg text-xs font-bold transition"><i class="fas fa-boxes mr-1"></i>Current Stock</button>
-                        <button @click="inventoryTab='history'" :class="inventoryTab==='history'?'bg-[#714B67] text-white':'bg-white text-gray-600 border border-gray-200'" class="px-4 py-2 rounded-lg text-xs font-bold transition"><i class="fas fa-history mr-1"></i>Inventory History</button>
-                    </div>
-
-                    <!-- CURRENT STOCK TAB -->
-                    <div v-if="inventoryTab==='stock'" class="space-y-4">
-                        <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
-                            <div class="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
-                                <h3 class="font-bold text-gray-700">Inventory Management</h3>
-                                <div class="flex gap-2 flex-wrap w-full sm:w-auto">
-                                    <div class="relative flex-1 sm:flex-initial">
-                                        <i class="fas fa-search absolute left-3 top-2.5 text-gray-400 text-sm"></i>
-                                        <input v-model="inventoryFilters.search" type="text" placeholder="Search products..." class="w-full sm:w-48 pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-xs focus:ring-2 focus:ring-[#00A09D] outline-none bg-gray-50">
-                                    </div>
-                                    <select v-model="inventoryFilters.category" class="border border-gray-200 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-[#00A09D] outline-none bg-gray-50">
-                                        <option value="">All Categories</option>
-                                        <option v-for="cat in uniqueCategories" :key="cat">{{ cat }}</option>
-                                    </select>
-                                    <select v-model="inventoryFilters.stockLevel" class="border border-gray-200 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-[#00A09D] outline-none bg-gray-50">
-                                        <option value="">All Stock Levels</option>
-                                        <option value="low">Low Stock (&lt; 20)</option>
-                                        <option value="normal">Normal Stock (≥ 20)</option>
-                                    </select>
-                                    <select v-model="inventoryFilters.sortBy" class="border border-gray-200 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-[#00A09D] outline-none bg-gray-50">
-                                        <option value="name">Sort: Name (A-Z)</option>
-                                        <option value="name_desc">Sort: Name (Z-A)</option>
-                                        <option value="stock_low">Sort: Stock (Low-High)</option>
-                                        <option value="stock_high">Sort: Stock (High-Low)</option>
-                                        <option value="price_low">Sort: Price (Low-High)</option>
-                                        <option value="price_high">Sort: Price (High-Low)</option>
-                                    </select>
-                                    <button v-if="session && session.role === 'Admin'" @click="downloadInventoryReport" class="bg-[#714B67] hover:bg-purple-800 text-white px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-2">
-                                        <i class="fas fa-download"></i> Report
-                                    </button>
+                    <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+                        <div class="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
+                            <h3 class="font-bold text-gray-700">Inventory Management</h3>
+                            <div class="flex gap-2 flex-wrap w-full sm:w-auto">
+                                <div class="relative flex-1 sm:flex-initial">
+                                    <i class="fas fa-search absolute left-3 top-2.5 text-gray-400 text-sm"></i>
+                                    <input v-model="inventoryFilters.search" type="text" placeholder="Search products..." class="w-full sm:w-48 pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-xs focus:ring-2 focus:ring-[#00A09D] outline-none bg-gray-50">
                                 </div>
-                            </div>
-                        </div>
-
-                        <!-- Current Stock Balance Summary -->
-                        <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-                            <div class="p-4 border-b border-gray-100 bg-teal-50/50 flex justify-between items-center">
-                                <h4 class="font-bold text-gray-700 text-sm"><i class="fas fa-warehouse mr-2 text-[#00A09D]"></i>Current Stock Balance</h4>
-                                <span class="text-xs text-gray-500">{{ products.length }} items tracked</span>
-                            </div>
-                            <div class="overflow-x-auto">
-                                <table class="w-full text-left">
-                                    <thead class="bg-gray-50 text-xs font-bold uppercase text-gray-400">
-                                        <tr><th class="p-4">Item Name</th><th class="p-4">Category</th><th class="p-4 text-center">Qty in Stock</th><th class="p-4 text-center">Status</th><th class="p-4">Last Updated</th><th class="p-4 text-right">Unit Price</th><th class="p-4 text-center">Actions</th></tr>
-                                    </thead>
-                                    <tbody class="text-sm divide-y divide-gray-100">
-                                        <tr v-if="filteredInventory.length === 0"><td colspan="7" class="p-8 text-center text-gray-400 italic">No products found</td></tr>
-                                        <tr v-for="(p, index) in filteredInventory" :key="p.name" class="hover:bg-gray-50 transition">
-                                            <td class="p-4 font-bold text-gray-800">{{ p.name }}</td>
-                                            <td class="p-4"><span class="px-2 py-1 bg-gray-100 rounded text-xs font-bold text-gray-500 uppercase">{{ p.category }}</span></td>
-                                            <td class="p-4 text-center">
-                                                <div>
-                                                    <span class="text-lg font-black" :class="(effectiveStock[p.name]||0) === 0 ? 'text-red-600' : (effectiveStock[p.name]||0) < 20 ? 'text-amber-600' : 'text-green-600'">{{ effectiveStock[p.name]!==undefined?effectiveStock[p.name]:p.stock }}</span>
-                                                    <span class="text-xs text-gray-400 ml-1">{{ p.unit }}</span>
-                                                    <div v-if="p.stock !== (effectiveStock[p.name]!==undefined?effectiveStock[p.name]:p.stock)" class="text-[9px] text-orange-500 font-bold mt-0.5">
-                                                        Physical: {{ p.stock }} · Reserved: {{ p.stock - (effectiveStock[p.name]||0) }}
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td class="p-4 text-center">
-                                                <div class="flex items-center justify-center gap-1.5">
-                                                    <div class="w-2 h-2 rounded-full" :class="(effectiveStock[p.name]||0) === 0 ? 'bg-red-500 animate-pulse' : (effectiveStock[p.name]||0) < 20 ? 'bg-amber-500 animate-pulse' : 'bg-green-500'"></div>
-                                                    <span class="text-xs font-bold" :class="(effectiveStock[p.name]||0) === 0 ? 'text-red-600' : (effectiveStock[p.name]||0) < 20 ? 'text-amber-600' : 'text-green-600'">{{ (effectiveStock[p.name]||0) === 0 ? 'Out of Stock' : (effectiveStock[p.name]||0) < 20 ? 'Low Stock' : 'In Stock' }}</span>
-                                                </div>
-                                            </td>
-                                            <td class="p-4 text-xs text-gray-500">
-                                                {{ inventoryLog.filter(l=>l.item===p.name).length > 0 ? formatDate(inventoryLog.filter(l=>l.item===p.name).slice().sort((a,b)=>String(b.date).localeCompare(String(a.date)))[0].date) : formatDate(localDateStr()) }}
-                                            </td>
-                                            <td class="p-4 text-right font-mono text-gray-600">₦{{ formatMoney(p.price) }}</td>
-                                            <td class="p-4 text-center">
-                                                <div class="flex items-center justify-center gap-2">
-                                                    <button v-if="['Admin','Store'].includes(session.role)" @click="editProduct(p)" class="p-2 text-[#00A09D] hover:bg-teal-50 rounded transition" title="Edit"><i class="fas fa-edit"></i></button>
-                                                    <button v-if="['Admin', 'Store'].includes(session.role)" @click="deleteProduct(products.indexOf(p))" class="p-2 text-red-500 hover:bg-red-50 rounded transition" title="Delete"><i class="fas fa-trash-alt"></i></button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
+                                <select v-model="inventoryFilters.category" class="border border-gray-200 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-[#00A09D] outline-none bg-gray-50">
+                                    <option value="">All Categories</option>
+                                    <option v-for="cat in uniqueCategories" :key="cat">{{ cat }}</option>
+                                </select>
+                                <select v-model="inventoryFilters.stockLevel" class="border border-gray-200 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-[#00A09D] outline-none bg-gray-50">
+                                    <option value="">All Stock Levels</option>
+                                    <option value="low">Low Stock (< 20)</option>
+                                    <option value="normal">Normal Stock (≥ 20)</option>
+                                </select>
+                                <select v-model="inventoryFilters.sortBy" class="border border-gray-200 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-[#00A09D] outline-none bg-gray-50">
+                                    <option value="name">Sort: Name (A-Z)</option>
+                                    <option value="name_desc">Sort: Name (Z-A)</option>
+                                    <option value="stock_low">Sort: Stock (Low-High)</option>
+                                    <option value="stock_high">Sort: Stock (High-Low)</option>
+                                    <option value="price_low">Sort: Price (Low-High)</option>
+                                    <option value="price_high">Sort: Price (High-Low)</option>
+                                </select>
                             </div>
                         </div>
                     </div>
 
-                    <!-- HISTORY TAB -->
-                    <div v-if="inventoryTab==='history'" class="space-y-4">
-                        <!-- Filter bar -->
-                        <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
-                            <div class="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
-                                <h3 class="font-bold text-gray-700">Inventory History Log</h3>
-                                <div class="flex gap-2 flex-wrap">
-                                    <select v-model="invHistFilter.type" class="border border-gray-200 rounded-lg px-3 py-2 text-xs bg-gray-50 focus:ring-2 focus:ring-[#714B67] outline-none">
-                                        <option value="">All Types</option>
-                                        <option value="issued">Goods Issued</option>
-                                        <option value="added">Stock Added</option>
-                                    </select>
-                                    <input type="date" v-model="invHistFilter.dateFrom" class="border border-gray-200 rounded-lg px-3 py-2 text-xs bg-gray-50 focus:ring-2 focus:ring-[#714B67] outline-none">
-                                    <input type="date" v-model="invHistFilter.dateTo" class="border border-gray-200 rounded-lg px-3 py-2 text-xs bg-gray-50 focus:ring-2 focus:ring-[#714B67] outline-none">
-                                    <button @click="invHistFilter={type:'',dateFrom:'',dateTo:''}" class="border border-gray-200 bg-white hover:bg-gray-100 text-gray-500 px-3 py-2 rounded-lg text-xs font-bold transition"><i class="fas fa-times mr-1"></i>Reset</button>
-                                    <button v-if="session && session.role === 'Admin'" @click="downloadInventoryHistoryReport" class="bg-[#714B67] hover:bg-purple-800 text-white px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-2"><i class="fas fa-download"></i> Download</button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Goods Issued -->
-                        <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-                            <div class="p-4 border-b bg-red-50/50 flex justify-between items-center">
-                                <h4 class="font-bold text-gray-700 text-sm"><i class="fas fa-arrow-up mr-2 text-red-500"></i>Goods Issued from Store</h4>
-                                <span class="text-xs text-gray-500">{{ filteredInventoryLog.filter(l=>l.type==='issued').length }} records</span>
-                            </div>
-                            <div class="overflow-x-auto">
-                                <table class="w-full text-left">
-                                    <thead class="bg-gray-50 text-xs font-bold uppercase text-gray-400">
-                                        <tr><th class="p-3">Date</th><th class="p-3">Item Name</th><th class="p-3 text-center">Qty Issued</th><th class="p-3 text-right">Value</th><th class="p-3">Order Ref</th><th class="p-3">Customer</th><th class="p-3">Issued By</th></tr>
-                                    </thead>
-                                    <tbody class="text-sm divide-y divide-gray-100">
-                                        <tr v-if="filteredInventoryLog.filter(l=>l.type==='issued').length===0"><td colspan="7" class="p-6 text-center text-gray-400 italic">No goods issued yet</td></tr>
-                                        <tr v-for="log in filteredInventoryLog.filter(l=>l.type==='issued').slice().sort((a,b)=>String(b.date).localeCompare(String(a.date)))" :key="log.date+log.item+log.ref" class="hover:bg-red-50/30">
-                                            <td class="p-3 text-xs text-gray-500">{{ formatDate(log.date) }}</td>
-                                            <td class="p-3 font-bold text-gray-800">{{ log.item }}</td>
-                                            <td class="p-3 text-center font-black text-red-600">{{ log.qty }}</td>
-                                            <td class="p-3 text-right font-mono text-gray-700">₦{{ formatMoney(log.amount) }}</td>
-                                            <td class="p-3 text-xs text-[#714B67] font-bold">{{ log.ref }}</td>
-                                            <td class="p-3 text-xs text-gray-600">{{ log.customer || '—' }}</td>
-                                            <td class="p-3 text-xs text-gray-500">{{ log.issuedBy || '—' }}</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-
-                        <!-- Stock Added -->
-                        <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-                            <div class="p-4 border-b bg-green-50/50 flex justify-between items-center">
-                                <h4 class="font-bold text-gray-700 text-sm"><i class="fas fa-arrow-down mr-2 text-green-500"></i>Stock Added to Store</h4>
-                                <span class="text-xs text-gray-500">{{ filteredInventoryLog.filter(l=>l.type==='added').length }} records</span>
-                            </div>
-                            <div class="overflow-x-auto">
-                                <table class="w-full text-left">
-                                    <thead class="bg-gray-50 text-xs font-bold uppercase text-gray-400">
-                                        <tr><th class="p-3">Date</th><th class="p-3">Item Name</th><th class="p-3 text-center">Qty Added</th><th class="p-3">Purchase Ref</th><th class="p-3">Supplier</th></tr>
-                                    </thead>
-                                    <tbody class="text-sm divide-y divide-gray-100">
-                                        <tr v-if="filteredInventoryLog.filter(l=>l.type==='added').length===0"><td colspan="5" class="p-6 text-center text-gray-400 italic">No stock additions recorded yet</td></tr>
-                                        <tr v-for="log in filteredInventoryLog.filter(l=>l.type==='added').slice().sort((a,b)=>String(b.date).localeCompare(String(a.date)))" :key="log.date+log.item+log.ref" class="hover:bg-green-50/30">
-                                            <td class="p-3 text-xs text-gray-500">{{ formatDate(log.date) }}</td>
-                                            <td class="p-3 font-bold text-gray-800">{{ log.item }}</td>
-                                            <td class="p-3 text-center font-black text-green-600">+{{ log.qty }}</td>
-                                            <td class="p-3 text-xs text-[#714B67] font-bold">{{ log.ref }}</td>
-                                            <td class="p-3 text-xs text-gray-600">{{ log.customer || '—' }}</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
+                    <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left">
+                                <thead class="bg-gray-50 text-xs font-bold uppercase text-gray-400">
+                                    <tr><th class="p-4">Product Name</th><th class="p-4">Category</th><th class="p-4">Stock Level</th><th class="p-4 text-right">Unit Price</th><th class="p-4 text-center">Actions</th></tr>
+                                </thead>
+                                <tbody class="text-sm divide-y divide-gray-100">
+                                    <tr v-if="filteredInventory.length === 0"><td colspan="5" class="p-8 text-center text-gray-400 italic">No products found</td></tr>
+                                    <tr v-for="(p, index) in filteredInventory" :key="p.name" class="hover:bg-gray-50 transition">
+                                        <td class="p-4 font-bold text-gray-800">{{ p.name }}</td>
+                                        <td class="p-4"><span class="px-2 py-1 bg-gray-100 rounded text-xs font-bold text-gray-500 uppercase">{{ p.category }}</span></td>
+                                        <td class="p-4">
+                                            <div class="flex items-center gap-2">
+                                                <div class="w-2 h-2 rounded-full" :class="p.stock < 20 ? 'bg-red-500 animate-pulse' : 'bg-green-500'"></div>
+                                                <span :class="p.stock < 20 ? 'text-red-600 font-bold' : 'text-gray-700 font-medium'">{{ p.stock }} {{ p.unit }}</span>
+                                            </div>
+                                        </td>
+                                        <td class="p-4 text-right font-mono text-gray-600">₦{{ formatMoney(p.price) }}</td>
+                                        <td class="p-4 text-center">
+                                            <div class="flex items-center justify-center gap-2">
+                                                <button @click="editProduct(p)" class="p-2 text-[#00A09D] hover:bg-teal-50 rounded transition" title="Edit"><i class="fas fa-edit"></i></button>
+                                                <button v-if="['Admin', 'Store'].includes(session.role)" @click="deleteProduct(products.indexOf(p))" class="p-2 text-red-500 hover:bg-red-50 rounded transition" title="Delete"><i class="fas fa-trash-alt"></i></button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
@@ -1206,27 +1101,15 @@
                                         </div>
                                     </div>
 
-                                    <!-- Store: Provide Goods badge -->
-                                    <div v-if="o.paymentStatus==='paid' && !o.goodsProvided" class="mt-2 p-2 rounded-lg bg-amber-50 border border-amber-200 text-center">
-                                        <p class="text-[9px] text-amber-600 font-bold uppercase tracking-wide mb-1"><i class="fas fa-box-open mr-1"></i>Awaiting Goods Delivery</p>
-                                        <button v-if="session && session.role === 'Store'" @click.stop="provideGoods(o)" class="text-[10px] bg-amber-500 hover:bg-amber-600 text-white px-3 py-1 rounded font-bold w-full transition">
-                                            <i class="fas fa-check-double mr-1"></i>Mark as Provided
-                                        </button>
-                                        <span v-else class="text-[9px] text-amber-500 italic">Store staff to provide goods</span>
-                                    </div>
-                                    <div v-if="o.goodsProvided" class="mt-2 p-1.5 rounded bg-green-50 border border-green-200 text-center">
-                                        <p class="text-[9px] text-green-600 font-bold"><i class="fas fa-check-double mr-1"></i>Goods Provided · {{ formatDate(o.goodsProvidedDate) }}</p>
-                                    </div>
                                     <div class="flex justify-between items-end mt-2">
                                         <span class="font-black text-[#714B67]">₦{{ formatMoney(o.total) }}</span>
                                         <div class="flex gap-1 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <!-- Confirm button: Admin/Sales only — moves quotation to confirmed -->
-                                            <button v-if="o.status === 'quotation' && ['Admin','Sales'].includes(session.role)" @click.stop="updateOrderStatus(o,'confirmed')" class="text-[10px] bg-green-600 text-white px-2 py-1 rounded font-bold hover:bg-green-700">
+                                            <!-- Confirm button: just moves quotation to confirmed for delivery -->
+                                            <button v-if="o.status === 'quotation'" @click.stop="updateOrderStatus(o,'confirmed')" class="text-[10px] bg-green-600 text-white px-2 py-1 rounded font-bold hover:bg-green-700">
                                                 <i class="fas fa-check mr-1"></i>Confirm
                                             </button>
-                                            <button v-if="o.status === 'confirmed' && ['Admin','Sales'].includes(session.role)" @click.stop="updateOrderStatus(o,'delivered')" class="text-[10px] bg-[#714B67] text-white px-2 py-1 rounded font-bold hover:bg-purple-800">Deliver</button>
-                                            <button @click.stop="downloadReceipt(o)" class="text-[10px] bg-gray-100 text-gray-600 px-2 py-1 rounded font-bold hover:bg-gray-200" title="Download Receipt"><i class="fas fa-file-download"></i></button>
-                                            <button @click.stop="printReceipt(o)" class="text-[10px] bg-gray-100 text-gray-600 px-2 py-1 rounded font-bold hover:bg-gray-200" title="Print Receipt"><i class="fas fa-print"></i></button>
+                                            <button v-if="o.status === 'confirmed'" @click.stop="updateOrderStatus(o,'delivered')" class="text-[10px] bg-[#714B67] text-white px-2 py-1 rounded font-bold hover:bg-purple-800">Deliver</button>
+                                            <button v-if="o.paymentStatus === 'paid'" @click.stop="downloadReceipt(o)" class="text-[10px] bg-gray-100 text-gray-600 px-2 py-1 rounded font-bold hover:bg-gray-200"><i class="fas fa-file-download"></i></button>
                                             <span v-if="o.status === 'delivered'" class="text-green-500 text-sm"><i class="fas fa-check-circle"></i></span>
                                         </div>
                                     </div>
@@ -1536,10 +1419,10 @@
                         <div class="overflow-x-auto">
                             <table class="w-full text-left">
                                 <thead class="bg-gray-50 text-xs font-bold uppercase text-gray-400">
-                                    <tr><th class="p-4">Order Ref</th><th class="p-4">Customer</th><th class="p-4">Items</th><th class="p-4">Total</th><th class="p-4">Paid</th><th class="p-4">Balance</th><th class="p-4">Method</th><th class="p-4">Date</th><th class="p-4">Status</th><th class="p-4 text-center">Goods</th><th class="p-4 text-center">Actions</th></tr>
+                                    <tr><th class="p-4">Order Ref</th><th class="p-4">Customer</th><th class="p-4">Items</th><th class="p-4">Total</th><th class="p-4">Paid</th><th class="p-4">Balance</th><th class="p-4">Method</th><th class="p-4">Date</th><th class="p-4">Status</th><th class="p-4 text-center">Actions</th></tr>
                                 </thead>
                                 <tbody class="text-sm divide-y divide-gray-100">
-                                    <tr v-if="filteredPayments.length === 0"><td colspan="11" class="p-8 text-center text-gray-400 italic">No payment records found</td></tr>
+                                    <tr v-if="filteredPayments.length === 0"><td colspan="10" class="p-8 text-center text-gray-400 italic">No payment records found</td></tr>
                                     <tr v-for="o in filteredPayments" :key="o.id" class="hover:bg-gray-50 transition">
                                         <td class="p-4 font-bold text-[#714B67]">{{ o.id }}</td>
                                         <td class="p-4">
@@ -1566,18 +1449,12 @@
                                             <span v-else class="text-gray-400 text-xs flex items-center gap-1"><i class="fas fa-minus-circle"></i> Unpaid</span>
                                         </td>
                                         <td class="p-4 text-center">
-                                            <span v-if="o.goodsProvided" class="text-green-600 text-xs font-bold flex items-center justify-center gap-1"><i class="fas fa-check-double"></i>Provided</span>
-                                            <span v-else-if="o.paymentStatus==='paid'" class="text-amber-500 text-xs font-bold flex items-center justify-center gap-1"><i class="fas fa-box-open"></i>Pending</span>
-                                            <span v-else class="text-gray-300 text-xs">—</span>
-                                        </td>
-                                        <td class="p-4 text-center">
-                                            <div class="flex justify-center gap-2 flex-wrap">
-                                                <button v-if="o.paymentStatus !== 'paid' && ['Admin','Sales'].includes(session.role)" @click="openStaffPaymentModal(o)" class="text-xs bg-green-100 hover:bg-green-200 text-green-700 px-3 py-1 rounded font-bold transition">
+                                            <div class="flex justify-center gap-2">
+                                                <button v-if="o.paymentStatus !== 'paid'" @click="openStaffPaymentModal(o)" class="text-xs bg-green-100 hover:bg-green-200 text-green-700 px-3 py-1 rounded font-bold transition">
                                                     <i class="fas fa-check mr-1"></i>{{ o.paymentStatus === 'pending_confirmation' ? 'Confirm' : (o.paymentStatus==='partial'?'Add Payment':'Record Pay') }}
                                                 </button>
-                                                <button v-if="o.paymentStatus==='paid' && !o.goodsProvided && session.role==='Store'" @click="provideGoods(o)" class="text-xs bg-amber-500 hover:bg-amber-600 text-white px-3 py-1 rounded font-bold transition"><i class="fas fa-check-double mr-1"></i>Provide</button>
-                                                <button v-if="['Admin','Sales'].includes(session.role)" @click="downloadReceipt(o)" class="text-xs bg-purple-100 hover:bg-purple-200 text-purple-700 px-3 py-1 rounded font-bold transition"><i class="fas fa-file-download mr-1"></i>Receipt</button>
-                                                <button v-if="['Admin','Sales'].includes(session.role)" @click="printReceipt(o)" class="text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1 rounded font-bold transition"><i class="fas fa-print mr-1"></i>Print</button>
+                                                <button v-if="o.paymentStatus === 'paid'" @click="downloadReceipt(o)" class="text-xs bg-purple-100 hover:bg-purple-200 text-purple-700 px-3 py-1 rounded font-bold transition"><i class="fas fa-file-download mr-1"></i>Receipt</button>
+                                                <button v-if="o.paymentStatus === 'paid'" @click="printReceipt(o)" class="text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1 rounded font-bold transition"><i class="fas fa-print mr-1"></i>Print</button>
                                             </div>
                                         </td>
                                     </tr>
@@ -1786,19 +1663,9 @@
                                     <span class="block">{{ bankLedger.filter(e=>e.method==='cash').length }} transactions</span>
                                 </div>
                             </div>
-                            <!-- Central Account as selectable bank -->
-                            <div @click="selectedBank = (selectedBank==='__central__'?null:'__central__')" class="p-4 cursor-pointer hover:bg-indigo-50 transition" :class="selectedBank==='__central__'?'bg-indigo-50 border-b-2 border-indigo-500':''">
-                                <p class="text-xs font-bold text-indigo-600 mb-1"><i class="fas fa-building-columns mr-1"></i>Central Account</p>
-                                <p class="text-sm font-mono text-gray-400 mb-2">Internal Holding</p>
-                                <p class="text-lg font-black" :class="selectedBank==='__central__'?'text-indigo-600':'text-gray-800'">₦{{ formatMoney(centralAccount.balance) }}</p>
-                                <div class="text-[10px] text-gray-400 mt-1">
-                                    <span class="block">{{ centralAccount.ledger.length }} transactions</span>
-                                    <span class="block text-indigo-500 font-bold">Click to view ledger</span>
-                                </div>
-                            </div>
                         </div>
                         <!-- Edit Opening Balance for selected bank -->
-                        <div v-if="selectedBank && selectedBank !== '__cash__' && selectedBank !== '__central__'" class="border-t border-gray-100 p-4 bg-amber-50 flex items-center gap-3 flex-wrap">
+                        <div v-if="selectedBank && selectedBank !== '__cash__'" class="border-t border-gray-100 p-4 bg-amber-50 flex items-center gap-3 flex-wrap">
                             <span class="text-xs font-bold text-amber-800">{{ selectedBank }} — Opening Balance:</span>
                             <template v-if="!editingOpeningBalance">
                                 <span class="text-sm font-black text-amber-900">₦{{ formatMoney(banks.find(b=>b.name===selectedBank)?.openingBalance||0) }}</span>
@@ -1813,7 +1680,7 @@
                             <span class="text-xs font-bold text-[#00A09D]">→ Total: ₦{{ formatMoney(bankBalances[selectedBank]||0) }}</span>
                         </div>
                         <!-- Selected Bank Transactions -->
-                        <div v-if="selectedBank && selectedBank !== '__cash__' && selectedBank !== '__central__'" class="border-t border-gray-100 overflow-x-auto">
+                        <div v-if="selectedBank && selectedBank !== '__cash__'" class="border-t border-gray-100 overflow-x-auto">
                             <div class="p-4 bg-teal-50 text-sm font-bold text-[#00A09D]">{{ selectedBank }} — Transaction History</div>
                             <table class="w-full text-left">
                                 <thead class="bg-gray-50 text-xs font-bold uppercase text-gray-400">
@@ -1852,28 +1719,6 @@
                                         <td class="p-3 text-xs text-gray-600">{{ entry.customerName }}</td>
                                         <td class="p-3 text-gray-700">{{ entry.description }}</td>
                                         <td class="p-3 text-right font-bold" :class="entry.amount>=0?'text-green-600':'text-red-500'">{{ entry.amount>=0?'+':'' }}₦{{ formatMoney(Math.abs(entry.amount)) }}</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                        <!-- Central Account Transactions -->
-                        <div v-if="selectedBank === '__central__'" class="border-t border-gray-100 overflow-x-auto">
-                            <div class="p-4 bg-indigo-50 text-sm font-bold text-indigo-700"><i class="fas fa-building-columns mr-2"></i>Central Account — Transaction History · Balance: ₦{{ formatMoney(centralAccount.balance) }}</div>
-                            <table class="w-full text-left">
-                                <thead class="bg-gray-50 text-xs font-bold uppercase text-gray-400">
-                                    <tr><th class="p-3">Date</th><th class="p-3">Ref</th><th class="p-3">Description</th><th class="p-3">Type</th><th class="p-3 text-right">Amount</th><th class="p-3 text-right">Balance After</th></tr>
-                                </thead>
-                                <tbody class="text-sm divide-y divide-gray-100">
-                                    <tr v-if="centralAccount.ledger.length===0"><td colspan="6" class="p-6 text-center text-gray-400 italic">No Central Account transactions yet</td></tr>
-                                    <tr v-for="(e,idx) in centralAccount.ledger.slice().reverse()" :key="idx" class="hover:bg-indigo-50/30">
-                                        <td class="p-3 text-xs text-gray-500">{{ formatDate(e.date) }}</td>
-                                        <td class="p-3 font-mono text-xs text-indigo-600">{{ e.ref }}</td>
-                                        <td class="p-3 text-gray-700 text-xs">{{ e.description }}</td>
-                                        <td class="p-3 text-xs capitalize">
-                                            <span :class="e.type==='transfer_in'?'text-green-600':e.type==='refund'?'text-orange-600':'text-red-500'" class="font-bold">{{ e.type.replace('_',' ') }}</span>
-                                        </td>
-                                        <td class="p-3 text-right font-bold" :class="e.amount>=0?'text-green-600':'text-red-500'">{{ e.amount>=0?'+':'' }}₦{{ formatMoney(Math.abs(e.amount)) }}</td>
-                                        <td class="p-3 text-right font-mono text-xs text-gray-600">₦{{ formatMoney(e.runningBalance||0) }}</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -2252,7 +2097,7 @@
                                 </div>
                                 <select v-model="line.name" @change="autoFillLinePrice(line)" class="w-full border border-gray-200 p-2.5 rounded-lg bg-white focus:ring-2 focus:ring-[#00A09D] outline-none text-sm mb-2">
                                     <option value="" disabled>Select product</option>
-                                    <option v-for="p in products" :key="p.name" :value="p.name" :disabled="(effectiveStock[p.name]!==undefined?effectiveStock[p.name]:p.stock) <= 0 && session.role !== 'Admin'">{{ p.name }} (₦{{ formatMoney(p.price) }}/{{ p.unit }}) — {{ (effectiveStock[p.name]!==undefined?effectiveStock[p.name]:p.stock) <= 0 ? 'OUT OF STOCK' : ((effectiveStock[p.name]!==undefined?effectiveStock[p.name]:p.stock)) + ' avail' }}</option>
+                                    <option v-for="p in products" :key="p.name" :value="p.name" :disabled="p.stock <= 0 && session.role !== 'Admin'">{{ p.name }} (₦{{ formatMoney(p.price) }}/{{ p.unit }}){{ p.stock <= 0 ? ' — OUT OF STOCK' : '' }}</option>
                                 </select>
                                 <div class="grid grid-cols-3 gap-2">
                                     <div>
@@ -2505,7 +2350,7 @@
                 </div>
                 <div class="flex gap-2 items-center">
                     <button v-if="session && session.role === 'Admin'" @click="customerHistoryModal.show=false; openCustomerRefundModal(customerHistoryModal.customer)" class="bg-orange-500 hover:bg-orange-600 text-white text-xs px-3 py-1.5 rounded font-bold flex items-center gap-1"><i class="fas fa-undo mr-1"></i>Issue Refund</button>
-                    <button @click="downloadCustomerHistoryPDF()" class="bg-red-600 hover:bg-red-700 text-white text-xs px-3 py-1.5 rounded font-bold flex items-center gap-1"><i class="fas fa-file-pdf mr-1"></i>Download Report</button>
+                    <button @click="downloadCustomerHistoryPDF()" class="bg-red-600 hover:bg-red-700 text-white text-xs px-3 py-1.5 rounded font-bold flex items-center gap-1"><i class="fas fa-file-pdf mr-1"></i>Download PDF</button>
                     <button @click="customerHistoryModal.show=false" class="text-white/70 hover:text-white"><i class="fas fa-times"></i></button>
                 </div>
             </div>
@@ -2583,13 +2428,10 @@
                                     <span class="text-[10px] font-bold capitalize px-2 py-0.5 rounded-full" :class="o.paymentStatus==='paid'?'bg-green-100 text-green-700':o.paymentStatus==='partial'?'bg-blue-100 text-blue-700':o.paymentStatus==='pending_confirmation'?'bg-orange-100 text-orange-700':'bg-gray-100 text-gray-500'">{{ o.paymentStatus }}</span>
                                 </td>
                                 <td class="p-3 text-center">
-                                    <div class="flex flex-col items-center gap-1">
-                                        <button v-if="o.paymentStatus !== 'paid' && session && ['Admin','Sales'].includes(session.role)" @click="customerHistoryModal.show=false; openStaffPaymentModal(o)" class="text-xs bg-[#00A09D] hover:bg-teal-700 text-white px-2 py-1 rounded font-bold transition whitespace-nowrap">
-                                            <i class="fas fa-credit-card mr-1"></i>Record Pay
-                                        </button>
-                                        <button v-if="['Admin','Sales'].includes(session && session.role)" @click="printReceipt(o)" class="text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 px-2 py-1 rounded font-bold transition whitespace-nowrap"><i class="fas fa-print mr-1"></i>Print</button>
-                                        <button v-if="['Admin','Sales'].includes(session && session.role)" @click="downloadReceipt(o)" class="text-xs bg-purple-100 hover:bg-purple-200 text-purple-700 px-2 py-1 rounded font-bold transition whitespace-nowrap"><i class="fas fa-download mr-1"></i>Receipt</button>
-                                    </div>
+                                    <button v-if="o.paymentStatus !== 'paid' && session && session.role !== 'Customer'" @click="customerHistoryModal.show=false; openStaffPaymentModal(o)" class="text-xs bg-[#00A09D] hover:bg-teal-700 text-white px-2 py-1 rounded font-bold transition whitespace-nowrap">
+                                        <i class="fas fa-credit-card mr-1"></i>Record Pay
+                                    </button>
+                                    <span v-else-if="o.paymentStatus==='paid'" class="text-green-500 text-xs font-bold"><i class="fas fa-check-circle"></i></span>
                                 </td>
                             </tr>
                         </tbody>
@@ -2598,30 +2440,17 @@
 
                 <!-- Transactions sub-section — latest first -->
                 <div class="border-t pt-4">
-                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-3">
-                        <p class="text-xs font-bold text-gray-500 uppercase">Payment &amp; Refund Transactions</p>
-                        <div class="flex gap-2 flex-wrap items-center">
-                            <select v-model="customerHistoryModal.txnFilter.type" class="border border-gray-200 rounded px-2 py-1 text-xs bg-white focus:outline-none">
-                                <option value="">All Types</option>
-                                <option value="payment">Payments</option>
-                                <option value="partial_payment">Partial</option>
-                                <option value="refund">Refunds</option>
-                            </select>
-                            <input type="date" v-model="customerHistoryModal.txnFilter.dateFrom" class="border border-gray-200 rounded px-2 py-1 text-xs bg-white focus:outline-none">
-                            <input type="date" v-model="customerHistoryModal.txnFilter.dateTo" class="border border-gray-200 rounded px-2 py-1 text-xs bg-white focus:outline-none">
-                            <button @click="customerHistoryModal.txnFilter={type:'',dateFrom:'',dateTo:''}" class="text-[10px] text-[#00A09D] font-bold hover:underline">Reset</button>
-                        </div>
-                    </div>
+                    <p class="text-xs font-bold text-gray-500 uppercase mb-3">Payment & Refund Transactions <span class="text-[10px] text-gray-400 font-normal ml-1">(Latest first)</span></p>
                     <div class="overflow-x-auto rounded-lg border border-gray-100">
                         <table class="w-full text-left">
                             <thead class="bg-gray-50 text-xs font-bold uppercase text-gray-400">
-                                <tr><th class="p-2">Date</th><th class="p-2">Ref</th><th class="p-2">Type</th><th class="p-2">Method/Bank</th><th class="p-2">Description / Reason</th><th class="p-2 text-right">Amount</th><th class="p-2 text-right">Balance After</th><th class="p-2 text-center">Receipt</th></tr>
+                                <tr><th class="p-2">Date</th><th class="p-2">Ref</th><th class="p-2">Type</th><th class="p-2">Method/Bank</th><th class="p-2">Description / Reason</th><th class="p-2 text-right">Amount</th><th class="p-2 text-right">Balance After</th></tr>
                             </thead>
                             <tbody class="text-xs divide-y divide-gray-100">
-                                <tr v-if="filteredCustomerHistoryTxns.length===0">
-                                    <td colspan="8" class="p-4 text-center text-gray-400 italic">No payment transactions yet</td>
+                                <tr v-if="transactions.filter(t=>t.customerId===customerHistoryModal.customer?.customerId).length===0">
+                                    <td colspan="7" class="p-4 text-center text-gray-400 italic">No payment transactions yet</td>
                                 </tr>
-                                <tr v-for="t in filteredCustomerHistoryTxns" :key="t.id" class="hover:bg-gray-50" :class="t.type==='refund'?'bg-orange-50/50':''">
+                                <tr v-for="t in transactions.filter(t=>t.customerId===customerHistoryModal.customer?.customerId).slice().sort((a,b)=>new Date(b.date)-new Date(a.date))" :key="t.id" class="hover:bg-gray-50" :class="t.type==='refund'?'bg-orange-50/50':''">
                                     <td class="p-2 text-gray-500">{{ formatDate(t.date) }}</td>
                                     <td class="p-2 font-bold text-[#714B67]">{{ t.ref }}</td>
                                     <td class="p-2">
@@ -2631,18 +2460,9 @@
                                     <td class="p-2 text-gray-500 capitalize">{{ t.type==='refund' ? (t.fromBank||'—') : ((t.method||'—') + (t.bankName ? ' · '+t.bankName : '')) }}</td>
                                     <td class="p-2 text-gray-600 max-w-[140px] truncate">{{ t.reason || t.description || '—' }}</td>
                                     <td class="p-2 text-right font-bold" :class="t.type==='refund'?'text-orange-600':'text-green-600'">
-                                        <span v-if="t.type==='refund'">- </span>&#8358;{{ formatMoney(Math.abs(t.amount)) }}
+                                        <span v-if="t.type==='refund'">- </span>₦{{ formatMoney(Math.abs(t.amount)) }}
                                     </td>
-                                    <td class="p-2 text-right font-bold" :class="(t.outstanding||0)>0?'text-red-500':'text-gray-400'">&#8358;{{ formatMoney(t.outstanding||0) }}</td>
-                                    <td class="p-2 text-center">
-                                        <div class="flex gap-1 justify-center">
-                                            <button v-if="t.type==='refund'" @click="downloadCustomerRefundReceipt(t)" class="text-[10px] bg-orange-100 hover:bg-orange-200 text-orange-700 px-1.5 py-1 rounded font-bold" title="Download Refund Receipt"><i class="fas fa-download"></i></button>
-                                            <template v-else>
-                                                <button @click="printReceiptByOrderId(t.ref)" class="text-[10px] bg-gray-100 hover:bg-gray-200 text-gray-700 px-1.5 py-1 rounded font-bold" title="Print Receipt"><i class="fas fa-print"></i></button>
-                                                <button @click="downloadReceiptByOrderId(t.ref)" class="text-[10px] bg-purple-100 hover:bg-purple-200 text-purple-700 px-1.5 py-1 rounded font-bold" title="Download Receipt"><i class="fas fa-download"></i></button>
-                                            </template>
-                                        </div>
-                                    </td>
+                                    <td class="p-2 text-right font-bold" :class="(t.outstanding||0)>0?'text-red-500':'text-gray-400'">₦{{ formatMoney(t.outstanding||0) }}</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -2764,8 +2584,8 @@
                             </div>
                             <select v-model="line.name" @change="autoFillCustLine(line)" class="w-full border border-gray-200 p-2.5 rounded-lg bg-white focus:ring-2 focus:ring-[#00A09D] outline-none text-sm mb-2">
                                 <option value="" disabled>Select a product</option>
-                                <option v-for="p in products" :key="p.name" :value="p.name" :disabled="(effectiveStock[p.name]!==undefined?effectiveStock[p.name]:p.stock) < 1">
-                                    {{ p.name }} — ₦{{ formatMoney(p.price) }}/{{ p.unit }} ({{ effectiveStock[p.name]!==undefined?effectiveStock[p.name]:p.stock }} available) {{ (effectiveStock[p.name]!==undefined?effectiveStock[p.name]:p.stock) < 1 ? '(Out of Stock)' : '' }}
+                                <option v-for="p in products" :key="p.name" :value="p.name" :disabled="p.stock < 1 && session.role !== 'Admin'">
+                                    {{ p.name }} — ₦{{ formatMoney(p.price) }}/{{ p.unit }} ({{ p.stock }} available) {{ p.stock < 1 && session.role !== 'Admin' ? '(Out of Stock)' : '' }}
                                 </option>
                             </select>
                             <div v-if="products.find(p => p.name === line.name)?.stock < 1 && session.role !== 'Admin'" class="text-[10px] text-red-600 font-bold"><i class="fas fa-exclamation-circle mr-1"></i>This product is out of stock. Only Admin can place special orders.</div>
@@ -3087,9 +2907,6 @@ createApp({
             centralAccountModal: { show: false, mode: 'transfer_in', fromSource: '', toTarget: '', amount: 0, description: '', reference: '', error: '' },
             centralAccountHistoryModal: { show: false },
             centralRefundReceipt: null,
-            inventoryLog: [],
-            inventoryTab: 'stock',
-            invHistFilter: { type: '', dateFrom: '', dateTo: '' },
 
             // ---- Initial Cash / Drawer ----
             initialCash: 2000000,
@@ -3141,7 +2958,7 @@ createApp({
             expenseFilters: { search: '', category: '', sortBy: 'date_new' },
 
             // ---- Customer Refund ----
-            customerRefundModal: { show: false, customer: null, amount: 0, reason: '', fromBank: '', fromCash: false, fromCentral: false, reference: '', error: '' },
+            customerRefundModal: { show: false, customer: null, amount: 0, reason: '', fromBank: '', fromCash: false, reference: '', error: '' },
 
             // ---- Modals ----
             modal: { show: false, isEdit: false, activeIndex: null, userError: '' },
@@ -3483,22 +3300,6 @@ createApp({
             else if (f.sort === 'amount_low') result.sort((a,b) => a.total-b.total);
             return result;
         },
-        filteredCustomerHistoryTxns() {
-            const m = this.customerHistoryModal;
-            if (!m || !m.customer) return [];
-            const f = m.txnFilter || {};
-            let result = this.transactions.filter(t => t.customerId === m.customer.customerId);
-            if (f.type) result = result.filter(t => t.type === f.type || (f.type === 'payment' && (t.type === 'payment' || t.type === 'partial_payment')));
-            if (f.dateFrom) {
-                const df = parseInt(f.dateFrom.replace(/-/g,''));
-                result = result.filter(t => parseInt((t.date||'').replace(/-/g,'')) >= df);
-            }
-            if (f.dateTo) {
-                const dt = parseInt(f.dateTo.replace(/-/g,''));
-                result = result.filter(t => parseInt((t.date||'').replace(/-/g,'')) <= dt);
-            }
-            return result.slice().sort((a,b) => new Date(b.date) - new Date(a.date));
-        },
         filteredGeneralHistory() {
             const f = this.generalHistoryModal;
             let result = this.orders.slice();
@@ -3524,36 +3325,6 @@ createApp({
             return result;
         },
         // ---- Expenses Filters & Sort ----
-        // effectiveStock: physical stock minus qty tied up in paid-but-not-yet-provided orders
-        effectiveStock() {
-            const reserved = {};
-            this.orders.forEach(o => {
-                if (o.paymentStatus === 'paid' && !o.goodsProvided) {
-                    (o.items || []).forEach(it => {
-                        reserved[it.name] = (reserved[it.name] || 0) + (it.qty || 0);
-                    });
-                }
-            });
-            const result = {};
-            this.products.forEach(p => {
-                result[p.name] = Math.max(0, p.stock - (reserved[p.name] || 0));
-            });
-            return result;
-        },
-        filteredInventoryLog() {
-            const f = this.invHistFilter;
-            let result = this.inventoryLog.slice();
-            if (f.type) result = result.filter(l => l.type === f.type);
-            if (f.dateFrom) {
-                const df = parseInt(f.dateFrom.replace(/-/g,''));
-                result = result.filter(l => parseInt((l.date||'').replace(/-/g,'')) >= df);
-            }
-            if (f.dateTo) {
-                const dt = parseInt(f.dateTo.replace(/-/g,''));
-                result = result.filter(l => parseInt((l.date||'').replace(/-/g,'')) <= dt);
-            }
-            return result;
-        },
         filteredExpenses() {
             let result = this.expenses.slice();
             // Search
@@ -3800,13 +3571,12 @@ createApp({
             const validLines = this.custOrderModal.cartLines.filter(l => l.name && l.qty > 0);
             if (validLines.length === 0) { alert('Please add at least one product with a valid quantity.'); return; }
 
-            // Validate stock — customers cannot order items with insufficient effective stock
+            // Validate stock — customers cannot order out-of-stock items
             for (const line of validLines) {
                 const prod = this.products.find(x => x.name === line.name);
                 if (!prod) { alert(`Product "${line.name}" not found.`); return; }
-                const avail = this.effectiveStock[prod.name] !== undefined ? this.effectiveStock[prod.name] : prod.stock;
-                if (avail <= 0) { alert(`"${line.name}" is currently out of stock (including items reserved for pending delivery). Please contact us for more information.`); return; }
-                if (line.qty > avail) { alert(`"${line.name}" only has ${avail} ${prod.unit} available (${prod.stock - avail} reserved for pending delivery).`); return; }
+                if (prod.stock <= 0) { alert(`"${line.name}" is currently out of stock. Please contact us for more information.`); return; }
+                if (line.qty > prod.stock) { alert(`"${line.name}" only has ${prod.stock} ${prod.unit} in stock.`); return; }
             }
 
             const id = 'SO' + Math.floor(1000 + Math.random() * 9000);
@@ -3857,14 +3627,6 @@ createApp({
         },
 
         // ---- Receipt ----
-        printReceiptByOrderId(orderId) {
-            const order = this.orders.find(o => o.id === orderId);
-            if (order) this.printReceipt(order);
-        },
-        downloadReceiptByOrderId(orderId) {
-            const order = this.orders.find(o => o.id === orderId);
-            if (order) this.downloadReceipt(order);
-        },
         downloadReceipt(order) {
             const receiptHTML = this.buildReceiptHTML(order);
             const blob = new Blob([receiptHTML], { type: 'text/html' });
@@ -3883,12 +3645,6 @@ createApp({
             setTimeout(() => { printWindow.print(); }, 500);
         },
         buildReceiptHTML(order) {
-            const cust = this.customers ? this.customers.find(c => c.customerId === order.customerId) : null;
-            const custPhone = cust ? (cust.phone||'') : '';
-            const custEmail = cust ? (cust.email||'') : '';
-            const custAddr  = cust ? ((cust.address||'') + (cust.state ? ', ' + cust.state : '')) : '';
-            const amtPaid   = order.amountPaid || 0;
-            const balance   = Math.max(0, order.total - amtPaid);
             return `<!DOCTYPE html>
 <html><head><meta charset="UTF-8"><title>Receipt - ${order.id}</title>
 <style>
@@ -3896,52 +3652,28 @@ body{font-family:Arial,sans-serif;padding:40px;max-width:800px;margin:0 auto;}
 .header{text-align:center;border-bottom:3px solid #714B67;padding-bottom:20px;margin-bottom:30px;}
 .header h1{color:#714B67;margin:0;font-size:32px;}
 .header p{color:#666;margin:5px 0;}
-.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px;}
-.info-box{background:#f9f9f9;border-radius:8px;padding:14px;}
-.info-box strong{display:block;color:#714B67;font-size:11px;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;}
-.info-box p{margin:2px 0;font-size:13px;color:#333;}
+.receipt-info{display:flex;justify-content:space-between;margin-bottom:30px;}
+.receipt-info div{flex:1;}
+.receipt-info strong{display:block;color:#714B67;margin-bottom:5px;}
 table{width:100%;border-collapse:collapse;margin:20px 0;}
 th{background:#714B67;color:white;padding:12px;text-align:left;}
 td{padding:12px;border-bottom:1px solid #ddd;}
-.total-row{background:#f9f9f9;font-weight:bold;font-size:16px;}
-.status-bar{margin:16px 0;padding:12px 16px;border-radius:8px;font-weight:bold;font-size:14px;}
+.total-row{background:#f9f9f9;font-weight:bold;font-size:18px;}
 .footer{margin-top:40px;padding-top:20px;border-top:2px solid #ddd;text-align:center;color:#666;font-size:12px;}
-.badge{display:inline-block;padding:5px 15px;border-radius:20px;font-size:12px;font-weight:bold;text-transform:uppercase;}
+.badge{display:inline-block;padding:5px 15px;background:#00A09D;color:white;border-radius:20px;font-size:12px;font-weight:bold;text-transform:uppercase;}
 </style></head><body>
-<div class="header"><h1>LADU INVESTMENT</h1><p>Construction Materials &amp; Equipment</p><p style="font-size:12px;margin-top:10px">Lagos, Nigeria | info@laduinvestment.com</p></div>
-<div style="text-align:center;margin:24px 0">
-  <h2 style="color:#714B67;margin:0 0 8px 0">OFFICIAL RECEIPT</h2>
-  <p style="color:#666;margin:4px 0;font-size:14px"><strong>Transaction ID:</strong> ${order.id}</p>
-  <span class="badge" style="background:${order.paymentStatus==='paid'?'#00A09D':'#f97316'}">${order.paymentStatus==='paid'?'PAID':'PENDING CONFIRMATION'}</span>
+<div class="header"><h1>LADU INVESTMENT</h1><p>Construction Materials & Equipment</p><p style="font-size:12px;margin-top:10px">Lagos, Nigeria | info@laduinvestment.com</p></div>
+<div style="text-align:center;margin:30px 0"><h2 style="color:#714B67;margin:0">OFFICIAL RECEIPT</h2><p style="color:#666;margin:5px 0">Receipt No: ${order.id}</p><span class="badge">PAID</span></div>
+<div class="receipt-info">
+<div><strong>Customer:</strong><p>${order.customerName || order.customer}</p><p style="font-size:12px;color:#999">ID: ${order.customerId || 'Walk-in'}</p><p style="font-size:12px;color:#999">${(order.customerName && order.customer !== order.customerName) ? order.customer.replace(order.customerName, '').replace('—','').trim() : ''}</p></div>
+<div style="text-align:right"><strong>Date:</strong><p>${this.formatDate(order.paymentDate || order.created_at)}</p><strong>Payment Method:</strong><p style="text-transform:capitalize">${order.paymentMethod || 'N/A'}</p></div>
 </div>
-<div class="info-grid">
-  <div class="info-box">
-    <strong>Customer Details</strong>
-    <p><b>${order.customerName || order.customer || 'N/A'}</b></p>
-    <p style="color:#888;font-size:12px">ID: ${order.customerId || 'Walk-in'}</p>
-    ${custPhone ? `<p style="font-size:12px">&#128222; ${custPhone}</p>` : ''}
-    ${custEmail ? `<p style="font-size:12px">&#9993; ${custEmail}</p>` : ''}
-    ${custAddr  ? `<p style="font-size:12px">&#128205; ${custAddr}</p>` : ''}
-  </div>
-  <div class="info-box">
-    <strong>Payment Details</strong>
-    <p>Order Date: ${this.formatDate(order.created_at)}</p>
-    <p>Payment Date: ${this.formatDate(order.paymentDate) || '—'}</p>
-    <p style="text-transform:capitalize">Method: ${order.paymentMethod || 'N/A'}${order.bankName ? ' — ' + order.bankName : ''}</p>
-    <p>Payment Ref: ${order.paymentRef || 'N/A'}</p>
-  </div>
-</div>
-<table><thead><tr><th>Item Description</th><th style="text-align:center">Qty</th><th style="text-align:right">Amount (&#8358;)</th></tr></thead>
+<table><thead><tr><th>Item Description</th><th style="text-align:center">Qty</th><th style="text-align:right">Amount (₦)</th></tr></thead>
 <tbody>
-${order.items.map(i => `<tr><td>${i.name}</td><td style="text-align:center">${i.qty}</td><td style="text-align:right">&#8358;${Number(i.amount||0).toLocaleString()}</td></tr>`).join('')}
-<tr class="total-row"><td colspan="2" style="text-align:right">Order Total:</td><td style="text-align:right">&#8358;${Number(order.total||0).toLocaleString()}</td></tr>
-<tr class="total-row"><td colspan="2" style="text-align:right">Amount Paid:</td><td style="text-align:right;color:#00A09D">&#8358;${Number(amtPaid).toLocaleString()}</td></tr>
-${balance > 0 ? `<tr class="total-row"><td colspan="2" style="text-align:right">Balance Due:</td><td style="text-align:right;color:#ef4444">&#8358;${Number(balance).toLocaleString()}</td></tr>` : ''}
+${order.items.map(i => `<tr><td>${i.name}</td><td style="text-align:center">${i.qty}</td><td style="text-align:right">₦${this.formatMoney(i.amount)}</td></tr>`).join('')}
+<tr class="total-row"><td colspan="2" style="text-align:right">TOTAL PAID:</td><td style="text-align:right">₦${this.formatMoney(order.total)}</td></tr>
 </tbody></table>
-<div class="status-bar" style="background:${order.paymentStatus==='paid'?'#f0fdf4':'#fff7ed'};border-left:4px solid ${order.paymentStatus==='paid'?'#00A09D':'#f97316'}">
-  Payment Status: <span style="color:${order.paymentStatus==='paid'?'#00A09D':'#f97316'}">${order.paymentStatus==='paid'?'FULLY PAID':'PENDING CONFIRMATION'}</span>
-</div>
-<div class="footer"><p><strong>Thank you for your business!</strong></p><p>This is a computer-generated receipt. | Generated: ${new Date().toLocaleString()}</p></div>
+<div class="footer"><p><strong>Thank you for your business!</strong></p><p>This is a computer-generated receipt. Payment Ref: ${order.paymentRef || 'N/A'}</p><p>Generated: ${new Date().toLocaleString()}</p></div>
 </body></html>`;
         },
 
@@ -3989,37 +3721,6 @@ ${balance > 0 ? `<tr class="total-row"><td colspan="2" style="text-align:right">
             });
         },
 
-        // REQ 6: Store staff marks goods as provided → triggers inventory deduction
-        provideGoods(order) {
-            if (!confirm('Confirm that goods for order ' + order.id + ' have been provided to the customer? This will deduct items from inventory.')) return;
-            order.goodsProvided = true;
-            order.goodsProvidedDate = this.localDateStr();
-            order.goodsProvidedBy = this.session ? this.session.fullname : 'Store';
-            // Deduct inventory
-            order.items.forEach(it => {
-                const p = this.products.find(x => x.name === it.name);
-                if (p) {
-                    const before = p.stock;
-                    p.stock = Math.max(0, p.stock - it.qty);
-                    // Record in inventory log
-                    this.inventoryLog.push({
-                        type: 'issued',
-                        item: it.name,
-                        qty: it.qty,
-                        amount: it.amount || 0,
-                        date: this.localDateStr(),
-                        ref: order.id,
-                        customer: order.customerName || order.customer,
-                        issuedBy: order.goodsProvidedBy,
-                        stockBefore: before,
-                        stockAfter: p.stock
-                    });
-                }
-            });
-            this.notifs.unshift({ title: 'Goods Provided', msg: 'Order ' + order.id + ' — items deducted from inventory by ' + (this.session ? this.session.fullname : 'Store') });
-            this.checkStockAlerts();
-        },
-
         // ---- Record Submission ----
         submitRecord() {
             if (this.view === 'sales') {
@@ -4059,15 +3760,12 @@ ${balance > 0 ? `<tr class="total-row"><td colspan="2" style="text-align:right">
 
                 const validLines = (this.form.orderLines || []).filter(l => l.name && l.qty > 0);
                 if (validLines.length === 0) { alert('Add at least one product line with a quantity.'); return; }
-                // Out-of-stock restriction: only Admin can create quotations for items with no effective stock
+                // Out-of-stock restriction: only Admin can create quotations for out-of-stock items
                 if (this.session.role !== 'Admin') {
                     for (const line of validLines) {
                         const prod = this.products.find(p => p.name === line.name);
-                        const avail = prod ? (this.effectiveStock[prod.name] !== undefined ? this.effectiveStock[prod.name] : prod.stock) : 0;
-                        if (!prod || avail <= 0) {
-                            const reserved = prod ? Math.max(0, prod.stock - avail) : 0;
-                            const reservedNote = reserved > 0 ? ` (${prod.stock} in stock but ${reserved} reserved for pending delivery)` : '';
-                            alert(`"${line.name}" is out of stock${reservedNote}. Only Admin can create quotations for out-of-stock items.`);
+                        if (!prod || prod.stock <= 0) {
+                            alert(`"${line.name}" is out of stock. Only Admin can create quotations for out-of-stock items.`);
                             return;
                         }
                     }
@@ -4327,7 +4025,6 @@ ${balance > 0 ? `<tr class="total-row"><td colspan="2" style="text-align:right">
             this.staffPayModal = { show: true, order, mode: 'bank', selectedBank: this.banks[0]?.name || '', bankAmount: Math.max(0, order.total - (order.amountPaid||0)), cashAmount: 0, reference: order.id + '-PAY' };
         },
         submitStaffPayment() {
-            if (this.session && this.session.role === 'Store') { alert('Store staff cannot confirm payments. Please ask Admin or Sales.'); return; }
             const o = this.staffPayModal.order; const bankAmt = Number(this.staffPayModal.bankAmount)||0; const cashAmt = Number(this.staffPayModal.cashAmount)||0; const totalPaying = bankAmt + cashAmt;
             const remaining = Math.max(0, o.total - (o.amountPaid||0));
             if (totalPaying <= 0) { alert('Enter a payment amount'); return; }
@@ -4336,7 +4033,7 @@ ${balance > 0 ? `<tr class="total-row"><td colspan="2" style="text-align:right">
             const newPaid = (o.amountPaid||0) + totalPaying; const newOutstanding = Math.max(0, o.total - newPaid);
             const date = this.localDateStr();
             o.amountPaid = newPaid; o.paymentMethod = this.staffPayModal.mode; o.bankName = this.staffPayModal.mode !== 'cash' ? this.staffPayModal.selectedBank : ''; o.paymentRef = this.staffPayModal.reference || (o.id+'-PAY'); o.paymentDate = date;
-            if (newOutstanding <= 0.01) { o.paymentStatus = 'paid'; o.status = 'confirmed'; o.amountPaid = o.total; } else { o.paymentStatus = 'partial'; o.status = 'confirmed'; }
+            if (newOutstanding <= 0.01) { o.paymentStatus = 'paid'; o.status = 'confirmed'; o.amountPaid = o.total; o.items.forEach(it => { const p = this.products.find(x => x.name === it.name); if (p) p.stock = Math.max(0, p.stock - it.qty); }); } else { o.paymentStatus = 'partial'; o.status = 'confirmed'; }
             if (bankAmt > 0) this.bankLedger.push({ date, ref: o.id, customerName: o.customerName, description: 'Bank payment - '+o.customerName, amount: bankAmt, method: 'bank', bankName: this.staffPayModal.selectedBank, runningBalance: 0 });
             if (cashAmt > 0) this.bankLedger.push({ date, ref: o.id, customerName: o.customerName, description: 'Cash payment - '+o.customerName, amount: cashAmt, method: 'cash', bankName: '', runningBalance: 0 });
             const txnId = 'TXN'+String(this.transactions.length+1).padStart(3,'0');
@@ -4360,7 +4057,7 @@ ${balance > 0 ? `<tr class="total-row"><td colspan="2" style="text-align:right">
         viewCustomerHistory(c) {
             const cOrders = this.orders.filter(o => o.customerId === c.customerId);
             const tp = cOrders.reduce((s,o)=>s+o.total,0); const paid = cOrders.reduce((s,o)=>s+(o.amountPaid||0),0);
-            this.customerHistoryModal = { show: true, customer: c, orders: cOrders, totalPurchases: tp, totalPaid: paid, outstanding: tp-paid, histFilter: { status: '', dateFrom: '', dateTo: '', sort: 'date_new' }, txnFilter: { type: '', dateFrom: '', dateTo: '' } };
+            this.customerHistoryModal = { show: true, customer: c, orders: cOrders, totalPurchases: tp, totalPaid: paid, outstanding: tp-paid, histFilter: { status: '', dateFrom: '', dateTo: '', sort: 'date_new' } };
         },
         openPayForCustomer(c) {
             // Open the customer history modal but with a "Record Payment" mode
@@ -4372,30 +4069,17 @@ ${balance > 0 ? `<tr class="total-row"><td colspan="2" style="text-align:right">
             // Open staff pay modal on the first unpaid order, or show history to pick
             const tp = this.orders.filter(o=>o.customerId===c.customerId).reduce((s,o)=>s+o.total,0);
             const paid = this.orders.filter(o=>o.customerId===c.customerId).reduce((s,o)=>s+(o.amountPaid||0),0);
-            this.customerHistoryModal = { show: true, customer: c, orders: this.orders.filter(o=>o.customerId===c.customerId), totalPurchases: tp, totalPaid: paid, outstanding: tp-paid, payMode: true, histFilter: { status: '', dateFrom: '', dateTo: '', sort: 'date_new' }, txnFilter: { type: '', dateFrom: '', dateTo: '' } };
+            this.customerHistoryModal = { show: true, customer: c, orders: this.orders.filter(o=>o.customerId===c.customerId), totalPurchases: tp, totalPaid: paid, outstanding: tp-paid, payMode: true, histFilter: { status: '', dateFrom: '', dateTo: '', sort: 'date_new' } };
         },
         // ---- Purchase Methods ----
         markPurchaseArrived(idx) {
             const p = this.purchases[idx];
             if (!confirm('Mark ' + p.id + ' as arrived? Stock will be updated for all items.')) return;
             p.status = 'arrived';
-            const today = this.localDateStr();
             // Increment stock now that goods have physically arrived
             (p.items || []).forEach(it => {
                 const prod = this.products.find(x => x.name === it.name);
-                if (prod) {
-                    prod.stock += it.qty;
-                    // Log stock addition
-                    this.inventoryLog.push({
-                        type: 'added',
-                        item: it.name,
-                        qty: it.qty,
-                        amount: (it.qty * (it.price || 0)),
-                        date: today,
-                        ref: p.id,
-                        customer: p.source
-                    });
-                }
+                if (prod) prod.stock += it.qty;
             });
             this.notifs.unshift({ title: 'Purchase Arrived', msg: p.id + ' marked as arrived. Stock updated.' });
         },
@@ -4563,7 +4247,7 @@ ${p.items.map(i=>`<tr><td>${i.name}</td><td>${i.qty}</td><td>₦${Number(i.price
 
         // ---- Customer Refund Methods ----
         openCustomerRefundModal(customer) {
-            this.customerRefundModal = { show: true, customer, amount: 0, reason: '', fromBank: '', fromCash: false, fromCentral: false, reference: '', error: '' };
+            this.customerRefundModal = { show: true, customer, amount: 0, reason: '', fromBank: '', fromCash: false, reference: '', error: '' };
         },
         submitCustomerRefund() {
             const rm = this.customerRefundModal;
@@ -4571,24 +4255,19 @@ ${p.items.map(i=>`<tr><td>${i.name}</td><td>${i.qty}</td><td>₦${Number(i.price
             const amt = Number(rm.amount) || 0;
             if (amt <= 0) { rm.error = 'Enter a valid refund amount.'; return; }
             if (!rm.reason.trim()) { rm.error = 'A reason for the refund is required.'; return; }
-            if (!rm.fromBank && !rm.fromCash && !rm.fromCentral) { rm.error = 'Select the bank, drawer, or Central Account to refund from.'; return; }
+            if (!rm.fromBank && !rm.fromCash) { rm.error = 'Select the bank or drawer to refund from.'; return; }
 
             const today = this.localDateStr();
             const refId = 'REF' + String(this.transactions.length + 1).padStart(3, '0') + '-' + Math.floor(100 + Math.random() * 900);
-            const fromSource = rm.fromCash ? 'Cash Drawer' : rm.fromCentral ? 'Central Account' : rm.fromBank;
+            const fromSource = rm.fromCash ? 'Cash Drawer' : rm.fromBank;
 
             // Check balance of source
             if (rm.fromCash && amt > this.drawerBalance) { rm.error = 'Insufficient cash drawer balance.'; return; }
-            if (rm.fromCentral && amt > this.centralAccount.balance) { rm.error = 'Insufficient Central Account balance.'; return; }
-            if (!rm.fromCash && !rm.fromCentral && amt > (this.bankBalances[rm.fromBank] || 0)) { rm.error = 'Insufficient balance in ' + rm.fromBank; return; }
+            if (!rm.fromCash && amt > (this.bankBalances[rm.fromBank] || 0)) { rm.error = 'Insufficient balance in ' + rm.fromBank; return; }
 
-            // Deduct from bank/drawer/central
+            // Deduct from bank/drawer
             if (rm.fromCash) {
                 this.bankLedger.push({ date: today, ref: refId, customerName: rm.customer.fullname, description: 'Refund to ' + rm.customer.fullname + ': ' + rm.reason, amount: -amt, method: 'cash', bankName: '', runningBalance: 0 });
-            } else if (rm.fromCentral) {
-                this.centralAccount.balance -= amt;
-                const runBal = this.centralAccount.balance;
-                this.centralAccount.ledger.push({ date: today, ref: refId, description: 'Refund to ' + rm.customer.fullname + ': ' + rm.reason, amount: -amt, type: 'refund', fromSource: '', toTarget: '', runningBalance: runBal });
             } else {
                 this.bankLedger.push({ date: today, ref: refId, customerName: rm.customer.fullname, description: 'Refund to ' + rm.customer.fullname + ': ' + rm.reason, amount: -amt, method: 'bank', bankName: rm.fromBank, runningBalance: 0 });
             }
@@ -4598,8 +4277,8 @@ ${p.items.map(i=>`<tr><td>${i.name}</td><td>${i.qty}</td><td>₦${Number(i.price
                 id: refId, customerId: rm.customer.customerId, ref: refId,
                 description: 'Refund: ' + rm.reason, reason: rm.reason,
                 amount: -amt, date: today, type: 'refund',
-                method: rm.fromCash ? 'cash' : rm.fromCentral ? 'central' : 'bank',
-                bankName: rm.fromCash || rm.fromCentral ? '' : rm.fromBank,
+                method: rm.fromCash ? 'cash' : 'bank',
+                bankName: rm.fromCash ? '' : rm.fromBank,
                 fromBank: fromSource,
                 outstanding: 0
             });
@@ -4685,51 +4364,10 @@ ${r.reference?`<div class="info-row"><span class="label">Reference</span><span c
             this.downloadRefundReceipt(r);
         },
 
-        // ---- Inventory Reports ----
-        downloadInventoryReport() {
-            const { doc, lw } = this.createPDFDoc('CURRENT STOCK BALANCE REPORT');
-            let y = 52;
-            doc.setFontSize(8); doc.setFont(undefined,'normal'); doc.setTextColor(80,80,80);
-            doc.text('Generated: ' + new Date().toLocaleDateString(), 14, y); y += 8;
-            const rows = this.products.map(p => [p.name, p.category, p.stock + ' ' + p.unit, p.stock === 0 ? 'OUT OF STOCK' : p.stock < 20 ? 'LOW STOCK' : 'IN STOCK', this.pdfMoney(p.price)]);
-            doc.autoTable({ startY: y, head: [['Item Name','Category','Qty in Stock','Status','Unit Price (NGN)']], body: rows, styles: { fontSize: 8, cellPadding: 2 }, headStyles: { fillColor: [0,160,157] }, alternateRowStyles: { fillColor: [248,248,248] }, theme: 'grid', margin: { left: 14, right: 14 },
-                didParseCell: (d) => { if (d.section === 'body' && d.column.index === 3) { if (d.cell.raw === 'OUT OF STOCK') d.cell.styles.textColor = [220,50,50]; else if (d.cell.raw === 'LOW STOCK') d.cell.styles.textColor = [180,100,0]; else d.cell.styles.textColor = [0,130,100]; } }
-            });
-            y = doc.lastAutoTable.finalY + 8;
-            doc.setFontSize(9); doc.setFont(undefined,'bold');
-            doc.text('Total Items: ' + this.products.length + '  |  Total Stock Value: NGN ' + this.formatMoney(this.stockValue), 14, y);
-            this.addPDFFooter(doc);
-            doc.save('StockReport-' + this.localDateStr() + '.pdf');
-        },
-        downloadInventoryHistoryReport() {
-            const { doc, lw } = this.createPDFDoc('INVENTORY HISTORY REPORT');
-            let y = 52;
-            doc.setFontSize(8); doc.setFont(undefined,'normal'); doc.setTextColor(80,80,80);
-            doc.text('Date Range: ' + (this.invHistFilter.dateFrom||'All') + ' to ' + (this.invHistFilter.dateTo||'All') + '  |  Type: ' + (this.invHistFilter.type||'All'), 14, y); y += 8;
-            const issued = this.filteredInventoryLog.filter(l=>l.type==='issued').slice().sort((a,b)=>String(b.date).localeCompare(String(a.date)));
-            const added  = this.filteredInventoryLog.filter(l=>l.type==='added').slice().sort((a,b)=>String(b.date).localeCompare(String(a.date)));
-            if (issued.length) {
-                doc.setFontSize(9); doc.setFont(undefined,'bold'); doc.setTextColor(0,0,0);
-                doc.text('GOODS ISSUED', 14, y); y += 4;
-                doc.autoTable({ startY: y, head: [['Date','Item','Qty','Value (NGN)','Order Ref','Customer','Issued By']], body: issued.map(l=>[this.formatDate(l.date),l.item,l.qty,this.pdfMoney(l.amount),l.ref||'-',l.customer||'-',l.issuedBy||'-']), styles: { fontSize: 7.5, cellPadding: 2 }, headStyles: { fillColor: [220,50,50] }, alternateRowStyles: { fillColor: [255,248,248] }, theme: 'grid', margin: { left: 14, right: 14 } });
-                y = doc.lastAutoTable.finalY + 8;
-            }
-            if (added.length) {
-                doc.setFontSize(9); doc.setFont(undefined,'bold'); doc.setTextColor(0,0,0);
-                doc.text('STOCK ADDED', 14, y); y += 4;
-                doc.autoTable({ startY: y, head: [['Date','Item','Qty Added','Purchase Ref','Supplier']], body: added.map(l=>[this.formatDate(l.date),l.item,l.qty,l.ref||'-',l.customer||'-']), styles: { fontSize: 7.5, cellPadding: 2 }, headStyles: { fillColor: [0,160,100] }, alternateRowStyles: { fillColor: [248,255,248] }, theme: 'grid', margin: { left: 14, right: 14 } });
-            }
-            if (!issued.length && !added.length) { doc.setFontSize(10); doc.text('No inventory records found for the selected filters.', 14, y); }
-            this.addPDFFooter(doc);
-            doc.save('InventoryHistory-' + this.localDateStr() + '.pdf');
-        },
-
         // ---- Stock Management: Block orders when stock is zero ----
         canPlaceOrder(productName) {
             const prod = this.products.find(p => p.name === productName);
-            if (!prod) return false;
-            const avail = this.effectiveStock[prod.name] !== undefined ? this.effectiveStock[prod.name] : prod.stock;
-            return avail > 0;
+            return prod && prod.stock > 0;
         },
         checkStockAvailability(productName) {
             if (!this.canPlaceOrder(productName)) {
