@@ -2907,15 +2907,19 @@
                 </div>
                 <!-- Refund from -->
                 <div>
-                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-2">Refund From (Bank/Drawer) *</label>
+                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-2">Refund From *</label>
                     <div class="grid grid-cols-2 gap-2">
-                        <button v-for="b in banks" :key="b.name" @click="customerRefundModal.fromBank=b.name; customerRefundModal.fromCash=false" :class="customerRefundModal.fromBank===b.name&&!customerRefundModal.fromCash?'bg-orange-500 text-white border-orange-500':'bg-white text-gray-600 border-gray-200'" class="p-2 border rounded-lg text-xs font-bold transition text-left">
+                        <button v-for="b in banks" :key="b.name" @click="customerRefundModal.fromBank=b.name; customerRefundModal.fromCash=false; customerRefundModal.fromCentral=false" :class="customerRefundModal.fromBank===b.name&&!customerRefundModal.fromCash&&!customerRefundModal.fromCentral?'bg-orange-500 text-white border-orange-500':'bg-white text-gray-600 border-gray-200'" class="p-2 border rounded-lg text-xs font-bold transition text-left">
                             <p class="font-bold">{{ b.name }}</p>
                             <p class="text-[9px] opacity-70">₦{{ formatMoney(bankBalances[b.name]||0) }}</p>
                         </button>
-                        <button @click="customerRefundModal.fromBank=''; customerRefundModal.fromCash=true" :class="customerRefundModal.fromCash?'bg-orange-500 text-white border-orange-500':'bg-white text-gray-600 border-gray-200'" class="p-2 border rounded-lg text-xs font-bold transition text-left">
+                        <button @click="customerRefundModal.fromBank=''; customerRefundModal.fromCash=true; customerRefundModal.fromCentral=false" :class="customerRefundModal.fromCash?'bg-orange-500 text-white border-orange-500':'bg-white text-gray-600 border-gray-200'" class="p-2 border rounded-lg text-xs font-bold transition text-left">
                             <p class="font-bold"><i class="fas fa-money-bill mr-1"></i>Cash Drawer</p>
                             <p class="text-[9px] opacity-70">₦{{ formatMoney(drawerBalance) }}</p>
+                        </button>
+                        <button @click="customerRefundModal.fromBank=''; customerRefundModal.fromCash=false; customerRefundModal.fromCentral=true" :class="customerRefundModal.fromCentral?'bg-indigo-600 text-white border-indigo-600':'bg-white text-gray-600 border-gray-200'" class="p-2 border rounded-lg text-xs font-bold transition text-left">
+                            <p class="font-bold"><i class="fas fa-building-columns mr-1"></i>Central Account</p>
+                            <p class="text-[9px] opacity-70">₦{{ formatMoney(centralAccount.balance) }}</p>
                         </button>
                     </div>
                 </div>
@@ -2984,6 +2988,102 @@
     <div id="printRefundReceipt" style="display: none;"></div>
 
     <div id="printReceipt" style="display: none;"></div>
+
+    <!-- REFUND RECEIPT MODAL -->
+    <div v-if="refundReceiptModal.show" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-[90] flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up flex flex-col max-h-[92vh]">
+            <!-- Header -->
+            <div class="bg-gradient-to-r from-orange-500 to-orange-700 p-5 text-white flex justify-between items-center flex-shrink-0">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center text-xl font-black">LDI</div>
+                    <div>
+                        <h3 class="font-black text-base tracking-wide">REFUND RECEIPT</h3>
+                        <p class="text-orange-100 text-xs mt-0.5">{{ refundReceiptModal.receipt?.refId }}</p>
+                    </div>
+                </div>
+                <button @click="refundReceiptModal.show=false" class="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition"><i class="fas fa-times text-sm"></i></button>
+            </div>
+
+            <!-- Receipt body (scrollable) -->
+            <div class="overflow-y-auto flex-1 p-6 space-y-4" v-if="refundReceiptModal.receipt">
+                <!-- Badge -->
+                <div class="text-center">
+                    <span class="inline-block bg-orange-100 border-2 border-orange-400 text-orange-700 text-xs font-black px-4 py-1.5 rounded-full uppercase tracking-widest">Refund Issued</span>
+                </div>
+
+                <!-- Info rows -->
+                <div class="bg-gray-50 rounded-xl divide-y divide-gray-100 border border-gray-100">
+                    <div class="flex justify-between items-center px-4 py-2.5">
+                        <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wide">Receipt No.</span>
+                        <span class="font-black text-orange-600 text-sm">{{ refundReceiptModal.receipt.refId }}</span>
+                    </div>
+                    <div class="flex justify-between items-center px-4 py-2.5">
+                        <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wide">Date</span>
+                        <span class="font-semibold text-gray-700 text-sm">{{ formatDate(refundReceiptModal.receipt.date) }}</span>
+                    </div>
+                    <div class="flex justify-between items-center px-4 py-2.5">
+                        <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wide">Customer</span>
+                        <div class="text-right">
+                            <p class="font-semibold text-gray-700 text-sm">{{ refundReceiptModal.receipt.customer.fullname }}</p>
+                            <p v-if="refundReceiptModal.receipt.customer.company" class="text-gray-400 text-xs">({{ refundReceiptModal.receipt.customer.company }})</p>
+                        </div>
+                    </div>
+                    <div class="flex justify-between items-center px-4 py-2.5">
+                        <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wide">Customer ID</span>
+                        <span class="font-mono text-xs text-gray-500">{{ refundReceiptModal.receipt.customer.customerId }}</span>
+                    </div>
+                    <div v-if="refundReceiptModal.receipt.customer.phone" class="flex justify-between items-center px-4 py-2.5">
+                        <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wide">Phone</span>
+                        <span class="text-sm text-gray-600">{{ refundReceiptModal.receipt.customer.phone }}</span>
+                    </div>
+                    <div v-if="refundReceiptModal.receipt.customer.email" class="flex justify-between items-center px-4 py-2.5">
+                        <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wide">Email</span>
+                        <span class="text-sm text-gray-600">{{ refundReceiptModal.receipt.customer.email }}</span>
+                    </div>
+                    <div v-if="refundReceiptModal.receipt.customer.address" class="flex justify-between items-center px-4 py-2.5">
+                        <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wide">Address</span>
+                        <span class="text-sm text-gray-600 text-right max-w-[60%]">{{ refundReceiptModal.receipt.customer.address }}<span v-if="refundReceiptModal.receipt.customer.state">, {{ refundReceiptModal.receipt.customer.state }}</span></span>
+                    </div>
+                    <div class="flex justify-between items-center px-4 py-2.5">
+                        <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wide">Refunded From</span>
+                        <span class="font-semibold text-gray-700 text-sm">{{ refundReceiptModal.receipt.fromSource }}</span>
+                    </div>
+                    <div v-if="refundReceiptModal.receipt.reference" class="flex justify-between items-center px-4 py-2.5">
+                        <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wide">Reference</span>
+                        <span class="font-mono text-xs text-gray-500">{{ refundReceiptModal.receipt.reference }}</span>
+                    </div>
+                </div>
+
+                <!-- Amount -->
+                <div class="bg-gradient-to-br from-orange-500 to-orange-700 rounded-xl p-5 text-white text-center">
+                    <p class="text-xs font-bold uppercase tracking-widest opacity-80 mb-1">Refund Amount</p>
+                    <p class="text-4xl font-black">&#8358;{{ formatMoney(refundReceiptModal.receipt.amount) }}</p>
+                </div>
+
+                <!-- Reason -->
+                <div class="bg-orange-50 border-l-4 border-orange-400 rounded-r-xl p-4">
+                    <p class="text-[10px] font-black text-orange-600 uppercase tracking-wide mb-1.5"><i class="fas fa-comment-alt mr-1"></i>Reason for Refund</p>
+                    <p class="text-sm text-gray-700 leading-relaxed">{{ refundReceiptModal.receipt.reason }}</p>
+                </div>
+
+                <!-- Generated note -->
+                <p class="text-center text-[10px] text-gray-400">Generated by Ladu Investment ERP &middot; Keep this for your records</p>
+            </div>
+
+            <!-- Action buttons -->
+            <div class="flex gap-3 p-5 border-t border-gray-100 bg-gray-50 flex-shrink-0">
+                <button @click="printRefundReceipt()" class="flex-1 flex items-center justify-center gap-2 bg-gray-700 hover:bg-gray-800 text-white font-bold py-3 rounded-xl transition shadow-sm">
+                    <i class="fas fa-print"></i> Print
+                </button>
+                <button @click="downloadRefundReceiptPDF()" class="flex-1 flex items-center justify-center gap-2 bg-orange-600 hover:bg-orange-700 text-white font-bold py-3 rounded-xl transition shadow-sm">
+                    <i class="fas fa-file-pdf"></i> Download PDF
+                </button>
+                <button @click="refundReceiptModal.show=false" class="px-5 flex items-center justify-center bg-white border border-gray-200 hover:bg-gray-100 text-gray-600 font-bold py-3 rounded-xl transition">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -3087,6 +3187,7 @@ createApp({
             centralAccountModal: { show: false, mode: 'transfer_in', fromSource: '', toTarget: '', amount: 0, description: '', reference: '', error: '' },
             centralAccountHistoryModal: { show: false },
             centralRefundReceipt: null,
+            refundReceiptModal: { show: false, receipt: null },
             inventoryLog: [],
             inventoryTab: 'stock',
             invHistFilter: { type: '', dateFrom: '', dateTo: '' },
@@ -4613,8 +4714,8 @@ ${p.items.map(i=>`<tr><td>${i.name}</td><td>${i.qty}</td><td>₦${Number(i.price
             this.notifs.unshift({ title: 'Refund Issued', msg: refId + ' — ₦' + this.formatMoney(amt) + ' refunded to ' + rm.customer.fullname });
             rm.show = false;
 
-            // Auto-download receipt
-            this.$nextTick(() => this.downloadRefundReceipt(this.centralRefundReceipt));
+            // Show receipt modal instead of auto-downloading
+            this.$nextTick(() => { this.refundReceiptModal = { show: true, receipt: this.centralRefundReceipt }; });
         },
         downloadRefundReceipt(r) {
             if (!r) return;
@@ -4671,18 +4772,142 @@ ${r.reference?`<div class="info-row"><span class="label">Reference</span><span c
         },
 
         downloadCustomerRefundReceipt(t) {
-            // Build receipt from transaction record (customer side)
+            // Build receipt from transaction record and show modal
             const customer = this.session && this.session.role === 'Customer' ? this.session : this.customers.find(c => c.customerId === t.customerId);
             const r = {
                 refId: t.ref || t.id,
                 customer: customer || { fullname: t.customerId, customerId: t.customerId, phone: '', company: '' },
                 amount: Math.abs(t.amount || 0),
                 reason: t.reason || t.description || 'Refund',
-                fromSource: t.fromBank || (t.method === 'cash' ? 'Cash Drawer' : t.bankName || '—'),
+                fromSource: t.fromBank || (t.method === 'central' ? 'Central Account' : t.method === 'cash' ? 'Cash Drawer' : t.bankName || '—'),
                 date: t.date,
                 reference: t.ref
             };
-            this.downloadRefundReceipt(r);
+            this.refundReceiptModal = { show: true, receipt: r };
+        },
+
+        // ---- Refund Receipt Modal Actions ----
+        printRefundReceipt() {
+            const r = this.refundReceiptModal.receipt;
+            if (!r) return;
+            const html = this.buildRefundReceiptHTML(r);
+            const w = window.open('', '_blank');
+            if (w) { w.document.write(html); w.document.close(); setTimeout(() => w.print(), 600); }
+        },
+        downloadRefundReceiptPDF() {
+            const r = this.refundReceiptModal.receipt;
+            if (!r) return;
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            const lw = doc.internal.pageSize.getWidth();
+            // Header
+            doc.setFillColor(234, 88, 12);
+            doc.rect(0, 0, lw, 30, 'F');
+            doc.setTextColor(255,255,255);
+            doc.setFontSize(14); doc.setFont(undefined,'bold');
+            doc.text('LADU INVESTMENT', 14, 12);
+            doc.setFontSize(8); doc.setFont(undefined,'normal');
+            doc.text('Construction Materials & Equipment', 14, 18);
+            doc.text('Lagos, Nigeria | info@laduinvestment.com', 14, 23);
+            // Title
+            doc.setTextColor(0,0,0);
+            doc.setFontSize(13); doc.setFont(undefined,'bold');
+            doc.text('REFUND RECEIPT', lw/2, 42, { align: 'center' });
+            doc.setDrawColor(234,88,12); doc.line(14, 45, lw-14, 45);
+            let y = 52;
+            // Info rows
+            const rows = [
+                ['Receipt No.', r.refId],
+                ['Date', this.formatDate(r.date)],
+                ['Customer', (r.customer.fullname||'') + (r.customer.company ? ' (' + r.customer.company + ')' : '')],
+                ['Customer ID', r.customer.customerId||''],
+                ['Phone', r.customer.phone||'—'],
+                ['Refunded From', r.fromSource||'—'],
+            ];
+            if (r.reference) rows.push(['Reference', r.reference]);
+            doc.autoTable({ startY: y, body: rows, styles: { fontSize: 9, cellPadding: 3 }, columnStyles: { 0: { fontStyle: 'bold', cellWidth: 45, textColor: [130,130,130] }, 1: { fontStyle: 'bold' } }, theme: 'plain', margin: { left: 14, right: 14 } });
+            y = doc.lastAutoTable.finalY + 6;
+            // Amount box
+            doc.setFillColor(234, 88, 12);
+            doc.roundedRect(14, y, lw-28, 22, 3, 3, 'F');
+            doc.setTextColor(255,255,255);
+            doc.setFontSize(9); doc.setFont(undefined,'normal');
+            doc.text('REFUND AMOUNT', lw/2, y+7, { align: 'center' });
+            doc.setFontSize(18); doc.setFont(undefined,'bold');
+            doc.text('NGN ' + Number(r.amount).toLocaleString('en-NG', {minimumFractionDigits:2}), lw/2, y+17, { align: 'center' });
+            y += 28;
+            // Reason
+            doc.setTextColor(0,0,0);
+            doc.setFontSize(8); doc.setFont(undefined,'bold');
+            doc.text('REASON FOR REFUND', 14, y); y += 4;
+            doc.setFont(undefined,'normal'); doc.setFontSize(9);
+            doc.setFillColor(255,248,240); doc.rect(14, y, lw-28, 14, 'F');
+            doc.setDrawColor(234,88,12); doc.rect(14, y, 3, 14, 'F');
+            const reasonLines = doc.splitTextToSize(r.reason||'', lw-36);
+            doc.text(reasonLines, 20, y+5); y += 20;
+            // Stamp
+            doc.setTextColor(234,88,12); doc.setFontSize(11); doc.setFont(undefined,'bold');
+            doc.text('REFUND ISSUED', lw/2, y+4, { align: 'center' });
+            // Footer
+            const ph = doc.internal.pageSize.getHeight();
+            doc.setFontSize(8); doc.setTextColor(150,150,150); doc.setFont(undefined,'normal');
+            doc.line(14, ph-22, lw-14, ph-22);
+            doc.text('This receipt was generated by Ladu Investment ERP', lw/2, ph-15, { align: 'center' });
+            doc.text('Generated: ' + new Date().toLocaleString(), lw/2, ph-9, { align: 'center' });
+            doc.save('RefundReceipt-' + (r.refId||'receipt') + '.pdf');
+        },
+        // build the refund receipt HTML (used for print)
+        buildRefundReceiptHTML(r) {
+            return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Refund Receipt - ${r.refId}</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Arial',sans-serif;padding:40px;max-width:600px;margin:0 auto;color:#222;}
+.header{text-align:center;border-bottom:4px solid #ea580c;padding-bottom:24px;margin-bottom:28px;}
+.logo{width:60px;height:60px;background:#ea580c;color:white;font-size:20px;font-weight:900;border-radius:12px;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;}
+h1{color:#ea580c;font-size:22px;font-weight:900;}
+.subtitle{color:#888;font-size:13px;margin-top:4px;}
+.badge{display:inline-block;background:#fff3e0;border:2px solid #ea580c;color:#ea580c;padding:6px 18px;border-radius:20px;font-weight:900;font-size:13px;letter-spacing:1px;text-transform:uppercase;margin:16px 0;}
+.info-row{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f0f0f0;font-size:13px;}
+.info-row .label{color:#888;font-weight:bold;text-transform:uppercase;font-size:11px;}
+.info-row .value{font-weight:600;}
+.amount-box{background:linear-gradient(135deg,#ea580c,#c2410c);color:white;border-radius:12px;padding:20px;margin:24px 0;text-align:center;}
+.amount-box .alabel{font-size:11px;opacity:0.8;text-transform:uppercase;letter-spacing:1px;}
+.amount-box .aval{font-size:32px;font-weight:900;margin:4px 0;}
+.reason-box{background:#fff8f0;border-left:4px solid #ea580c;padding:16px;border-radius:0 8px 8px 0;margin:16px 0;}
+.reason-box .rlabel{font-size:11px;color:#ea580c;font-weight:900;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;}
+.reason-box .rtext{font-size:13px;color:#444;line-height:1.6;}
+.footer{text-align:center;margin-top:32px;padding-top:20px;border-top:2px solid #eee;color:#aaa;font-size:11px;}
+.stamp{display:inline-block;border:3px solid #ea580c;color:#ea580c;padding:8px 24px;border-radius:8px;font-weight:900;font-size:14px;letter-spacing:2px;opacity:0.7;transform:rotate(-5deg);margin-top:12px;}
+</style></head><body>
+<div class="header">
+<div class="logo">LDI</div>
+<h1>LADU INVESTMENT</h1>
+<div class="subtitle">Construction Materials &amp; Equipment</div>
+<div class="badge">REFUND RECEIPT</div>
+</div>
+<div class="info-row"><span class="label">Receipt No.</span><span class="value" style="color:#ea580c;font-weight:900">${r.refId}</span></div>
+<div class="info-row"><span class="label">Date</span><span class="value">${this.formatDate(r.date)}</span></div>
+<div class="info-row"><span class="label">Customer</span><span class="value">${r.customer.fullname||''}${r.customer.company?' ('+r.customer.company+')':''}</span></div>
+<div class="info-row"><span class="label">Customer ID</span><span class="value">${r.customer.customerId||''}</span></div>
+${r.customer.phone?`<div class="info-row"><span class="label">Phone</span><span class="value">${r.customer.phone}</span></div>`:''}
+${r.customer.email?`<div class="info-row"><span class="label">Email</span><span class="value">${r.customer.email}</span></div>`:''}
+${r.customer.address?`<div class="info-row"><span class="label">Address</span><span class="value">${r.customer.address}${r.customer.state?', '+r.customer.state:''}</span></div>`:''}
+<div class="info-row"><span class="label">Refunded From</span><span class="value">${r.fromSource}</span></div>
+${r.reference?`<div class="info-row"><span class="label">Reference</span><span class="value">${r.reference}</span></div>`:''}
+<div class="amount-box">
+<div class="alabel">Refund Amount</div>
+<div class="aval">&#8358;${Number(r.amount).toLocaleString('en-NG',{minimumFractionDigits:2,maximumFractionDigits:2})}</div>
+</div>
+<div class="reason-box">
+<div class="rlabel">Reason for Refund</div>
+<div class="rtext">${r.reason||''}</div>
+</div>
+<div style="text-align:center;margin-top:8px;"><div class="stamp">REFUND ISSUED</div></div>
+<div class="footer">
+<p>This receipt was generated by Ladu Investment ERP</p>
+<p style="margin-top:4px;">Generated on ${new Date().toLocaleString('en-GB')} — Keep this for your records</p>
+</div>
+</body></html>`;
         },
 
         // ---- Inventory Reports ----
