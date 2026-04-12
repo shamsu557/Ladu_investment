@@ -546,7 +546,6 @@
                 <a v-if="['Admin','Sales'].includes(session.role)" href="#" @click.prevent="view = 'sales'; sidebarOpen = false" :class="navClass('sales')"><i class="fas fa-shopping-cart w-8 text-center"></i> Sales Orders</a>
                 <a v-if="['Admin','Sales'].includes(session.role)" href="#" @click.prevent="view = 'customers'; sidebarOpen = false" :class="navClass('customers')"><i class="fas fa-address-book w-8 text-center"></i> Customers</a>
                 <a v-if="session.role === 'Admin'" href="#" @click.prevent="view = 'financials'; sidebarOpen = false" :class="navClass('financials')"><i class="fas fa-landmark w-8 text-center"></i> Financial</a>
-                <a v-if="session.role === 'Admin'" href="#" @click.prevent="view = 'suppliers'; sidebarOpen = false" :class="navClass('suppliers')"><i class="fas fa-truck w-8 text-center"></i> Suppliers</a>
                 <a v-if="session.role === 'Admin'" href="#" @click.prevent="view = 'expenses'; sidebarOpen = false" :class="navClass('expenses')"><i class="fas fa-receipt w-8 text-center"></i> Expenses</a>
                 <a v-if="session.role === 'Admin'" href="#" @click.prevent="view = 'users'; sidebarOpen = false" :class="navClass('users')"><i class="fas fa-users-cog w-8 text-center"></i> User Management</a>
                 <a v-if="['Admin','Sales'].includes(session.role)" href="#" @click.prevent="view = 'payments'; sidebarOpen = false" :class="navClass('payments')"><i class="fas fa-money-check-alt w-8 text-center"></i> Payments</a>
@@ -591,7 +590,7 @@
                         <i class="fas fa-comment-alt text-xl"></i>
                         <span v-if="messages.length > 0" class="absolute top-1 right-1 w-2 h-2 bg-green-500 rounded-full"></span>
                     </button>
-                    <button v-if="['sales','inventory','users','expenses','customers','suppliers'].includes(view)" @click="openActionModal" class="bg-[#714B67] hover:bg-[#5a3c52] text-white px-4 py-2 rounded-lg text-sm font-bold shadow-md shadow-purple-900/10 transition flex items-center gap-2">
+                    <button v-if="['sales','inventory','users','expenses','customers'].includes(view)" @click="openActionModal" class="bg-[#714B67] hover:bg-[#5a3c52] text-white px-4 py-2 rounded-lg text-sm font-bold shadow-md shadow-purple-900/10 transition flex items-center gap-2">
                         <i class="fas fa-plus"></i> <span class="hidden sm:inline">Create New</span>
                     </button>
                 </div>
@@ -858,118 +857,6 @@
                                             <div class="flex items-center justify-center gap-2">
                                                 <button v-if="p.status === 'pending'" @click="markPurchaseArrived(idx)" class="text-[10px] bg-green-600 text-white px-2 py-1 rounded font-bold hover:bg-green-700"><i class="fas fa-check mr-1"></i>Arrived</button>
                                                 <button @click="viewPurchaseReceipt(p)" class="text-[10px] bg-gray-100 text-gray-600 px-2 py-1 rounded font-bold hover:bg-gray-200"><i class="fas fa-file-alt mr-1"></i>Receipt</button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- SUPPLIERS -->
-                <div v-if="view === 'suppliers'" class="space-y-4">
-                    <!-- Stats row -->
-                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                        <div class="bg-white p-4 rounded-xl border border-gray-100 shadow-sm text-center">
-                            <p class="text-[10px] font-bold uppercase text-gray-400 mb-1">Total Suppliers</p>
-                            <p class="text-2xl font-black text-gray-800">{{ allSuppliersWithCustomers.length }}</p>
-                        </div>
-                        <div class="bg-white p-4 rounded-xl border border-[#714B67]/20 shadow-sm text-center">
-                            <p class="text-[10px] font-bold uppercase text-[#714B67] mb-1">Permanent</p>
-                            <p class="text-2xl font-black text-[#714B67]">{{ allSuppliersWithCustomers.filter(s=>s.type==='permanent').length }}</p>
-                        </div>
-                        <div class="bg-white p-4 rounded-xl border border-orange-200 shadow-sm text-center">
-                            <p class="text-[10px] font-bold uppercase text-orange-500 mb-1">Temporary</p>
-                            <p class="text-2xl font-black text-orange-600">{{ allSuppliersWithCustomers.filter(s=>s.type==='temporary').length }}</p>
-                        </div>
-                        <div class="bg-white p-4 rounded-xl border border-gray-100 shadow-sm text-center">
-                            <p class="text-[10px] font-bold uppercase text-gray-400 mb-1">Categories</p>
-                            <p class="text-2xl font-black text-gray-800">{{ [...new Set(allSuppliersWithCustomers.map(s=>s.category).filter(Boolean))].length }}</p>
-                        </div>
-                    </div>
-
-                    <!-- Filters + Add button -->
-                    <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
-                        <div class="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
-                            <h3 class="font-bold text-gray-700">Supplier Directory</h3>
-                            <div class="flex gap-2 flex-wrap w-full sm:w-auto">
-                                <div class="relative flex-1 sm:flex-initial">
-                                    <i class="fas fa-search absolute left-3 top-2.5 text-gray-400 text-sm"></i>
-                                    <input v-model="supplierFilters.search" type="text" placeholder="Search suppliers..." class="w-full sm:w-48 pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-xs focus:ring-2 focus:ring-[#714B67] outline-none bg-gray-50">
-                                </div>
-                                <select v-model="supplierFilters.type" class="border border-gray-200 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-[#714B67] outline-none bg-gray-50">
-                                    <option value="">All Types</option>
-                                    <option value="permanent">Permanent</option>
-                                    <option value="temporary">Temporary</option>
-                                </select>
-                                <button @click="openSupplierModal()" class="bg-[#714B67] hover:bg-purple-800 text-white px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-2">
-                                    <i class="fas fa-plus"></i> Add Supplier
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Info box about temporary suppliers -->
-                    <div class="p-3 bg-orange-50 border border-orange-200 rounded-xl text-xs text-orange-700 flex items-start gap-2">
-                        <i class="fas fa-info-circle mt-0.5"></i>
-                        <span><strong>Temporary suppliers</strong> are permanent customers who occasionally sell to you. They appear alongside permanent suppliers in the purchase dropdown.</span>
-                    </div>
-
-                    <!-- Suppliers Table -->
-                    <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-left">
-                                <thead class="bg-gray-50 text-xs font-bold uppercase text-gray-400">
-                                    <tr>
-                                        <th class="p-4">Supplier</th>
-                                        <th class="p-4">Contact</th>
-                                        <th class="p-4">Category</th>
-                                        <th class="p-4">Type</th>
-                                        <th class="p-4">Purchases</th>
-                                        <th class="p-4 text-center">Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="text-sm divide-y divide-gray-100">
-                                    <tr v-if="filteredSuppliers.length === 0">
-                                        <td colspan="6" class="p-8 text-center text-gray-400 italic">No suppliers found</td>
-                                    </tr>
-                                    <tr v-for="s in filteredSuppliers" :key="s.id" class="hover:bg-gray-50 transition">
-                                        <td class="p-4">
-                                            <div class="flex items-center gap-3">
-                                                <div class="w-9 h-9 rounded-full flex items-center justify-center text-xs font-black text-white" :class="s.type==='permanent' ? 'bg-[#714B67]' : 'bg-orange-500'">
-                                                    {{ s.name.charAt(0) }}
-                                                </div>
-                                                <div>
-                                                    <p class="font-bold text-gray-800">{{ s.name }}</p>
-                                                    <p class="text-[10px] font-mono text-gray-400">{{ s.id }}</p>
-                                                    <span v-if="s._source==='customer'" class="inline-flex items-center gap-1 text-[9px] font-bold bg-teal-100 text-teal-700 px-1.5 py-0.5 rounded mt-0.5"><i class="fas fa-link"></i> Auto-linked from Customers</span>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td class="p-4">
-                                            <p class="text-xs text-gray-700 font-medium">{{ s.contact || '—' }}</p>
-                                            <p class="text-[10px] text-gray-400">{{ s.phone || '' }}</p>
-                                            <p class="text-[10px] text-gray-400">{{ s.email || '' }}</p>
-                                        </td>
-                                        <td class="p-4">
-                                            <span v-if="s.category" class="px-2 py-1 bg-gray-100 rounded text-[10px] font-bold text-gray-600 uppercase">{{ s.category }}</span>
-                                            <span v-else class="text-gray-400 text-xs">—</span>
-                                        </td>
-                                        <td class="p-4">
-                                            <span :class="s.type==='permanent' ? 'bg-purple-100 text-purple-700' : 'bg-orange-100 text-orange-700'" class="px-2 py-1 rounded text-[10px] font-bold uppercase">
-                                                <i :class="s.type==='permanent' ? 'fas fa-building' : 'fas fa-user-clock'" class="mr-1"></i>{{ s.type }}
-                                            </span>
-                                        </td>
-                                        <td class="p-4">
-                                            <p class="text-xs font-bold text-gray-700">{{ purchases.filter(p=>p.source===s.name).length }} orders</p>
-                                            <p class="text-[10px] text-gray-400">₦{{ formatMoney(purchases.filter(p=>p.source===s.name).reduce((sum,p)=>sum+p.amount,0)) }}</p>
-                                        </td>
-                                        <td class="p-4 text-center">
-                                            <div class="flex items-center justify-center gap-2">
-                                                <button v-if="s._source!=='customer'" @click="openSupplierModal(s)" class="p-2 text-[#714B67] hover:bg-purple-50 rounded transition" title="Edit"><i class="fas fa-edit"></i></button>
-                                                <button v-if="s._source!=='customer'" @click="deleteSupplier(s)" class="p-2 text-red-400 hover:bg-red-50 rounded transition" title="Delete"><i class="fas fa-trash-alt"></i></button>
-                                                <span v-if="s._source==='customer'" class="text-[10px] text-teal-600 font-bold flex items-center gap-1"><i class="fas fa-user-check"></i> Manage in Customers</span>
                                             </div>
                                         </td>
                                     </tr>
@@ -1764,73 +1651,6 @@
         </main>
     </div>
 
-    <!-- SUPPLIER MODAL -->
-    <div v-if="supplierModal.show" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4" @click.self="supplierModal.show=false">
-        <div class="bg-white w-full max-w-lg rounded-xl shadow-2xl overflow-hidden animate-fade-in-up">
-            <div class="p-5 bg-[#714B67] text-white flex justify-between items-center">
-                <div>
-                    <h3 class="font-bold text-sm flex items-center gap-2"><i class="fas fa-truck"></i> {{ supplierModal.isEdit ? 'Edit Supplier' : 'Add New Supplier' }}</h3>
-                    <p class="text-white/70 text-xs mt-0.5">{{ supplierModal.isEdit ? 'Update supplier details' : 'Register a new supplier for purchases' }}</p>
-                </div>
-                <button @click="supplierModal.show=false" class="text-white/70 hover:text-white"><i class="fas fa-times"></i></button>
-            </div>
-            <div class="p-6 space-y-4 max-h-[80vh] overflow-y-auto">
-                <!-- Type selector -->
-                <div>
-                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-2">Supplier Type *</label>
-                    <div class="grid grid-cols-2 gap-2">
-                        <button @click="supplierModal.type='permanent'" :class="supplierModal.type==='permanent' ? 'bg-[#714B67] text-white border-[#714B67]' : 'bg-white text-gray-600 border-gray-300'" class="p-3 border rounded-lg text-xs font-bold transition flex flex-col items-center gap-1">
-                            <i class="fas fa-building text-lg"></i> Permanent Supplier
-                            <span class="text-[9px] font-normal opacity-70">Regular business supplier</span>
-                        </button>
-                        <button @click="supplierModal.type='temporary'" :class="supplierModal.type==='temporary' ? 'bg-orange-500 text-white border-orange-500' : 'bg-white text-gray-600 border-gray-300'" class="p-3 border rounded-lg text-xs font-bold transition flex flex-col items-center gap-1">
-                            <i class="fas fa-user-clock text-lg"></i> Temporary Supplier
-                            <span class="text-[9px] font-normal opacity-70">Customer who also sells to you</span>
-                        </button>
-                    </div>
-                    <p v-if="supplierModal.type==='temporary'" class="text-[10px] text-orange-600 mt-1 flex items-center gap-1"><i class="fas fa-info-circle"></i> Temporary suppliers are permanent customers. They will appear in the purchase supplier dropdown.</p>
-                </div>
-
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div class="sm:col-span-2">
-                        <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Supplier Name *</label>
-                        <input v-model="supplierModal.name" type="text" class="w-full border border-gray-300 p-2.5 rounded-lg bg-gray-50 focus:ring-2 focus:ring-[#714B67] outline-none text-sm" placeholder="e.g. Dangote Industries">
-                    </div>
-                    <div>
-                        <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Contact Person</label>
-                        <input v-model="supplierModal.contact" type="text" class="w-full border border-gray-300 p-2.5 rounded-lg bg-gray-50 focus:ring-2 focus:ring-[#714B67] outline-none text-sm" placeholder="Name">
-                    </div>
-                    <div>
-                        <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Phone</label>
-                        <input v-model="supplierModal.phone" type="tel" class="w-full border border-gray-300 p-2.5 rounded-lg bg-gray-50 focus:ring-2 focus:ring-[#714B67] outline-none text-sm" placeholder="+234 XXX XXX XXXX">
-                    </div>
-                    <div>
-                        <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Email</label>
-                        <input v-model="supplierModal.email" type="email" class="w-full border border-gray-300 p-2.5 rounded-lg bg-gray-50 focus:ring-2 focus:ring-[#714B67] outline-none text-sm" placeholder="supplier@example.com">
-                    </div>
-                    <div>
-                        <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Address / Location</label>
-                        <input v-model="supplierModal.address" type="text" class="w-full border border-gray-300 p-2.5 rounded-lg bg-gray-50 focus:ring-2 focus:ring-[#714B67] outline-none text-sm" placeholder="City or full address">
-                    </div>
-                    <div>
-                        <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Category / Specialty</label>
-                        <input v-model="supplierModal.category" type="text" class="w-full border border-gray-300 p-2.5 rounded-lg bg-gray-50 focus:ring-2 focus:ring-[#714B67] outline-none text-sm" placeholder="e.g. Cement, Rods, Sand">
-                    </div>
-                    <div class="sm:col-span-2">
-                        <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Notes (Optional)</label>
-                        <textarea v-model="supplierModal.notes" rows="2" class="w-full border border-gray-300 p-2.5 rounded-lg bg-gray-50 focus:ring-2 focus:ring-[#714B67] outline-none text-sm resize-none" placeholder="Any extra notes about this supplier..."></textarea>
-                    </div>
-                </div>
-
-                <div v-if="supplierModal.error" class="p-3 bg-red-50 text-red-600 text-xs font-bold rounded flex items-center gap-2"><i class="fas fa-exclamation-circle"></i> {{ supplierModal.error }}</div>
-
-                <button @click="saveSupplier" class="w-full py-3 bg-[#714B67] hover:bg-purple-800 text-white rounded-lg font-bold uppercase tracking-widest shadow-lg transition transform active:scale-95">
-                    <i class="fas fa-save mr-2"></i> {{ supplierModal.isEdit ? 'Update Supplier' : 'Save Supplier' }}
-                </button>
-            </div>
-        </div>
-    </div>
-
     <!-- ADD PURCHASE MODAL -->
     <div v-if="purchaseModal.show" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4" @click.self="purchaseModal.show=false">
         <div class="bg-white w-full max-w-2xl rounded-xl shadow-2xl overflow-hidden animate-fade-in-up">
@@ -1842,22 +1662,8 @@
                 <!-- Supplier & Date -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Supplier *</label>
-                        <select v-model="purchaseModal.supplier" class="w-full border border-gray-300 p-2.5 rounded-lg bg-gray-50 focus:ring-2 focus:ring-[#714B67] outline-none text-sm">
-                            <option value="" disabled>— Select a supplier —</option>
-                            <optgroup label="Permanent Suppliers">
-                                <option v-for="s in allSuppliersWithCustomers.filter(x=>x.type==='permanent')" :key="s.id" :value="s.name">{{ s.name }}<span v-if="s.category"> ({{ s.category }})</span></option>
-                            </optgroup>
-                            <optgroup label="Temporary Suppliers (Customers)">
-                                <option v-for="s in allSuppliersWithCustomers.filter(x=>x.type==='temporary')" :key="s.id" :value="s.name">{{ s.name }}</option>
-                            </optgroup>
-                            <option value="__other__">Other (type below)</option>
-                        </select>
-                        <input v-if="purchaseModal.supplier === '__other__'" v-model="purchaseModal.supplierCustom" type="text" placeholder="Enter supplier name" class="w-full border border-gray-300 p-2.5 rounded-lg bg-gray-50 focus:ring-2 focus:ring-[#714B67] outline-none text-sm mt-1">
-                        <p v-if="purchaseModal.supplier && purchaseModal.supplier !== '__other__'" class="text-[10px] text-gray-400 mt-1 flex items-center gap-1">
-                            <i class="fas fa-info-circle"></i>
-                            <span v-if="allSuppliersWithCustomers.find(s=>s.name===purchaseModal.supplier)?.contact">Contact: {{ allSuppliersWithCustomers.find(s=>s.name===purchaseModal.supplier)?.contact }} · {{ allSuppliersWithCustomers.find(s=>s.name===purchaseModal.supplier)?.phone }}</span>
-                        </p>
+                        <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Supplier / Source *</label>
+                        <input v-model="purchaseModal.supplier" type="text" placeholder="e.g. Dangote Industries" class="w-full border border-gray-300 p-2.5 rounded-lg bg-gray-50 focus:ring-2 focus:ring-[#714B67] outline-none text-sm">
                     </div>
                     <div>
                         <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Purchase Date *</label>
@@ -2733,9 +2539,6 @@
 
     <div id="printReceipt" style="display: none;"></div>
 </div>
-
-<script src="./js/index.js">
-
-</script>
+<script src="./js/index.js"></script>
 </body>
 </html>
