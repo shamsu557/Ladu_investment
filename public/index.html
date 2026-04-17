@@ -917,7 +917,7 @@ input[type=number].no-spinner {
                                                     </div>
                                                 </div>
                                                 <button @click="openPurchasePayment(p)" class="text-[10px] bg-[#00A09D] hover:bg-teal-700 text-white px-2 py-1 rounded font-bold" title="Record Payment"><i class="fas fa-credit-card mr-1"></i>Pay</button>
-                                                <button @click="openDebtCard()" class="text-[10px] bg-purple-600 hover:bg-purple-700 text-white px-2 py-1 rounded font-bold" title="View Debts"><i class="fas fa-handshake mr-1"></i>Debt</button>
+                                                <button @click="openDebtCard(p.source)" class="text-[10px] bg-purple-600 hover:bg-purple-700 text-white px-2 py-1 rounded font-bold" title="View Debts"><i class="fas fa-handshake mr-1"></i>Debt</button>
                                                 <button @click="viewPurchaseReceipt(p)" class="text-[10px] bg-gray-100 text-gray-600 px-2 py-1 rounded font-bold hover:bg-gray-200"><i class="fas fa-file-alt mr-1"></i>Receipt</button>
                                             </div>
                                         </td>
@@ -2372,14 +2372,20 @@ input[type=number].no-spinner {
                         <button @click="paymentModal.mode='mixed'" :class="paymentModal.mode==='mixed'?'bg-[#00A09D] text-white border-[#00A09D]':'bg-white text-gray-600 border-gray-300'" class="p-2 border rounded-lg text-xs font-bold transition text-center"><i class="fas fa-layer-group block text-lg mb-1"></i>Mixed</button>
                     </div>
                 </div>
-                <!-- Bank Selection -->
+                <!-- Bank Selection + Details -->
                 <div v-if="paymentModal.mode==='bank'||paymentModal.mode==='mixed'">
-                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-2">Select Bank</label>
-                    <div class="grid grid-cols-2 gap-2">
+                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-2">Select LDI Receiving Bank</label>
+                    <div class="grid grid-cols-2 gap-2 mb-3">
                         <button v-for="b in banks" :key="b.name" @click="paymentModal.selectedBank=b.name" :class="paymentModal.selectedBank===b.name?'bg-[#714B67] text-white border-[#714B67]':'bg-white text-gray-600 border-gray-200'" class="p-2 border rounded-lg text-xs font-bold transition text-left">
                             <p class="font-bold">{{ b.name }}</p>
                             <p class="text-[9px] opacity-70 font-mono">{{ b.accountNumber }}</p>
                         </button>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div><label class="block text-[9px] font-bold text-gray-400 uppercase mb-1">Your Bank (Paying From)</label><input v-model="paymentModal.bankFrom" type="text" class="w-full border border-gray-300 p-2 rounded-lg bg-white focus:ring-2 focus:ring-[#00A09D] outline-none text-xs" placeholder="e.g. GTBank"></div>
+                        <div><label class="block text-[9px] font-bold text-gray-400 uppercase mb-1">Receiving Bank (LDI)</label><input v-model="paymentModal.bankTo" type="text" class="w-full border border-gray-300 p-2 rounded-lg bg-white focus:ring-2 focus:ring-[#00A09D] outline-none text-xs" placeholder="e.g. Zenith Bank"></div>
+                        <div><label class="block text-[9px] font-bold text-gray-400 uppercase mb-1">LDI Account Name</label><input v-model="paymentModal.accountName" type="text" class="w-full border border-gray-300 p-2 rounded-lg bg-white focus:ring-2 focus:ring-[#00A09D] outline-none text-xs" placeholder="Account holder name"></div>
+                        <div><label class="block text-[9px] font-bold text-gray-400 uppercase mb-1">LDI Account Number</label><input v-model="paymentModal.accountNumber" type="text" class="w-full border border-gray-300 p-2 rounded-lg bg-white focus:ring-2 focus:ring-[#00A09D] outline-none text-xs" placeholder="0123456789"></div>
                     </div>
                 </div>
                 <!-- Amount Fields -->
@@ -2433,14 +2439,20 @@ input[type=number].no-spinner {
                         <button @click="staffPayModal.mode='mixed'" :class="staffPayModal.mode==='mixed'?'bg-[#714B67] text-white border-[#714B67]':'bg-white text-gray-600 border-gray-300'" class="p-2 border rounded-lg text-xs font-bold transition text-center"><i class="fas fa-layer-group block text-lg mb-1"></i>Mixed</button>
                     </div>
                 </div>
-                <!-- Bank Selection -->
+                <!-- Bank Selection + Details -->
                 <div v-if="staffPayModal.mode==='bank'||staffPayModal.mode==='mixed'">
                     <label class="block text-[10px] font-bold text-gray-500 uppercase mb-2">Bank Received In</label>
-                    <div class="grid grid-cols-2 gap-2">
+                    <div class="grid grid-cols-2 gap-2 mb-3">
                         <button v-for="b in banks" :key="b.name" @click="staffPayModal.selectedBank=b.name" :class="staffPayModal.selectedBank===b.name?'bg-[#714B67] text-white border-[#714B67]':'bg-white text-gray-600 border-gray-200'" class="p-2 border rounded-lg text-xs font-bold transition text-left">
                             <p class="font-bold">{{ b.name }}</p>
                             <p class="text-[9px] opacity-70 font-mono">{{ b.accountNumber }}</p>
                         </button>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div><label class="block text-[9px] font-bold text-gray-400 uppercase mb-1">Paying From Bank</label><input v-model="staffPayModal.bankFrom" type="text" class="w-full border border-gray-300 p-2 rounded-lg bg-white focus:ring-2 focus:ring-[#714B67] outline-none text-xs" placeholder="e.g. Zenith Bank"></div>
+                        <div><label class="block text-[9px] font-bold text-gray-400 uppercase mb-1">Paying To Bank</label><input v-model="staffPayModal.bankTo" type="text" class="w-full border border-gray-300 p-2 rounded-lg bg-white focus:ring-2 focus:ring-[#714B67] outline-none text-xs" placeholder="e.g. First Bank"></div>
+                        <div><label class="block text-[9px] font-bold text-gray-400 uppercase mb-1">Account Name</label><input v-model="staffPayModal.accountName" type="text" class="w-full border border-gray-300 p-2 rounded-lg bg-white focus:ring-2 focus:ring-[#714B67] outline-none text-xs" placeholder="Account holder name"></div>
+                        <div><label class="block text-[9px] font-bold text-gray-400 uppercase mb-1">Account Number</label><input v-model="staffPayModal.accountNumber" type="text" class="w-full border border-gray-300 p-2 rounded-lg bg-white focus:ring-2 focus:ring-[#714B67] outline-none text-xs" placeholder="0123456789"></div>
                     </div>
                 </div>
                 <!-- Amount Fields -->
@@ -2683,11 +2695,15 @@ input[type=number].no-spinner {
                             </div>
                             <div class="grid grid-cols-2 gap-2">
                                 <div>
-                                    <label class="text-[9px] font-bold text-blue-600 uppercase block mb-1">Bank Account *</label>
+                                    <label class="text-[9px] font-bold text-blue-600 uppercase block mb-1">Paying From Bank *</label>
                                     <select v-model="row.bankName" class="w-full border border-blue-200 p-2 rounded-lg bg-white text-xs focus:ring-2 focus:ring-blue-400 outline-none">
                                         <option value="">-- Select Bank --</option>
                                         <option v-for="b in banks" :key="b.name" :value="b.name">{{ b.name }}</option>
                                     </select>
+                                </div>
+                                <div>
+                                    <label class="text-[9px] font-bold text-blue-600 uppercase block mb-1">Recipient Bank Name</label>
+                                    <input v-model="row.bankTo" type="text" placeholder="e.g. GTBank, Access Bank" class="w-full border border-blue-200 p-2 rounded-lg bg-white text-xs focus:ring-2 focus:ring-blue-400 outline-none">
                                 </div>
                                 <div>
                                     <label class="text-[9px] font-bold text-blue-600 uppercase block mb-1">Account Name *</label>
@@ -2697,7 +2713,7 @@ input[type=number].no-spinner {
                                     <label class="text-[9px] font-bold text-blue-600 uppercase block mb-1">Account Number *</label>
                                     <input v-model="row.accountNumber" type="text" placeholder="Account number" class="w-full border border-blue-200 p-2 rounded-lg bg-white text-xs focus:ring-2 focus:ring-blue-400 outline-none">
                                 </div>
-                                <div>
+                                <div class="col-span-2">
                                     <label class="text-[9px] font-bold text-blue-600 uppercase block mb-1">Amount (₦) *</label>
                                     <input v-model.number="row.amount" type="number" min="0" placeholder="0" class="w-full border border-blue-200 p-2 rounded-lg bg-white text-xs focus:ring-2 focus:ring-blue-400 outline-none">
                                 </div>
@@ -2780,43 +2796,114 @@ input[type=number].no-spinner {
         <div class="bg-white w-full max-w-2xl rounded-xl shadow-2xl overflow-hidden animate-fade-in-up">
             <div class="p-5 bg-[#714B67] text-white flex justify-between items-center">
                 <div>
-                    <h3 class="font-bold text-sm flex items-center gap-2"><i class="fas fa-handshake"></i> Debt Management Summary</h3>
-                    <p class="text-white/70 text-xs mt-0.5">Supplier & Customer Financial Balances</p>
+                    <h3 class="font-bold text-sm flex items-center gap-2"><i class="fas fa-handshake"></i> {{ debtCardModal.selectedSupplier ? debtCardModal.selectedSupplier + ' — Debt & Balance' : 'Debt Management Summary' }}</h3>
+                    <p class="text-white/70 text-xs mt-0.5">{{ debtCardModal.selectedSupplier ? 'Debt & credit history with this supplier' : 'Supplier & Customer Financial Balances' }}</p>
                 </div>
                 <button @click="debtCardModal.show=false" class="text-white/70 hover:text-white"><i class="fas fa-times"></i></button>
             </div>
             <div class="p-6 space-y-6 max-h-[80vh] overflow-y-auto">
-                <!-- Summary Cards - Clickable to view by category -->
-                <div class="grid grid-cols-2 gap-4">
-                    <div @click="viewDebtHistory('owed')" class="bg-red-50 rounded-lg p-4 border border-red-200 cursor-pointer hover:shadow-lg hover:border-red-400 transition">
-                        <p class="text-xs text-red-600 uppercase font-bold mb-1"><i class="fas fa-arrow-up mr-1"></i>Money Owed to Suppliers</p>
-                        <p class="font-black text-2xl text-red-700">₦{{ formatMoney(supplierDebt.totalOwed) }}</p>
-                        <p class="text-[10px] text-red-500 mt-1">Click to view all suppliers we owe</p>
+                <!-- Specific Supplier View -->
+                <div v-if="debtCardModal.selectedSupplier" class="space-y-4">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="bg-red-50 rounded-lg p-4 border border-red-200">
+                            <p class="text-xs text-red-600 uppercase font-bold mb-1"><i class="fas fa-arrow-up mr-1"></i>We Owe This Supplier</p>
+                            <p class="font-black text-2xl text-red-700">₦{{ formatMoney((supplierDebt.suppliers.find(s=>s.name===debtCardModal.selectedSupplier)||{totalOwed:0}).totalOwed) }}</p>
+                        </div>
+                        <div class="bg-green-50 rounded-lg p-4 border border-green-200">
+                            <p class="text-xs text-green-600 uppercase font-bold mb-1"><i class="fas fa-arrow-down mr-1"></i>Supplier Owes Us (Credit)</p>
+                            <p class="font-black text-2xl text-green-700">₦{{ formatMoney((supplierDebt.suppliers.find(s=>s.name===debtCardModal.selectedSupplier)||{creditHeld:0}).creditHeld) }}</p>
+                        </div>
                     </div>
-                    <div @click="viewDebtHistory('held')" class="bg-green-50 rounded-lg p-4 border border-green-200 cursor-pointer hover:shadow-lg hover:border-green-400 transition">
-                        <p class="text-xs text-green-600 uppercase font-bold mb-1"><i class="fas fa-arrow-down mr-1"></i>Money Held from Suppliers</p>
-                        <p class="font-black text-2xl text-green-700">₦{{ formatMoney(supplierDebt.totalCreditHeld) }}</p>
-                        <p class="text-[10px] text-green-500 mt-1">Click to view all supplier credits</p>
+                    <div>
+                        <h4 class="font-bold text-gray-700 mb-2 flex items-center gap-2"><i class="fas fa-file-invoice text-amber-600"></i> Purchase Orders with {{ debtCardModal.selectedSupplier }}</h4>
+                        <div class="overflow-x-auto rounded-lg border border-gray-200">
+                            <table class="w-full text-left">
+                                <thead class="bg-gray-100 text-xs font-bold uppercase text-gray-500">
+                                    <tr><th class="p-3">PO#</th><th class="p-3">Date</th><th class="p-3">Items</th><th class="p-3 text-right">Amount</th><th class="p-3 text-right">Paid</th><th class="p-3 text-right">Outstanding</th><th class="p-3 text-right">Credit</th><th class="p-3">Status</th></tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-100 text-sm">
+                                    <tr v-if="!purchases.filter(p=>p.source===debtCardModal.selectedSupplier).length"><td colspan="8" class="p-6 text-center text-gray-400 italic">No purchases found</td></tr>
+                                    <tr v-for="p in purchases.filter(p=>p.source===debtCardModal.selectedSupplier)" :key="p.id" class="hover:bg-gray-50">
+                                        <td class="p-3 font-bold text-[#714B67] text-xs">{{ p.id }}</td>
+                                        <td class="p-3 text-xs text-gray-500">{{ formatDate(p.date) }}</td>
+                                        <td class="p-3 text-xs text-gray-600">{{ p.items.map(i=>i.name+' x'+i.qty).join(', ') }}</td>
+                                        <td class="p-3 text-right font-mono text-xs">₦{{ formatMoney(p.amount) }}</td>
+                                        <td class="p-3 text-right font-mono text-xs text-green-600 font-bold">₦{{ formatMoney(p.totalAmountPaid||0) }}</td>
+                                        <td class="p-3 text-right font-mono text-xs font-bold" :class="(p.outstandingBalance||0)>0?'text-red-500':'text-gray-400'">₦{{ formatMoney(p.outstandingBalance||0) }}</td>
+                                        <td class="p-3 text-right font-mono text-xs text-green-600">₦{{ formatMoney(p.supplierCredit||0) }}</td>
+                                        <td class="p-3"><span :class="p.paymentStatus==='paid'?'bg-green-100 text-green-700':'bg-red-100 text-red-700'" class="text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">{{ p.paymentStatus }}</span></td>
+                                    </tr>
+                                </tbody>
+                                <tfoot class="bg-gray-50 text-xs font-bold border-t-2 border-gray-200">
+                                    <tr>
+                                        <td colspan="3" class="p-3 text-right text-gray-500 uppercase">Totals:</td>
+                                        <td class="p-3 text-right font-mono">₦{{ formatMoney(purchases.filter(p=>p.source===debtCardModal.selectedSupplier).reduce((s,p)=>s+p.amount,0)) }}</td>
+                                        <td class="p-3 text-right font-mono text-green-600">₦{{ formatMoney(purchases.filter(p=>p.source===debtCardModal.selectedSupplier).reduce((s,p)=>s+(p.totalAmountPaid||0),0)) }}</td>
+                                        <td class="p-3 text-right font-mono text-red-600">₦{{ formatMoney(purchases.filter(p=>p.source===debtCardModal.selectedSupplier).reduce((s,p)=>s+(p.outstandingBalance||0),0)) }}</td>
+                                        <td class="p-3 text-right font-mono text-green-600">₦{{ formatMoney(purchases.filter(p=>p.source===debtCardModal.selectedSupplier).reduce((s,p)=>s+(p.supplierCredit||0),0)) }}</td>
+                                        <td></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-gray-700 mb-2 flex items-center gap-2"><i class="fas fa-history text-blue-500"></i> Payment History</h4>
+                        <div class="overflow-x-auto rounded-lg border border-gray-200">
+                            <table class="w-full text-left">
+                                <thead class="bg-gray-100 text-xs font-bold uppercase text-gray-500">
+                                    <tr><th class="p-3">Date / Time</th><th class="p-3">PO#</th><th class="p-3">Method</th><th class="p-3">Bank Details</th><th class="p-3 text-right">Amount</th></tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-100 text-xs">
+                                    <template v-for="p in purchases.filter(p=>p.source===debtCardModal.selectedSupplier)" :key="p.id">
+                                        <tr v-for="(pr, pri) in (p.paymentRecords||[])" :key="pri" class="hover:bg-blue-50">
+                                            <td class="p-3 text-gray-500">{{ formatDate(pr.date) }}<span v-if="pr.time" class="block text-gray-400">{{ pr.time }}</span></td>
+                                            <td class="p-3 font-bold text-[#714B67]">{{ p.id }}</td>
+                                            <td class="p-3 capitalize text-gray-600">{{ pr.method }}</td>
+                                            <td class="p-3">
+                                                <div v-for="(row,ri) in (pr.bankRows||[])" :key="ri" class="mb-1 leading-5">
+                                                    <span class="font-bold text-blue-700">{{ row.bankName }}</span><span v-if="row.bankTo"> → <span class="font-bold text-purple-700">{{ row.bankTo }}</span></span><br>
+                                                    <span class="text-gray-600">{{ row.accountName }}</span> <span class="font-mono text-gray-400">({{ row.accountNumber }})</span> <span class="font-bold text-[#714B67]">₦{{ formatMoney(row.amount) }}</span>
+                                                </div>
+                                                <div v-if="pr.cashAmount>0" class="text-green-700"><i class="fas fa-money-bill mr-1"></i>Cash: ₦{{ formatMoney(pr.cashAmount) }}</div>
+                                            </td>
+                                            <td class="p-3 text-right font-mono font-bold text-gray-800">₦{{ formatMoney(pr.amount) }}</td>
+                                        </tr>
+                                    </template>
+                                    <tr v-if="purchases.filter(p=>p.source===debtCardModal.selectedSupplier).every(p=>!(p.paymentRecords||[]).length)"><td colspan="5" class="p-6 text-center text-gray-400 italic">No payments recorded yet</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Supplier Breakdown -->
-                <div>
-                    <h4 class="font-bold text-gray-700 mb-3 flex items-center gap-2"><i class="fas fa-building text-amber-600"></i> Supplier Balances (Click to view history)</h4>
-                    <div class="space-y-2">
-                        <div v-if="supplierDebt.suppliers.length === 0" class="text-center py-6 text-gray-400 text-sm italic">No supplier debts recorded</div>
-                        <div v-for="s in supplierDebt.suppliers" :key="s.name" @click="viewSupplierDebtHistory(s.name)" class="bg-gray-50 rounded-lg p-4 border border-gray-200 hover:border-[#714B67] hover:shadow-md transition cursor-pointer">
-                            <div class="flex justify-between items-start mb-3">
-                                <div>
-                                    <span class="font-bold text-gray-800 block text-sm">{{ s.name }}</span>
-                                    <p class="text-xs text-gray-500 mt-1"><i class="fas fa-info-circle mr-1"></i>Click to see transaction history</p>
-                                </div>
-                                <div class="flex gap-2">
-                                    <span v-if="s.totalOwed > 0" class="text-xs bg-red-100 text-red-700 px-3 py-1.5 rounded font-bold">We Owe: ₦{{ formatMoney(s.totalOwed) }}</span>
-                                    <span v-if="s.creditHeld > 0" class="text-xs bg-green-100 text-green-700 px-3 py-1.5 rounded font-bold">We Hold: ₦{{ formatMoney(s.creditHeld) }}</span>
+                <!-- All Suppliers View -->
+                <div v-else class="space-y-4">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div @click="viewDebtHistory('owed')" class="bg-red-50 rounded-lg p-4 border border-red-200 cursor-pointer hover:shadow-lg hover:border-red-400 transition">
+                            <p class="text-xs text-red-600 uppercase font-bold mb-1"><i class="fas fa-arrow-up mr-1"></i>Money Owed to Suppliers</p>
+                            <p class="font-black text-2xl text-red-700">₦{{ formatMoney(supplierDebt.totalOwed) }}</p>
+                            <p class="text-[10px] text-red-500 mt-1">Click to view all suppliers we owe</p>
+                        </div>
+                        <div @click="viewDebtHistory('held')" class="bg-green-50 rounded-lg p-4 border border-green-200 cursor-pointer hover:shadow-lg hover:border-green-400 transition">
+                            <p class="text-xs text-green-600 uppercase font-bold mb-1"><i class="fas fa-arrow-down mr-1"></i>Money Held from Suppliers</p>
+                            <p class="font-black text-2xl text-green-700">₦{{ formatMoney(supplierDebt.totalCreditHeld) }}</p>
+                            <p class="text-[10px] text-green-500 mt-1">Click to view all supplier credits</p>
+                        </div>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-gray-700 mb-3 flex items-center gap-2"><i class="fas fa-building text-amber-600"></i> Supplier Balances (Click to view history)</h4>
+                        <div class="space-y-2">
+                            <div v-if="supplierDebt.suppliers.length === 0" class="text-center py-6 text-gray-400 text-sm italic">No supplier debts recorded</div>
+                            <div v-for="s in supplierDebt.suppliers" :key="s.name" @click="viewSupplierDebtHistory(s.name)" class="bg-gray-50 rounded-lg p-4 border border-gray-200 hover:border-[#714B67] hover:shadow-md transition cursor-pointer">
+                                <div class="flex justify-between items-start">
+                                    <span class="font-bold text-gray-800 text-sm">{{ s.name }}</span>
+                                    <div class="flex gap-2">
+                                        <span v-if="s.totalOwed > 0" class="text-xs bg-red-100 text-red-700 px-3 py-1.5 rounded font-bold">We Owe: ₦{{ formatMoney(s.totalOwed) }}</span>
+                                        <span v-if="s.creditHeld > 0" class="text-xs bg-green-100 text-green-700 px-3 py-1.5 rounded font-bold">We Hold: ₦{{ formatMoney(s.creditHeld) }}</span>
+                                    </div>
                                 </div>
                             </div>
-                            <div v-if="s.totalOwed === 0 && s.creditHeld === 0" class="text-xs text-gray-500"><i class="fas fa-check-circle text-green-500 mr-1"></i>Account Settled</div>
                         </div>
                     </div>
                 </div>
@@ -3287,8 +3374,8 @@ createApp({
 
             // ---- Modals ----
             modal: { show: false, isEdit: false, activeIndex: null, userError: '' },
-            paymentModal: { show: false, order: null, mode: 'bank', selectedBank: '', bankAmount: 0, cashAmount: 0, reference: '' },
-            staffPayModal: { show: false, order: null, mode: 'bank', selectedBank: '', bankAmount: 0, cashAmount: 0, reference: '' },
+            paymentModal: { show: false, order: null, mode: 'bank', selectedBank: '', bankAmount: 0, cashAmount: 0, reference: '', bankFrom: '', bankTo: '', accountName: '', accountNumber: '' },
+            staffPayModal: { show: false, order: null, mode: 'bank', selectedBank: '', bankAmount: 0, cashAmount: 0, reference: '', bankFrom: '', bankTo: '', accountName: '', accountNumber: '' },
             purchaseModal: { show: false, supplier: '', supplierCustom: '', date: '', lines: [{ name: '', customName: '', qty: 1, unitCost: 0, amount: 0 }], bankRows: [{ bankName: '', amount: 0 }], useCash: false, cashAmount: 0, useBalance: false, balanceAmount: 0, reference: '', error: '' },
             custOrderModal: { show: false, cartLines: [{ name: '', qty: 1, unitPrice: 0, amount: 0 }], type: 'quotation' },
             customerHistoryModal: { show: false, customer: null, orders: [], totalPurchases: 0, totalPaid: 0, outstanding: 0, histFilter: { status: '', dateFrom: '', dateTo: '', sort: 'date_new' } },
@@ -3299,7 +3386,7 @@ createApp({
             purchaseReceivingModal: { show: false, purchase: null, quantityReceived: 0, notes: '' },
             purchasePaymentModal: { show: false, purchase: null, paymentAmount: 0, bankRows: [], useCash: false, cashAmount: 0, useBalance: false, balanceAmount: 0, reference: '', error: '' },
             sendMoneyModal: { show: false, supplierName: '', amount: 0, paymentMethod: 'bank', selectedBank: '', bankFrom: '', bankTo: '', accountNumber: '', reference: '', notes: '', error: '' },
-            debtCardModal: { show: false },
+            debtCardModal: { show: false, selectedSupplier: null },
 
             // ---- Forms ----
             form: {
@@ -4029,7 +4116,7 @@ createApp({
 
         // ---- Customer Payment ----
         openPaymentModal(order) {
-            this.paymentModal = { show: true, order, mode: 'bank', selectedBank: this.banks[0]?.name || '', bankAmount: Math.max(0, order.total - (order.amountPaid||0)), cashAmount: 0, reference: order.id + '-PAY' };
+            this.paymentModal = { show: true, order, mode: 'bank', selectedBank: this.banks[0]?.name || '', bankAmount: Math.max(0, order.total - (order.amountPaid||0)), cashAmount: 0, reference: order.id + '-PAY', bankFrom: '', bankTo: '', accountName: '', accountNumber: '' };
         },
         submitPayment() {
             const bankAmt = Number(this.paymentModal.bankAmount) || 0;
@@ -4044,10 +4131,15 @@ createApp({
                 o.paymentRef = this.paymentModal.reference;
                 o.paymentMethod = this.paymentModal.mode;
                 o.bankName = this.paymentModal.selectedBank || '';
+                o.bankFrom = this.paymentModal.bankFrom||'';
+                o.bankTo = this.paymentModal.bankTo||'';
+                o.accountName = this.paymentModal.accountName||'';
+                o.accountNumber = this.paymentModal.accountNumber||'';
                 o.paymentDate = this.localDateStr();
             }
-            this.paymentModal.show = false;
-            this.notifs.unshift({ title: 'Payment Submitted', msg: `Payment for ${this.paymentModal.order?.id} awaiting confirmation.` });
+            const _poid = this.paymentModal.order?.id;
+            this.paymentModal = { show: false, order: null, mode: 'bank', selectedBank: this.banks[0]?.name || '', bankAmount: 0, cashAmount: 0, reference: '', bankFrom: '', bankTo: '', accountName: '', accountNumber: '' };
+            this.notifs.unshift({ title: 'Payment Submitted', msg: `Payment for ${_poid} awaiting confirmation.` });
             alert('Payment submitted! The Sales team will confirm your payment shortly.');
         },
 
@@ -4091,7 +4183,7 @@ td{padding:12px;border-bottom:1px solid #ddd;}
 <div style="text-align:center;margin:30px 0"><h2 style="color:#714B67;margin:0">OFFICIAL RECEIPT</h2><p style="color:#666;margin:5px 0">Receipt No: ${order.id}</p><span class="badge">PAID</span></div>
 <div class="receipt-info">
 <div><strong>Customer:</strong><p>${order.customerName || order.customer}</p><p style="font-size:12px;color:#999">ID: ${order.customerId || 'Walk-in'}</p><p style="font-size:12px;color:#999">${(order.customerName && order.customer !== order.customerName) ? order.customer.replace(order.customerName, '').replace('—','').trim() : ''}</p></div>
-<div style="text-align:right"><strong>Date:</strong><p>${this.formatDate(order.paymentDate || order.created_at)}</p><strong>Payment Method:</strong><p style="text-transform:capitalize">${order.paymentMethod || 'N/A'}</p></div>
+<div style="text-align:right"><strong>Date:</strong><p>${this.formatDate(order.paymentDate || order.created_at)}</p><strong>Payment Method:</strong><p style="text-transform:capitalize">${order.paymentMethod || 'N/A'}</p>${order.bankName ? '<strong>Bank:</strong><p>' + order.bankName + '</p>' : ''}${order.bankFrom ? '<strong>From Bank:</strong><p>' + order.bankFrom + '</p>' : ''}${order.bankTo ? '<strong>To Bank:</strong><p>' + order.bankTo + '</p>' : ''}${order.accountName ? '<strong>Account Name:</strong><p>' + order.accountName + '</p>' : ''}${order.accountNumber ? '<strong>Account Number:</strong><p style=\"font-family:monospace\">' + order.accountNumber + '</p>' : ''}</div>
 </div>
 <table><thead><tr><th>Item Description</th><th style="text-align:center">Qty</th><th style="text-align:right">Amount (₦)</th></tr></thead>
 <tbody>
@@ -4210,7 +4302,7 @@ ${order.items.map(i => `<tr><td>${i.name}</td><td style="text-align:center">${i.
                 });
                 this.notifs.unshift({ title: 'Order Created', msg: `${id} created for ${customerName}` });
             } else if (this.view === 'inventory') {
-                if (!this.form.pName.trim() || !this.form.stock || !this.form.price) { alert('Fill all required fields'); return; }
+                if (!this.form.pName.trim() || this.form.stock === '' || this.form.stock === null || this.form.stock === undefined || !this.form.price) { alert('Fill all required fields'); return; }
                 if (this.modal.isEdit && this.modal.activeIndex !== null) {
                     const p = this.products[this.modal.activeIndex];
                     p.name = this.form.pName; p.stock = this.form.stock; p.price = this.form.price;
@@ -4447,7 +4539,7 @@ ${order.items.map(i => `<tr><td>${i.name}</td><td style="text-align:center">${i.
             doc.save('ExpenseReport-' + this.localDateStr() + '.pdf');
         },
                 openStaffPaymentModal(order) {
-            this.staffPayModal = { show: true, order, mode: 'bank', selectedBank: this.banks[0]?.name || '', bankAmount: Math.max(0, order.total - (order.amountPaid||0)), cashAmount: 0, reference: order.id + '-PAY' };
+            this.staffPayModal = { show: true, order, mode: 'bank', selectedBank: this.banks[0]?.name || '', bankAmount: Math.max(0, order.total - (order.amountPaid||0)), cashAmount: 0, reference: order.id + '-PAY', bankFrom: '', bankTo: '', accountName: '', accountNumber: '' };
         },
         submitStaffPayment() {
             const o = this.staffPayModal.order; const bankAmt = Number(this.staffPayModal.bankAmount)||0; const cashAmt = Number(this.staffPayModal.cashAmount)||0; const totalPaying = bankAmt + cashAmt;
@@ -4457,14 +4549,14 @@ ${order.items.map(i => `<tr><td>${i.name}</td><td style="text-align:center">${i.
             if ((this.staffPayModal.mode === 'bank' || this.staffPayModal.mode === 'mixed') && bankAmt > 0 && !this.staffPayModal.selectedBank) { alert('Please select a bank'); return; }
             const newPaid = (o.amountPaid||0) + totalPaying; const newOutstanding = Math.max(0, o.total - newPaid);
             const date = this.localDateStr();
-            o.amountPaid = newPaid; o.paymentMethod = this.staffPayModal.mode; o.bankName = this.staffPayModal.mode !== 'cash' ? this.staffPayModal.selectedBank : ''; o.paymentRef = this.staffPayModal.reference || (o.id+'-PAY'); o.paymentDate = date;
+            o.amountPaid = newPaid; o.paymentMethod = this.staffPayModal.mode; o.bankName = this.staffPayModal.mode !== 'cash' ? this.staffPayModal.selectedBank : ''; o.bankFrom = this.staffPayModal.bankFrom||''; o.bankTo = this.staffPayModal.bankTo||''; o.accountName = this.staffPayModal.accountName||''; o.accountNumber = this.staffPayModal.accountNumber||''; o.paymentRef = this.staffPayModal.reference || (o.id+'-PAY'); o.paymentDate = date;
             if (newOutstanding <= 0.01) { o.paymentStatus = 'paid'; o.status = 'confirmed'; o.amountPaid = o.total; o.items.forEach(it => { const p = this.products.find(x => x.name === it.name); if (p) p.stock = Math.max(0, p.stock - it.qty); }); } else { o.paymentStatus = 'partial'; o.status = 'confirmed'; }
-            if (bankAmt > 0) this.bankLedger.push({ date, ref: o.id, customerName: o.customerName, description: 'Bank payment - '+o.customerName, amount: bankAmt, method: 'bank', bankName: this.staffPayModal.selectedBank, runningBalance: 0 });
+            if (bankAmt > 0) this.bankLedger.push({ date, ref: o.id, customerName: o.customerName, description: 'Bank payment - '+o.customerName, amount: bankAmt, method: 'bank', bankName: this.staffPayModal.selectedBank, bankFrom: this.staffPayModal.bankFrom||'', bankTo: this.staffPayModal.bankTo||'', accountName: this.staffPayModal.accountName||'', accountNumber: this.staffPayModal.accountNumber||'', runningBalance: 0 });
             if (cashAmt > 0) this.bankLedger.push({ date, ref: o.id, customerName: o.customerName, description: 'Cash payment - '+o.customerName, amount: cashAmt, method: 'cash', bankName: '', runningBalance: 0 });
             const txnId = 'TXN'+String(this.transactions.length+1).padStart(3,'0');
             this.transactions.push({ id: txnId, customerId: o.customerId, ref: o.id, description: 'Payment for '+(o.items[0]?.name||'order'), amount: totalPaying, date, type: newOutstanding<=0.01?'payment':'partial_payment', method: o.paymentMethod, bankName: o.bankName, outstanding: newOutstanding });
             this.notifs.unshift({ title: 'Payment Recorded', msg: '₦'+this.formatMoney(totalPaying)+' recorded for '+o.id+(newOutstanding>0?' | Balance: ₦'+this.formatMoney(newOutstanding):' | FULLY PAID!') });
-            this.staffPayModal.show = false;
+            this.staffPayModal = { show: false, order: null, mode: 'bank', selectedBank: this.banks[0]?.name || '', bankAmount: 0, cashAmount: 0, reference: '', bankFrom: '', bankTo: '', accountName: '', accountNumber: '' };
             this.checkStockAlerts();
         },
         setInitialCash() {
@@ -4667,7 +4759,7 @@ ${order.items.map(i => `<tr><td>${i.name}</td><td style="text-align:center">${i.
                 ${p.paymentRecords.map(pr=>{
                     let details = '';
                     if (pr.bankRows && pr.bankRows.length > 0) {
-                        details += pr.bankRows.map(r => `Bank: ₦${Number(r.amount||0).toLocaleString()} (${r.bankName})`).join('; ');
+                        details += pr.bankRows.map(r => `From: ${r.bankName||'?'} → To: ${r.bankTo||'N/A'} | ${r.accountName||'N/A'} (${r.accountNumber||'N/A'}) ₦${Number(r.amount||0).toLocaleString()}`).join('; ');
                     }
                     if (pr.cashAmount && pr.cashAmount > 0) {
                         details += (details ? '; ' : '') + `Cash: ₦${Number(pr.cashAmount).toLocaleString()}`;
@@ -4833,7 +4925,7 @@ ${receivingHistoryHTML}
             this.purchasePaymentModal = { show: true, purchase: { ...purchase }, bankRows: [], useCash: false, cashAmount: 0, useBalance: false, balanceAmount: 0, reference: '', error: '' };
         },
         addPaymentBankRow() {
-            this.purchasePaymentModal.bankRows.push({ bankName: '', accountName: '', accountNumber: '', amount: 0 });
+            this.purchasePaymentModal.bankRows.push({ bankName: '', bankTo: '', accountName: '', accountNumber: '', amount: 0 });
         },
         submitPurchasePayment() {
             const m = this.purchasePaymentModal;
@@ -4946,7 +5038,7 @@ ${receivingHistoryHTML}
             this.printPaymentReceipt(payment, p);
             
             this.notifs.unshift({ title: 'Payment Recorded', msg: `${p.id}: ₦${this.formatMoney(totalPaying)} paid to ${p.source}. Balance: ₦${this.formatMoney(p.outstandingBalance)}` });
-            m.show = false;
+            this.purchasePaymentModal = { show: false, purchase: null, paymentAmount: 0, bankRows: [], useCash: false, cashAmount: 0, useBalance: false, balanceAmount: 0, reference: '', error: '' };
         },
         
         printPaymentReceipt(payment, purchase) {
@@ -4994,7 +5086,6 @@ td{padding:8px 10px;border-bottom:1px solid #ddd;font-size:11px;}
   <tr><td class="label">Purchase Amount:</td><td class="amount">₦${Number(purchase.amount).toLocaleString()}</td></tr>
   </table>
 </div>
-
 <div class="section">
   <div class="section-title">Payment Details</div>
   <table><tr><td class="label">Total Amount Paid (This Payment):</td><td class="amount">₦${Number(payment.amount).toLocaleString()}</td></tr>
@@ -5002,7 +5093,7 @@ td{padding:8px 10px;border-bottom:1px solid #ddd;font-size:11px;}
   ${payment.bankRows && payment.bankRows.length > 0 ? `<tr><td colspan="2" style="padding-top:10px;padding-bottom:5px;font-weight:bold;background:#f0f4ff;color:#714B67">Bank Transfer Details:</td></tr>` : ''}
   ${payment.bankRows ? payment.bankRows.map((row, i) => `
     <tr style="background:#f8f8ff"><td colspan="2" style="padding:8px 10px">
-      <strong>Bank ${i+1}: ${row.bankName}</strong><br>
+      <strong>From: ${row.bankName || 'N/A'}</strong> → <strong>To: ${row.bankTo || 'N/A'}</strong><br>
       <span style="color:#555">Account Name: <strong>${row.accountName || 'N/A'}</strong></span><br>
       <span style="color:#555">Account Number: <strong style="font-family:monospace">${row.accountNumber || 'N/A'}</strong></span><br>
       <span style="color:#00A09D">Amount: <strong>₦${Number(row.amount).toLocaleString()}</strong></span>
@@ -5091,8 +5182,9 @@ td{padding:8px 10px;border-bottom:1px solid #ddd;font-size:11px;}
                 suppliers: Object.values(suppliers).filter(s => s.totalOwed > 0 || s.creditHeld > 0) // Only show suppliers with actual debt/credit
             };
         },
-        openDebtCard() {
+        openDebtCard(supplierName) {
             this.calculateDebt();
+            this.debtCardModal.selectedSupplier = supplierName || null;
             this.debtCardModal.show = true;
         },
         viewDebtHistory(type) {
@@ -5222,7 +5314,7 @@ ${supplierPurchases.map(p=>`<tr><td><strong>${p.id}</strong></td><td>${this.form
             setTimeout(() => w.print(), 500);
             
             this.notifs.unshift({ title: 'Payment Sent', msg: `₦${this.formatMoney(sm.amount)} sent to ${sm.supplierName} | Ref: ${txnId}` });
-            sm.show = false;
+            this.sendMoneyModal = { show: false, supplierName: '', amount: 0, paymentMethod: 'bank', selectedBank: this.banks[0]?.name || '', bankFrom: '', bankTo: '', accountNumber: '', reference: '', notes: '', error: '' };
         },
     },
     mounted() {
@@ -5234,4 +5326,4 @@ ${supplierPurchases.map(p=>`<tr><td><strong>${p.id}</strong></td><td>${this.form
 
 </script>
 </body>
-</html>
+</html>s
