@@ -455,38 +455,83 @@ input[type=number].no-spinner {
                         </div>
                     </div>
                 </div>
+                <!-- Pending payment confirmation cards -->
+                <div v-if="myOrders.filter(o=>o.paymentStatus==='pending_confirmation').length > 0" class="space-y-2">
+                    <p class="text-xs font-bold text-orange-600 uppercase flex items-center gap-1"><i class="fas fa-clock"></i> Awaiting Payment Confirmation</p>
+                    <div v-for="o in myOrders.filter(o=>o.paymentStatus==='pending_confirmation')" :key="'pend-'+o.id" class="bg-orange-50 border border-orange-200 rounded-xl p-4">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="font-bold text-orange-800 text-sm">{{ o.id }}</p>
+                                <p class="text-xs text-orange-600 mt-0.5">{{ o.items.map(i=>i.name+' ×'+i.qty).join(', ') }}</p>
+                                <div class="mt-2 text-xs text-orange-700 space-y-0.5">
+                                    <p><strong>Method:</strong> {{ o.paymentMethod || '—' }}</p>
+                                    <p v-if="o.bankName"><strong>To Bank:</strong> {{ o.bankName }} <span v-if="o.accountNumber" class="font-mono">({{ o.accountNumber }})</span></p>
+                                    <p v-if="o.bankFrom"><strong>From Bank:</strong> {{ o.bankFrom }}</p>
+                                    <p v-if="o.accountName"><strong>Account Name:</strong> {{ o.accountName }}</p>
+                                    <p v-if="o.paymentRef"><strong>Reference:</strong> {{ o.paymentRef }}</p>
+                                    <p><strong>Amount:</strong> ₦{{ formatMoney((o.amountPaid||0) > 0 ? o.amountPaid : o.total) }}</p>
+                                    <p><strong>Submitted:</strong> {{ formatDate(o.paymentDate) }}</p>
+                                </div>
+                            </div>
+                            <span class="bg-orange-200 text-orange-800 text-[10px] font-black px-2 py-1 rounded-full flex items-center gap-1 flex-shrink-0"><i class="fas fa-hourglass-half"></i> Pending</span>
+                        </div>
+                        <p class="text-[10px] text-orange-500 mt-2 italic"><i class="fas fa-info-circle mr-1"></i>Our Sales team will confirm this payment shortly. Receipt available once confirmed.</p>
+                    </div>
+                </div>
                 <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
                     <div class="overflow-x-auto">
                         <table class="w-full text-left">
                             <thead class="bg-gray-50 text-xs font-bold uppercase text-gray-400">
                                 <tr>
                                     <th class="p-4">Reference</th>
-                                    <th class="p-4">Item</th>
+                                    <th class="p-4">Items</th>
                                     <th class="p-4">Total</th>
                                     <th class="p-4">Paid</th>
                                     <th class="p-4">Balance</th>
-                                    <th class="p-4">Method</th>
+                                    <th class="p-4">Order Status</th>
+                                    <th class="p-4">Payment</th>
                                     <th class="p-4">Date</th>
-                                    <th class="p-4">Status</th>
-                                    <th class="p-4 text-center">Action</th>
+                                    <th class="p-4 text-center">Actions</th>
                                 </tr>
                             </thead>
                             <tbody class="text-sm divide-y divide-gray-100">
                                 <tr v-if="filteredMyOrders.length === 0"><td colspan="9" class="p-8 text-center text-gray-400 italic">No orders found</td></tr>
                                 <tr v-for="o in filteredMyOrders" :key="o.id" class="hover:bg-gray-50">
-                                    <td class="p-4 font-bold text-[#714B67]">{{ o.id }}</td>
+                                    <td class="p-4">
+                                        <p class="font-bold text-[#714B67]">{{ o.id }}</p>
+                                        <p v-if="o.confirmedBy" class="text-[10px] text-gray-400 mt-0.5"><i class="fas fa-user-check mr-0.5 text-green-500"></i>{{ o.confirmedBy }}</p>
+                                    </td>
                                     <td class="p-4 font-medium text-gray-700 text-xs">
-                                        <div v-for="it in o.items" :key="it.name" class="leading-5">{{ it.name }} ×{{ it.qty }}</div>
+                                        <div v-for="it in o.items" :key="it.name" class="leading-5">
+                                            {{ it.name }} ×{{ it.qty }}
+                                            <span v-if="it.deliveredQty !== undefined && it.deliveredQty < it.qty" class="text-orange-500 font-bold">({{ it.deliveredQty||0 }} delivered)</span>
+                                        </div>
                                     </td>
                                     <td class="p-4 font-bold text-gray-800">₦{{ formatMoney(o.total) }}</td>
                                     <td class="p-4 font-bold text-green-600">₦{{ formatMoney(o.amountPaid||0) }}</td>
                                     <td class="p-4 font-bold" :class="Math.max(0,o.total-(o.amountPaid||0))>0?'text-red-500':'text-gray-300'">₦{{ formatMoney(Math.max(0,o.total-(o.amountPaid||0))) }}</td>
-                                    <td class="p-4 text-xs text-gray-500 capitalize">{{ o.paymentMethod||'—' }}<br><span v-if="o.bankName" class="text-[10px] text-gray-400">{{ o.bankName }}</span></td>
+                                    <td class="p-4">
+                                        <span :class="o.status==='delivered'?'bg-green-100 text-green-700':o.status==='confirmed'?'bg-blue-100 text-blue-700':o.status==='partial_delivery'?'bg-orange-100 text-orange-700':o.status==='cancelled'?'bg-red-100 text-red-600':'bg-gray-100 text-gray-500'" class="px-2 py-1 rounded-full text-[10px] font-black uppercase">{{ o.status === 'partial_delivery' ? 'Partial' : o.status }}</span>
+                                    </td>
+                                    <td class="p-4">
+                                        <span v-if="o.paymentStatus==='paid'" class="text-green-600 font-bold text-xs flex items-center gap-1"><i class="fas fa-check-circle"></i> Paid</span>
+                                        <span v-else-if="o.paymentStatus==='partial'" class="text-blue-500 font-bold text-xs">Partial</span>
+                                        <span v-else-if="o.paymentStatus==='pending_confirmation'" class="text-orange-500 font-bold text-xs flex items-center gap-1"><i class="fas fa-clock"></i> Pending</span>
+                                        <span v-else class="text-gray-400 text-xs">Unpaid</span>
+                                        <p v-if="o.paymentMethod" class="text-[10px] text-gray-400 capitalize mt-0.5">{{ o.paymentMethod }}<span v-if="o.bankName"> · {{ o.bankName }}</span></p>
+                                    </td>
                                     <td class="p-4 text-gray-500 text-xs">{{ formatDate(o.created_at) }}</td>
-                                    <td class="p-4"><span :class="statusClass(o.status)" class="px-2 py-1 rounded-full text-[10px] font-black uppercase">{{ o.status }}</span></td>
                                     <td class="p-4 text-center">
-                                        <span v-if="o.paymentStatus === 'paid'" class="text-green-600 font-bold text-xs"><i class="fas fa-check-circle mr-1"></i>Paid</span>
-                                        <button v-else @click="openPaymentModal(o)" class="text-xs bg-[#00A09D] hover:bg-teal-700 text-white px-3 py-1 rounded font-bold transition">Pay Now</button>
+                                        <div class="flex flex-col gap-1 items-center">
+                                            <!-- Pay button: show if not fully paid and not cancelled -->
+                                            <button v-if="o.paymentStatus !== 'paid' && o.status !== 'cancelled' && o.paymentStatus !== 'pending_confirmation'" @click="openPaymentModal(o)" class="text-xs bg-[#00A09D] hover:bg-teal-700 text-white px-3 py-1 rounded font-bold transition w-full">Pay Now</button>
+                                            <!-- Pending confirmation badge -->
+                                            <span v-if="o.paymentStatus==='pending_confirmation'" class="text-[10px] bg-orange-100 text-orange-700 px-2 py-1 rounded font-bold w-full text-center"><i class="fas fa-clock mr-1"></i>Awaiting</span>
+                                            <!-- Receipt: only if confirmed (payment confirmed by staff) -->
+                                            <button v-if="o.paymentStatus==='paid' || (o.amountPaid>0 && o.confirmedBy)" @click="printReceipt(o)" class="text-xs bg-[#714B67] hover:bg-purple-800 text-white px-3 py-1 rounded font-bold transition w-full"><i class="fas fa-receipt mr-1"></i>Receipt</button>
+                                            <!-- Cancel: only if quotation/unpaid -->
+                                            <button v-if="o.status==='quotation' && o.paymentStatus==='unpaid'" @click="cancelOrder(o)" class="text-xs bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 px-3 py-1 rounded font-bold transition w-full"><i class="fas fa-times mr-1"></i>Cancel</button>
+                                        </div>
                                     </td>
                                 </tr>
                             </tbody>
@@ -515,16 +560,21 @@ input[type=number].no-spinner {
                     <div class="overflow-x-auto">
                         <table class="w-full text-left">
                             <thead class="bg-gray-50 text-xs font-bold uppercase text-gray-400">
-                                <tr><th class="p-4">Date</th><th class="p-4">Reference</th><th class="p-4">Description</th><th class="p-4">Method</th><th class="p-4">Bank</th><th class="p-4 text-right">Amount</th><th class="p-4 text-right">Outstanding</th></tr>
+                                <tr><th class="p-4">Date</th><th class="p-4">Reference</th><th class="p-4">Description</th><th class="p-4">Method</th><th class="p-4">Bank</th><th class="p-4">Status</th><th class="p-4 text-right">Amount</th><th class="p-4 text-right">Outstanding</th></tr>
                             </thead>
                             <tbody class="text-sm divide-y divide-gray-100">
-                                <tr v-if="filteredMyTransactions.length === 0"><td colspan="7" class="p-8 text-center text-gray-400 italic">No transactions yet</td></tr>
+                                <tr v-if="filteredMyTransactions.length === 0"><td colspan="8" class="p-8 text-center text-gray-400 italic">No transactions yet</td></tr>
                                 <tr v-for="t in filteredMyTransactions" :key="t.id" class="hover:bg-gray-50">
                                     <td class="p-4 text-gray-500 text-xs">{{ formatDate(t.date) }}</td>
                                     <td class="p-4 font-bold text-[#714B67]">{{ t.ref }}</td>
                                     <td class="p-4 text-gray-700">{{ t.description }}</td>
                                     <td class="p-4 text-xs capitalize text-gray-600">{{ t.method||'—' }}</td>
                                     <td class="p-4 text-xs text-gray-500">{{ t.bankName||'—' }}</td>
+                                    <td class="p-4">
+                                        <span class="text-[10px] font-bold px-2 py-0.5 rounded-full capitalize" :class="t.type==='payment'?'bg-green-100 text-green-700':t.type==='partial_payment'?'bg-blue-100 text-blue-700':t.type==='pending_confirmation'?'bg-orange-100 text-orange-700':'bg-gray-100 text-gray-500'">
+                                            {{ t.type === 'payment' ? '✓ Confirmed' : t.type === 'partial_payment' ? 'Partial' : t.type === 'pending_confirmation' ? '⏳ Pending' : (t.type || 'payment') }}
+                                        </span>
+                                    </td>
                                     <td class="p-4 text-right font-mono font-bold text-gray-800">₦{{ formatMoney(t.amount) }}</td>
                                     <td class="p-4 text-right font-mono text-xs" :class="(t.outstanding||0)>0?'text-red-500 font-bold':'text-gray-400'">₦{{ formatMoney(t.outstanding||0) }}</td>
                                 </tr>
@@ -1079,8 +1129,13 @@ input[type=number].no-spinner {
                                 </thead>
                                 <tbody class="text-sm divide-y divide-gray-100">
                                     <tr v-if="filteredInventory.length === 0"><td colspan="5" class="p-8 text-center text-gray-400 italic">No products found</td></tr>
-                                    <tr v-for="(p, index) in filteredInventory" :key="p.name" class="hover:bg-gray-50 transition">
-                                        <td class="p-4 font-bold text-gray-800">{{ p.name }}</td>
+                                    <tr v-for="(p, index) in filteredInventory" :key="p.name" @click="openStockHistory(p)" class="hover:bg-teal-50 transition cursor-pointer">
+                                        <td class="p-4 font-bold text-gray-800">
+                                            {{ p.name }}
+                                            <span v-if="p.editHistory && p.editHistory.length" class="ml-1 text-[9px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded font-bold" :title="'Last edited by ' + p.editHistory[p.editHistory.length-1].by + ' on ' + new Date(p.editHistory[p.editHistory.length-1].dateTime).toLocaleString()">
+                                                <i class="fas fa-pencil-alt mr-0.5"></i>Edited {{ new Date(p.editHistory[p.editHistory.length-1].dateTime).toLocaleDateString() }}
+                                            </span>
+                                        </td>
                                         <td class="p-4"><span class="px-2 py-1 bg-gray-100 rounded text-xs font-bold text-gray-500 uppercase">{{ p.category }}</span></td>
                                         <td class="p-4">
                                             <div class="flex items-center gap-2">
@@ -1178,6 +1233,19 @@ input[type=number].no-spinner {
                                             <span class="font-bold whitespace-nowrap">{{ it.deliveredQty||0 }} / {{ it.qty }} <span class="text-blue-400">(bal: {{ it.qty-(it.deliveredQty||0) }})</span></span>
                                         </div>
                                     </div>
+                                    <!-- Confirmed by / Delivered by info -->
+                                    <div v-if="o.confirmedBy || o.deliveredBy" class="mt-1 mb-1 text-[9px] text-gray-400 space-y-0.5">
+                                        <div v-if="o.confirmedBy" class="flex items-center gap-1">
+                                            <i class="fas fa-user-check text-green-500"></i>
+                                            <span>Confirmed by <strong class="text-gray-600">{{ o.confirmedBy }}</strong> <span class="font-mono">({{ o.confirmedById }})</span></span>
+                                            <span v-if="o.confirmedAt" class="ml-auto">{{ formatDate(o.confirmedAt) }}</span>
+                                        </div>
+                                        <div v-if="o.deliveredBy && o.status === 'delivered'" class="flex items-center gap-1">
+                                            <i class="fas fa-truck text-[#714B67]"></i>
+                                            <span>Delivered by <strong class="text-gray-600">{{ o.deliveredBy }}</strong> <span class="font-mono">({{ o.deliveredById }})</span></span>
+                                            <span v-if="o.deliveredAt" class="ml-auto">{{ formatDate(o.deliveredAt) }}</span>
+                                        </div>
+                                    </div>
                                     <div class="flex justify-between items-end mt-2">
                                         <span class="font-black text-[#714B67]">₦{{ formatMoney(o.total) }}</span>
                                         <div class="flex gap-1 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity">
@@ -1217,6 +1285,9 @@ input[type=number].no-spinner {
                                             </div>
                                             <button v-if="o.paymentStatus === 'paid'" @click.stop="downloadReceipt(o)" class="text-[10px] bg-gray-100 text-gray-600 px-2 py-1 rounded font-bold hover:bg-gray-200"><i class="fas fa-file-download"></i></button>
                                             <span v-if="o.status === 'delivered'" class="text-green-500 text-sm"><i class="fas fa-check-circle"></i></span>
+                                            <!-- Cancel / Delete for admin -->
+                                            <button v-if="session.role==='Admin' && o.status!=='cancelled' && o.status!=='delivered'" @click.stop="cancelOrder(o)" class="text-[10px] bg-red-50 text-red-500 border border-red-200 px-1.5 py-1 rounded font-bold hover:bg-red-100" title="Cancel Order"><i class="fas fa-ban"></i></button>
+                                            <button v-if="session.role==='Admin'" @click.stop="deleteOrder(o)" class="text-[10px] bg-gray-100 text-gray-500 px-1.5 py-1 rounded font-bold hover:bg-red-50 hover:text-red-500" title="Delete Order"><i class="fas fa-trash"></i></button>
                                         </div>
                                     </div>
                                 </div>
@@ -1267,21 +1338,41 @@ input[type=number].no-spinner {
                                     <option value="amount_high">Sort: Amount (High-Low)</option>
                                     <option value="amount_low">Sort: Amount (Low-High)</option>
                                 </select>
+                                <input v-model="expenseFilters.dateFrom" type="date" class="border border-gray-200 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-[#00A09D] outline-none bg-gray-50" title="Date From">
+                                <input v-model="expenseFilters.dateTo" type="date" class="border border-gray-200 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-[#00A09D] outline-none bg-gray-50" title="Date To">
+                                <button @click="downloadExpenseHistory()" class="bg-[#714B67] hover:bg-purple-800 text-white px-3 py-2 rounded-lg text-xs font-bold transition flex items-center gap-1"><i class="fas fa-download mr-1"></i> Download History</button>
                             </div>
                         </div>
                         <div class="overflow-x-auto">
                             <table class="w-full text-left">
                                 <thead class="bg-gray-50 text-xs font-bold uppercase text-gray-400">
-                                    <tr><th class="p-4">Date</th><th class="p-4">Category</th><th class="p-4">Description</th><th class="p-4 text-right">Amount</th><th class="p-4 text-center">Actions</th></tr>
+                                    <tr><th class="p-4">Date</th><th class="p-4">Category</th><th class="p-4">Description</th><th class="p-4">Payment Source</th><th class="p-4">Approved By</th><th class="p-4 text-right">Amount</th><th class="p-4 text-center">Actions</th></tr>
                                 </thead>
                                 <tbody class="text-sm divide-y divide-gray-100">
-                                    <tr v-if="filteredExpenses.length === 0"><td colspan="5" class="p-8 text-center text-gray-400 italic">No expenses found</td></tr>
+                                    <tr v-if="filteredExpenses.length === 0"><td colspan="7" class="p-8 text-center text-gray-400 italic">No expenses found</td></tr>
                                     <tr v-for="e in filteredExpenses" :key="e.date + e.description" class="hover:bg-gray-50 transition">
                                         <td class="p-4 text-gray-600 text-xs">{{ formatDate(e.date) }}</td>
                                         <td class="p-4"><span class="px-2 py-1 bg-orange-100 text-orange-700 rounded text-xs font-bold uppercase">{{ e.category }}</span></td>
                                         <td class="p-4 font-medium text-gray-700">{{ e.description }}</td>
+                                        <td class="p-4">
+                                            <span v-if="e.paymentSource === 'cash'" class="text-xs text-green-700 font-bold flex items-center gap-1"><i class="fas fa-money-bill-wave"></i> Cash Drawer</span>
+                                            <span v-else-if="e.paymentSource" class="text-xs text-blue-700 font-bold flex items-center gap-1"><i class="fas fa-university"></i> {{ e.paymentSource }}</span>
+                                            <span v-else class="text-xs text-gray-400">—</span>
+                                        </td>
+                                        <td class="p-4">
+                                            <div v-if="e.approvedBy">
+                                                <p class="text-xs font-bold text-gray-700">{{ e.approvedBy }}</p>
+                                                <p class="text-[10px] text-gray-400 font-mono">{{ e.approvedById }}</p>
+                                            </div>
+                                            <span v-else class="text-xs text-gray-400">—</span>
+                                        </td>
                                         <td class="p-4 text-right font-mono font-bold text-red-600">₦{{ formatMoney(e.amount) }}</td>
-                                        <td class="p-4 text-center"><button @click="deleteExpense(e)" class="p-2 text-red-500 hover:bg-red-50 rounded transition" title="Delete"><i class="fas fa-trash-alt"></i></button></td>
+                                        <td class="p-4 text-center">
+                                            <div class="flex justify-center gap-1">
+                                                <button @click="printExpenseReceipt(e)" class="p-1.5 text-blue-500 hover:bg-blue-50 rounded transition text-xs" title="Print Receipt"><i class="fas fa-receipt"></i></button>
+                                                <button @click="deleteExpense(e)" class="p-1.5 text-red-500 hover:bg-red-50 rounded transition" title="Delete"><i class="fas fa-trash-alt"></i></button>
+                                            </div>
+                                        </td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -1484,8 +1575,13 @@ input[type=number].no-spinner {
                                         </td>
                                         <td class="p-4 text-center">
                                             <div class="flex justify-center gap-2">
-                                                <button v-if="o.paymentStatus !== 'paid'" @click="openStaffPaymentModal(o)" class="text-xs bg-green-100 hover:bg-green-200 text-green-700 px-3 py-1 rounded font-bold transition">
-                                                    <i class="fas fa-check mr-1"></i>{{ o.paymentStatus === 'pending_confirmation' ? 'Confirm' : (o.paymentStatus==='partial'?'Add Payment':'Record Pay') }}
+                                                <!-- pending_confirmation: one-click confirm (no modal needed) -->
+                                                <button v-if="o.paymentStatus === 'pending_confirmation'" @click="directConfirmPayment(o)" class="text-xs bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded font-bold transition flex items-center gap-1">
+                                                    <i class="fas fa-check-circle"></i> Confirm
+                                                </button>
+                                                <!-- unpaid / partial: open modal to record new payment -->
+                                                <button v-if="o.paymentStatus !== 'paid' && o.paymentStatus !== 'pending_confirmation'" @click="openStaffPaymentModal(o)" class="text-xs bg-green-100 hover:bg-green-200 text-green-700 px-3 py-1 rounded font-bold transition">
+                                                    <i class="fas fa-check mr-1"></i>{{ o.paymentStatus==='partial' ? 'Add Payment' : 'Record Pay' }}
                                                 </button>
                                                 <button v-if="o.paymentStatus === 'paid'" @click="downloadReceipt(o)" class="text-xs bg-purple-100 hover:bg-purple-200 text-purple-700 px-3 py-1 rounded font-bold transition"><i class="fas fa-file-download mr-1"></i>Receipt</button>
                                                 <button v-if="o.paymentStatus === 'paid'" @click="printReceipt(o)" class="text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1 rounded font-bold transition"><i class="fas fa-print mr-1"></i>Print</button>
@@ -1617,11 +1713,11 @@ input[type=number].no-spinner {
                         <div v-else>
                             <table class="w-full text-sm border border-gray-200">
                                 <thead class="bg-gray-100 text-gray-700">
-                                    <tr><th class="p-3 border border-gray-200 text-left">Date</th><th class="p-3 border border-gray-200 text-left">Category</th><th class="p-3 border border-gray-200 text-left">Description</th><th class="p-3 border border-gray-200 text-right">Amount</th></tr>
+                                    <tr><th class="p-3 border border-gray-200 text-left">Date</th><th class="p-3 border border-gray-200 text-left">Category</th><th class="p-3 border border-gray-200 text-left">Description</th><th class="p-3 border border-gray-200 text-left">Payment Source</th><th class="p-3 border border-gray-200 text-left">Approved By</th><th class="p-3 border border-gray-200 text-right">Amount</th></tr>
                                 </thead>
                                 <tbody>
-                                    <tr v-for="e in expenseReportResults.items" :key="e.id"><td class="p-3 border border-gray-200">{{ formatDate(e.date) }}</td><td class="p-3 border border-gray-200 font-medium">{{ e.category }}</td><td class="p-3 border border-gray-200">{{ e.description }}</td><td class="p-3 border border-gray-200 text-right font-mono text-red-600">₦{{ formatMoney(e.amount) }}</td></tr>
-                                    <tr class="bg-gray-50 font-bold text-gray-800"><td colspan="3" class="p-3 border border-gray-200 text-right uppercase text-xs tracking-wider">Total Expenses</td><td class="p-3 border border-gray-200 text-right font-mono text-lg text-red-600">₦{{ formatMoney(expenseReportResults.total) }}</td></tr>
+                                    <tr v-for="e in expenseReportResults.items" :key="e.id"><td class="p-3 border border-gray-200">{{ formatDate(e.date) }}</td><td class="p-3 border border-gray-200 font-medium">{{ e.category }}</td><td class="p-3 border border-gray-200">{{ e.description }}</td><td class="p-3 border border-gray-200 text-xs">{{ e.paymentSource === 'cash' ? 'Cash Drawer' : (e.paymentSource || '—') }}</td><td class="p-3 border border-gray-200 text-xs"><span class="font-bold">{{ e.approvedBy || '—' }}</span><span v-if="e.approvedById" class="block font-mono text-gray-400">{{ e.approvedById }}</span></td><td class="p-3 border border-gray-200 text-right font-mono text-red-600">₦{{ formatMoney(e.amount) }}</td></tr>
+                                    <tr class="bg-gray-50 font-bold text-gray-800"><td colspan="5" class="p-3 border border-gray-200 text-right uppercase text-xs tracking-wider">Total Expenses</td><td class="p-3 border border-gray-200 text-right font-mono text-lg text-red-600">₦{{ formatMoney(expenseReportResults.total) }}</td></tr>
                                 </tbody>
                             </table>
                             <div class="mt-8 flex justify-end gap-3 print:hidden">
@@ -1673,7 +1769,10 @@ input[type=number].no-spinner {
                     <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
                         <div class="p-5 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center">
                             <h3 class="font-bold text-gray-700">Bank Accounts</h3>
-                            <button @click="selectedBank=null" v-if="selectedBank" class="text-xs text-[#00A09D] hover:underline">Show All</button>
+                            <div class="flex items-center gap-2">
+                                <button @click="selectedBank=null" v-if="selectedBank" class="text-xs text-[#00A09D] hover:underline">Show All</button>
+                                <button @click="openAddBankModal()" class="bg-[#00A09D] hover:bg-teal-700 text-white text-xs px-3 py-1.5 rounded-lg font-bold flex items-center gap-1 transition"><i class="fas fa-plus mr-1"></i> Add Bank</button>
+                            </div>
                         </div>
                         <div class="grid grid-cols-2 sm:grid-cols-4 gap-0 divide-x divide-gray-100">
                             <div v-for="bank in banks" :key="bank.name" @click="selectedBank = (selectedBank===bank.name?null:bank.name); editingOpeningBalance=false" class="p-4 cursor-pointer hover:bg-gray-50 transition" :class="selectedBank===bank.name?'bg-teal-50 border-b-2 border-[#00A09D]':''">
@@ -1713,24 +1812,72 @@ input[type=number].no-spinner {
                             <span class="text-xs text-amber-700">Deposits: ₦{{ formatMoney(bankLedger.filter(e=>e.bankName===selectedBank&&e.method==='bank'&&e.amount>0).reduce((s,e)=>s+e.amount,0)) }}</span>
                             <span class="text-xs font-bold text-[#00A09D]">→ Total: ₦{{ formatMoney(bankBalances[selectedBank]||0) }}</span>
                         </div>
-                        <!-- Selected Bank Transactions -->
-                        <div v-if="selectedBank && selectedBank !== '__cash__'" class="border-t border-gray-100 overflow-x-auto">
-                            <div class="p-4 bg-teal-50 text-sm font-bold text-[#00A09D]">{{ selectedBank }} — Transaction History</div>
-                            <table class="w-full text-left">
-                                <thead class="bg-gray-50 text-xs font-bold uppercase text-gray-400">
-                                    <tr><th class="p-3">Date</th><th class="p-3">Ref</th><th class="p-3">Party</th><th class="p-3">Description</th><th class="p-3 text-right">Amount</th></tr>
-                                </thead>
-                                <tbody class="text-sm divide-y divide-gray-100">
-                                    <tr v-if="bankLedger.filter(e=>e.bankName===selectedBank).length===0"><td colspan="5" class="p-6 text-center text-gray-400 italic">No transactions for this bank</td></tr>
-                                    <tr v-for="(entry,idx) in bankLedger.filter(e=>e.bankName===selectedBank)" :key="idx" class="hover:bg-gray-50">
-                                        <td class="p-3 text-xs text-gray-500">{{ formatDate(entry.date) }}</td>
-                                        <td class="p-3 font-mono text-xs text-[#714B67]">{{ entry.ref }}</td>
-                                        <td class="p-3 text-xs text-gray-600">{{ entry.customerName }}</td>
-                                        <td class="p-3 text-gray-700">{{ entry.description }}</td>
-                                        <td class="p-3 text-right font-bold" :class="entry.amount>=0?'text-green-600':'text-red-500'">{{ entry.amount>=0?'+':'' }}₦{{ formatMoney(Math.abs(entry.amount)) }}</td>
-                                    </tr>
-                                </tbody>
-                            </table>
+                        <!-- Bank Statement for selected bank -->
+                        <div v-if="selectedBank && selectedBank !== '__cash__'" class="border-t border-gray-100">
+                            <!-- Statement header & filters -->
+                            <div class="p-4 bg-gradient-to-r from-[#714B67]/10 to-transparent flex flex-wrap gap-3 items-center justify-between">
+                                <div>
+                                    <p class="font-bold text-gray-700 text-sm">{{ selectedBank }} — Bank Statement</p>
+                                    <p class="text-[10px] text-gray-400 font-mono">A/C: {{ banks.find(b=>b.name===selectedBank)?.accountNumber }}</p>
+                                </div>
+                                <div class="flex gap-2 flex-wrap items-center">
+                                    <input type="month" v-model="bankStmtMonth" class="border border-gray-200 rounded px-2 py-1.5 text-xs focus:ring-2 focus:ring-[#714B67] outline-none bg-white font-bold">
+                                    <button @click="bankStmtMonth=''" class="text-xs border border-gray-200 text-gray-600 px-2 py-1.5 rounded hover:bg-gray-100 font-bold">All Time</button>
+                                    <button @click="downloadBankStatementPDF(selectedBank)" class="bg-[#714B67] hover:bg-purple-800 text-white text-xs px-3 py-1.5 rounded font-bold flex items-center gap-1"><i class="fas fa-file-pdf mr-1"></i>Download PDF</button>
+                                </div>
+                            </div>
+                            <!-- Opening balance row -->
+                            <div class="px-4 py-2 bg-amber-50 border-b border-amber-100 flex justify-between items-center text-xs">
+                                <span class="font-bold text-amber-800"><i class="fas fa-flag mr-1"></i>Opening Balance{{ bankStmtMonth ? ' (' + bankStmtMonth + ')' : '' }}</span>
+                                <span class="font-black text-amber-900 text-sm">₦{{ formatMoney(bankStmtOpeningBalance(selectedBank)) }}</span>
+                            </div>
+                            <!-- Transactions table -->
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left">
+                                    <thead class="bg-gray-50 text-[10px] font-bold uppercase text-gray-400 border-b border-gray-200">
+                                        <tr>
+                                            <th class="p-3">Date</th>
+                                            <th class="p-3">Reference</th>
+                                            <th class="p-3">Description</th>
+                                            <th class="p-3">From / To</th>
+                                            <th class="p-3">Mode</th>
+                                            <th class="p-3">Confirmed By</th>
+                                            <th class="p-3 text-right text-green-600">Credit (₦)</th>
+                                            <th class="p-3 text-right text-red-500">Debit (₦)</th>
+                                            <th class="p-3 text-right">Balance (₦)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="text-xs divide-y divide-gray-100">
+                                        <tr v-if="bankStmtRows(selectedBank).length===0"><td colspan="9" class="p-6 text-center text-gray-400 italic">No transactions for the selected period</td></tr>
+                                        <tr v-for="(e, idx) in (bankStmt.showCount >= bankStmtRows(selectedBank).length ? bankStmtRows(selectedBank) : bankStmtRows(selectedBank).slice(0, bankStmt.showCount))" :key="idx" class="hover:bg-gray-50" :class="e.amount>=0?'':'bg-red-50/30'">
+                                            <td class="p-3 text-gray-500 whitespace-nowrap">{{ formatDate(e.date) }}</td>
+                                            <td class="p-3 font-mono font-bold text-[#714B67]">{{ e.ref }}</td>
+                                            <td class="p-3 text-gray-700 max-w-[160px]">{{ e.description }}</td>
+                                            <td class="p-3 text-gray-500">
+                                                <span v-if="e.bankFrom" class="block">From: {{ e.bankFrom }}</span>
+                                                <span v-if="e.accountName" class="block text-[10px] text-gray-400">{{ e.accountName }}</span>
+                                                <span v-if="e.customerName && !e.bankFrom" class="block">{{ e.customerName }}</span>
+                                            </td>
+                                            <td class="p-3"><span class="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase" :class="e.method==='cash'?'bg-green-100 text-green-700':'bg-blue-100 text-blue-700'">{{ e.method==='cash'?'Cash':'Bank' }}</span></td>
+                                            <td class="p-3 text-[10px] text-gray-500">{{ e.confirmedBy || '—' }}<span v-if="e.confirmedById" class="block font-mono text-gray-400">{{ e.confirmedById }}</span></td>
+                                            <td class="p-3 text-right font-bold text-green-600">{{ e.amount>=0 ? '₦'+formatMoney(e.amount) : '—' }}</td>
+                                            <td class="p-3 text-right font-bold text-red-500">{{ e.amount<0 ? '₦'+formatMoney(Math.abs(e.amount)) : '—' }}</td>
+                                            <td class="p-3 text-right font-bold" :class="e.runningBalance>=0?'text-gray-800':'text-red-600'">₦{{ formatMoney(e.runningBalance) }}</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <!-- View more/less -->
+                            <div v-if="bankStmtRows(selectedBank).length > 5" class="p-3 border-t text-center flex items-center justify-center gap-3">
+                                <button @click="bankStmt.showCount = (bankStmt.showCount >= bankStmtRows(selectedBank).length ? 5 : bankStmtRows(selectedBank).length)" class="text-xs font-bold text-[#714B67] hover:underline">
+                                    {{ bankStmt.showCount >= bankStmtRows(selectedBank).length ? '↑ Show Less' : '↓ View More (' + (bankStmtRows(selectedBank).length - bankStmt.showCount) + ' more)' }}
+                                </button>
+                            </div>
+                            <!-- Closing balance row -->
+                            <div class="px-4 py-3 bg-teal-50 border-t border-teal-100 flex justify-between items-center">
+                                <span class="font-bold text-teal-800 text-xs"><i class="fas fa-flag-checkered mr-1"></i>Closing Balance{{ bankStmtMonth ? ' (' + bankStmtMonth + ')' : '' }}</span>
+                                <span class="font-black text-teal-900 text-base">₦{{ formatMoney(bankBalances[selectedBank]||0) }}</span>
+                            </div>
                         </div>
                         <!-- Cash Drawer Transactions -->
                         <div v-if="selectedBank === '__cash__'" class="border-t border-gray-100 overflow-x-auto">
@@ -2265,11 +2412,28 @@ input[type=number].no-spinner {
                 </div>
                 <!-- Inventory Form -->
                 <div v-if="view === 'inventory'" class="space-y-4">
-                    <div><label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Product Name</label><input v-model="form.pName" type="text" class="w-full border border-gray-300 p-3 rounded-lg bg-gray-50 focus:ring-2 focus:ring-[#00A09D] outline-none text-sm"></div>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div><label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Stock Quantity</label><input v-model.number="form.stock" type="number" class="w-full border border-gray-300 p-3 rounded-lg bg-gray-50 focus:ring-2 focus:ring-[#00A09D] outline-none text-sm"></div>
-                        <div><label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Unit Price (₦)</label><input v-model.number="form.price" type="number" class="w-full border border-gray-300 p-3 rounded-lg bg-gray-50 focus:ring-2 focus:ring-[#00A09D] outline-none text-sm"></div>
+                    <div><label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Product Name *</label><input v-model="form.pName" type="text" class="w-full border border-gray-300 p-3 rounded-lg bg-gray-50 focus:ring-2 focus:ring-[#00A09D] outline-none text-sm" placeholder="e.g. Dangote Cement (50kg)"></div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Category *</label>
+                        <select v-model="form.pCategory" class="w-full border border-gray-300 p-3 rounded-lg bg-gray-50 focus:ring-2 focus:ring-[#00A09D] outline-none text-sm">
+                            <option value="" disabled>Select category</option>
+                            <option value="Cement">Cement</option>
+                            <option value="Rods">Rods / Steel</option>
+                            <option value="Aggregates">Aggregates</option>
+                            <option value="Finishing">Finishing</option>
+                            <option value="Roofing">Roofing</option>
+                            <option value="Plumbing">Plumbing</option>
+                            <option value="Electrical">Electrical</option>
+                            <option value="Timber">Timber</option>
+                            <option value="Paint">Paint</option>
+                            <option value="General">General</option>
+                        </select>
                     </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div><label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Stock Quantity *</label><input v-model.number="form.stock" type="number" class="w-full border border-gray-300 p-3 rounded-lg bg-gray-50 focus:ring-2 focus:ring-[#00A09D] outline-none text-sm"></div>
+                        <div><label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Unit Price (₦) *</label><input v-model.number="form.price" type="number" class="w-full border border-gray-300 p-3 rounded-lg bg-gray-50 focus:ring-2 focus:ring-[#00A09D] outline-none text-sm"></div>
+                    </div>
+                    <div><label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Unit (e.g. bags, tons, pcs)</label><input v-model="form.pUnit" type="text" class="w-full border border-gray-300 p-3 rounded-lg bg-gray-50 focus:ring-2 focus:ring-[#00A09D] outline-none text-sm" placeholder="e.g. bags"></div>
                 </div>
                 <!-- Expenses Form -->
                 <div v-if="view === 'expenses'" class="space-y-4">
@@ -2283,6 +2447,18 @@ input[type=number].no-spinner {
                     <div class="grid grid-cols-2 gap-4">
                         <div><label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Amount (₦)</label><input v-model.number="form.expAmount" type="number" class="w-full border border-gray-300 p-3 rounded-lg bg-gray-50 focus:ring-2 focus:ring-[#00A09D] outline-none text-sm"></div>
                         <div><label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Date</label><input v-model="form.expDate" type="date" class="w-full border border-gray-300 p-3 rounded-lg bg-gray-50 focus:ring-2 focus:ring-[#00A09D] outline-none text-sm"></div>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Payment Source *</label>
+                        <select v-model="form.expPaymentSource" class="w-full border border-gray-300 p-3 rounded-lg bg-gray-50 focus:ring-2 focus:ring-[#00A09D] outline-none text-sm">
+                            <option value="" disabled>Select payment source</option>
+                            <option value="cash">Cash Drawer</option>
+                            <option v-for="b in banks" :key="b.name" :value="b.name">{{ b.name }} (₦{{ formatMoney(bankBalances[b.name]||0) }})</option>
+                        </select>
+                    </div>
+                    <div class="p-3 bg-blue-50 border border-blue-200 rounded-lg text-xs text-blue-700 flex items-center gap-2">
+                        <i class="fas fa-user-check"></i>
+                        <span>Approver: <strong>{{ session?.fullname }}</strong> <span class="font-mono text-blue-500">({{ session?.username }})</span></span>
                     </div>
                 </div>
                 <!-- Staff Users Form -->
@@ -2344,12 +2520,13 @@ input[type=number].no-spinner {
 
     <!-- PAYMENT MODAL (Customer) -->
     <div v-if="paymentModal.show" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
-        <div class="bg-white w-full max-w-md rounded-xl shadow-2xl overflow-hidden animate-fade-in-up">
+        <div class="bg-white w-full max-w-lg rounded-xl shadow-2xl overflow-hidden animate-fade-in-up">
             <div class="p-5 bg-[#00A09D] text-white flex justify-between items-center">
-                <h3 class="font-bold text-sm flex items-center gap-2"><i class="fas fa-credit-card"></i> Make Payment</h3>
+                <div><h3 class="font-bold text-sm flex items-center gap-2"><i class="fas fa-credit-card"></i> Make Payment</h3><p class="text-white/70 text-xs mt-0.5">{{ paymentModal.order?.id }} — awaiting confirmation after submission</p></div>
                 <button @click="paymentModal.show = false" class="text-white/70 hover:text-white"><i class="fas fa-times"></i></button>
             </div>
-            <div class="p-6 space-y-4">
+            <div class="p-6 space-y-4 max-h-[85vh] overflow-y-auto">
+                <!-- Order Summary -->
                 <div class="bg-gray-50 rounded-lg p-4 border border-gray-100">
                     <p class="text-xs text-gray-500 uppercase font-bold mb-2">Order Summary</p>
                     <div v-for="item in paymentModal.order?.items" :key="item.name" class="flex justify-between text-xs text-gray-600 py-0.5">
@@ -2359,51 +2536,69 @@ input[type=number].no-spinner {
                     <div class="flex justify-between items-center border-t border-gray-200 mt-2 pt-2">
                         <span class="font-bold text-gray-700 text-sm">{{ paymentModal.order?.id }}</span>
                         <div class="text-right">
-                            <p class="font-black text-xl text-[#00A09D]">₦{{ formatMoney(paymentModal.order?.total) }}</p>
-                            <p v-if="(paymentModal.order?.amountPaid||0)>0" class="text-xs text-green-600">Paid: ₦{{ formatMoney(paymentModal.order?.amountPaid||0) }} | Balance: ₦{{ formatMoney(Math.max(0,(paymentModal.order?.total||0)-(paymentModal.order?.amountPaid||0))) }}</p>
+                            <p class="font-black text-xl text-[#00A09D]">₦{{ formatMoney(Math.max(0,(paymentModal.order?.total||0)-(paymentModal.order?.amountPaid||0))) }}</p>
+                            <p class="text-[10px] text-gray-400">Outstanding balance</p>
+                            <p v-if="(paymentModal.order?.amountPaid||0)>0" class="text-xs text-green-600">Already paid: ₦{{ formatMoney(paymentModal.order?.amountPaid||0) }}</p>
                         </div>
                     </div>
                 </div>
-                <!-- Payment Mode -->
-                <div><label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Payment Method</label>
+                <!-- Payment Method -->
+                <div>
+                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Payment Method</label>
                     <div class="grid grid-cols-3 gap-2">
-                        <button @click="paymentModal.mode='bank'; paymentModal.cashAmount=0; paymentModal.bankAmount=Math.max(0,(paymentModal.order?.total||0)-(paymentModal.order?.amountPaid||0))" :class="paymentModal.mode==='bank'?'bg-[#00A09D] text-white border-[#00A09D]':'bg-white text-gray-600 border-gray-300'" class="p-2 border rounded-lg text-xs font-bold transition text-center"><i class="fas fa-university block text-lg mb-1"></i>Bank</button>
+                        <button @click="paymentModal.mode='bank'; paymentModal.cashAmount=0; paymentModal.bankAmount=Math.max(0,(paymentModal.order?.total||0)-(paymentModal.order?.amountPaid||0))" :class="paymentModal.mode==='bank'?'bg-[#00A09D] text-white border-[#00A09D]':'bg-white text-gray-600 border-gray-300'" class="p-2 border rounded-lg text-xs font-bold transition text-center"><i class="fas fa-university block text-lg mb-1"></i>Bank Transfer</button>
                         <button @click="paymentModal.mode='cash'; paymentModal.bankAmount=0; paymentModal.cashAmount=Math.max(0,(paymentModal.order?.total||0)-(paymentModal.order?.amountPaid||0))" :class="paymentModal.mode==='cash'?'bg-[#00A09D] text-white border-[#00A09D]':'bg-white text-gray-600 border-gray-300'" class="p-2 border rounded-lg text-xs font-bold transition text-center"><i class="fas fa-money-bill block text-lg mb-1"></i>Cash</button>
                         <button @click="paymentModal.mode='mixed'" :class="paymentModal.mode==='mixed'?'bg-[#00A09D] text-white border-[#00A09D]':'bg-white text-gray-600 border-gray-300'" class="p-2 border rounded-lg text-xs font-bold transition text-center"><i class="fas fa-layer-group block text-lg mb-1"></i>Mixed</button>
                     </div>
                 </div>
-                <!-- Bank Selection + Details -->
-                <div v-if="paymentModal.mode==='bank'||paymentModal.mode==='mixed'">
-                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-2">Select LDI Receiving Bank</label>
-                    <div class="grid grid-cols-2 gap-2 mb-3">
-                        <button v-for="b in banks" :key="b.name" @click="paymentModal.selectedBank=b.name" :class="paymentModal.selectedBank===b.name?'bg-[#714B67] text-white border-[#714B67]':'bg-white text-gray-600 border-gray-200'" class="p-2 border rounded-lg text-xs font-bold transition text-left">
-                            <p class="font-bold">{{ b.name }}</p>
-                            <p class="text-[9px] opacity-70 font-mono">{{ b.accountNumber }}</p>
-                        </button>
+                <!-- BANK section -->
+                <div v-if="paymentModal.mode==='bank'||paymentModal.mode==='mixed'" class="space-y-3">
+                    <!-- LDI receiving bank dropdown -->
+                    <div>
+                        <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Select LDI Bank to Transfer To *</label>
+                        <select v-model="paymentModal.selectedBank" @change="paymentModal.bankTo=paymentModal.selectedBank; paymentModal.accountNumber=banks.find(b=>b.name===paymentModal.selectedBank)?.accountNumber||''" class="w-full border border-gray-300 p-2.5 rounded-lg bg-gray-50 focus:ring-2 focus:ring-[#00A09D] outline-none text-sm">
+                            <option value="" disabled>-- Choose LDI bank --</option>
+                            <option v-for="b in banks" :key="b.name" :value="b.name">{{ b.name }} — A/C: {{ b.accountNumber }}</option>
+                        </select>
+                        <div v-if="paymentModal.selectedBank" class="mt-2 p-3 bg-teal-50 border border-teal-200 rounded-lg text-xs text-teal-800">
+                            <p class="font-bold"><i class="fas fa-university mr-1"></i>{{ paymentModal.selectedBank }}</p>
+                            <p class="font-mono text-sm mt-1">{{ banks.find(b=>b.name===paymentModal.selectedBank)?.accountNumber }}</p>
+                            <p class="text-teal-600 mt-0.5">Ladu Investment Ltd</p>
+                        </div>
                     </div>
-                    <div class="grid grid-cols-2 gap-2">
-                        <div><label class="block text-[9px] font-bold text-gray-400 uppercase mb-1">Your Bank (Paying From)</label><input v-model="paymentModal.bankFrom" type="text" class="w-full border border-gray-300 p-2 rounded-lg bg-white focus:ring-2 focus:ring-[#00A09D] outline-none text-xs" placeholder="e.g. GTBank"></div>
-                        <div><label class="block text-[9px] font-bold text-gray-400 uppercase mb-1">Receiving Bank (LDI)</label><input v-model="paymentModal.bankTo" type="text" class="w-full border border-gray-300 p-2 rounded-lg bg-white focus:ring-2 focus:ring-[#00A09D] outline-none text-xs" placeholder="e.g. Zenith Bank"></div>
-                        <div><label class="block text-[9px] font-bold text-gray-400 uppercase mb-1">LDI Account Name</label><input v-model="paymentModal.accountName" type="text" class="w-full border border-gray-300 p-2 rounded-lg bg-white focus:ring-2 focus:ring-[#00A09D] outline-none text-xs" placeholder="Account holder name"></div>
-                        <div><label class="block text-[9px] font-bold text-gray-400 uppercase mb-1">LDI Account Number</label><input v-model="paymentModal.accountNumber" type="text" class="w-full border border-gray-300 p-2 rounded-lg bg-white focus:ring-2 focus:ring-[#00A09D] outline-none text-xs" placeholder="0123456789"></div>
+                    <!-- Customer's own bank info -->
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-[9px] font-bold text-gray-400 uppercase mb-1">Your Bank (Sending From) *</label>
+                            <input v-model="paymentModal.bankFrom" type="text" class="w-full border border-gray-300 p-2.5 rounded-lg bg-white focus:ring-2 focus:ring-[#00A09D] outline-none text-sm" placeholder="e.g. GTBank">
+                        </div>
+                        <div>
+                            <label class="block text-[9px] font-bold text-gray-400 uppercase mb-1">Your Account Name *</label>
+                            <input v-model="paymentModal.accountName" type="text" class="w-full border border-gray-300 p-2.5 rounded-lg bg-white focus:ring-2 focus:ring-[#00A09D] outline-none text-sm" placeholder="Account holder name">
+                        </div>
                     </div>
-                </div>
-                <!-- Amount Fields -->
-                <div class="grid" :class="paymentModal.mode==='mixed'?'grid-cols-2 gap-2':'grid-cols-1'">
+                    <!-- Bank amount -->
                     <div v-if="paymentModal.mode!=='cash'">
-                        <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Bank Amount (₦)</label>
-                        <input v-model.number="paymentModal.bankAmount" type="number" min="0" class="w-full border border-gray-300 p-3 rounded-lg bg-gray-50 focus:ring-2 focus:ring-[#00A09D] outline-none text-sm">
-                    </div>
-                    <div v-if="paymentModal.mode!=='bank'">
-                        <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Cash Amount (₦)</label>
-                        <input v-model.number="paymentModal.cashAmount" type="number" min="0" class="w-full border border-gray-300 p-3 rounded-lg bg-gray-50 focus:ring-2 focus:ring-[#00A09D] outline-none text-sm">
+                        <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Bank Transfer Amount (₦)</label>
+                        <input v-model.number="paymentModal.bankAmount" type="number" min="0" class="w-full border border-gray-300 p-3 rounded-lg bg-gray-50 focus:ring-2 focus:ring-[#00A09D] outline-none text-sm no-spinner">
                     </div>
                 </div>
-                <div><label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Payment Reference</label><input v-model="paymentModal.reference" type="text" class="w-full border border-gray-300 p-3 rounded-lg bg-gray-50 focus:ring-2 focus:ring-[#00A09D] outline-none text-sm" :placeholder="'e.g. ' + (paymentModal.order?.id || '') + '-REF'"></div>
+                <!-- Cash amount -->
+                <div v-if="paymentModal.mode!=='bank'">
+                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Cash Amount (₦)</label>
+                    <input v-model.number="paymentModal.cashAmount" type="number" min="0" class="w-full border border-gray-300 p-3 rounded-lg bg-gray-50 focus:ring-2 focus:ring-[#00A09D] outline-none text-sm no-spinner">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Payment Reference / Teller Number</label>
+                    <input v-model="paymentModal.reference" type="text" class="w-full border border-gray-300 p-3 rounded-lg bg-gray-50 focus:ring-2 focus:ring-[#00A09D] outline-none text-sm" :placeholder="'e.g. ' + (paymentModal.order?.id || '') + '-REF'">
+                </div>
+                <div class="p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-700 flex items-start gap-2">
+                    <i class="fas fa-info-circle mt-0.5 flex-shrink-0"></i>
+                    <span>Your payment will go to <strong>pending confirmation</strong>. You'll be able to download your receipt once confirmed by our Sales team.</span>
+                </div>
                 <button @click="submitPayment" class="w-full py-3 bg-[#00A09D] hover:bg-teal-700 text-white rounded-lg font-bold transition shadow-lg">
-                    <i class="fas fa-check mr-2"></i> Submit Payment — ₦{{ formatMoney((paymentModal.bankAmount||0)+(paymentModal.cashAmount||0)) }}
+                    <i class="fas fa-paper-plane mr-2"></i> Submit Payment — ₦{{ formatMoney((paymentModal.bankAmount||0)+(paymentModal.cashAmount||0)) }}
                 </button>
-                <p class="text-xs text-center text-gray-400">Your payment will be confirmed by the Sales team shortly.</p>
             </div>
         </div>
     </div>
@@ -2440,19 +2635,22 @@ input[type=number].no-spinner {
                     </div>
                 </div>
                 <!-- Bank Selection + Details -->
-                <div v-if="staffPayModal.mode==='bank'||staffPayModal.mode==='mixed'">
-                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-2">Bank Received In</label>
-                    <div class="grid grid-cols-2 gap-2 mb-3">
-                        <button v-for="b in banks" :key="b.name" @click="staffPayModal.selectedBank=b.name" :class="staffPayModal.selectedBank===b.name?'bg-[#714B67] text-white border-[#714B67]':'bg-white text-gray-600 border-gray-200'" class="p-2 border rounded-lg text-xs font-bold transition text-left">
-                            <p class="font-bold">{{ b.name }}</p>
-                            <p class="text-[9px] opacity-70 font-mono">{{ b.accountNumber }}</p>
-                        </button>
+                <div v-if="staffPayModal.mode==='bank'||staffPayModal.mode==='mixed'" class="space-y-3">
+                    <div>
+                        <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">LDI Bank Receiving Payment *</label>
+                        <select v-model="staffPayModal.selectedBank" @change="staffPayModal.bankTo=staffPayModal.selectedBank; staffPayModal.accountNumber=banks.find(b=>b.name===staffPayModal.selectedBank)?.accountNumber||''" class="w-full border border-gray-300 p-2.5 rounded-lg bg-gray-50 focus:ring-2 focus:ring-[#714B67] outline-none text-sm">
+                            <option value="" disabled>-- Select LDI bank --</option>
+                            <option v-for="b in banks" :key="b.name" :value="b.name">{{ b.name }} — A/C: {{ b.accountNumber }}</option>
+                        </select>
+                        <div v-if="staffPayModal.selectedBank" class="mt-1.5 p-2.5 bg-purple-50 border border-purple-200 rounded-lg text-xs text-purple-800">
+                            <span class="font-bold">{{ staffPayModal.selectedBank }}</span>
+                            <span class="ml-2 font-mono">{{ banks.find(b=>b.name===staffPayModal.selectedBank)?.accountNumber }}</span>
+                            <span class="ml-2 text-purple-500">Ladu Investment Ltd</span>
+                        </div>
                     </div>
                     <div class="grid grid-cols-2 gap-2">
-                        <div><label class="block text-[9px] font-bold text-gray-400 uppercase mb-1">Paying From Bank</label><input v-model="staffPayModal.bankFrom" type="text" class="w-full border border-gray-300 p-2 rounded-lg bg-white focus:ring-2 focus:ring-[#714B67] outline-none text-xs" placeholder="e.g. Zenith Bank"></div>
-                        <div><label class="block text-[9px] font-bold text-gray-400 uppercase mb-1">Paying To Bank</label><input v-model="staffPayModal.bankTo" type="text" class="w-full border border-gray-300 p-2 rounded-lg bg-white focus:ring-2 focus:ring-[#714B67] outline-none text-xs" placeholder="e.g. First Bank"></div>
-                        <div><label class="block text-[9px] font-bold text-gray-400 uppercase mb-1">Account Name</label><input v-model="staffPayModal.accountName" type="text" class="w-full border border-gray-300 p-2 rounded-lg bg-white focus:ring-2 focus:ring-[#714B67] outline-none text-xs" placeholder="Account holder name"></div>
-                        <div><label class="block text-[9px] font-bold text-gray-400 uppercase mb-1">Account Number</label><input v-model="staffPayModal.accountNumber" type="text" class="w-full border border-gray-300 p-2 rounded-lg bg-white focus:ring-2 focus:ring-[#714B67] outline-none text-xs" placeholder="0123456789"></div>
+                        <div><label class="block text-[9px] font-bold text-gray-400 uppercase mb-1">Customer's Bank (Sending From)</label><input v-model="staffPayModal.bankFrom" type="text" class="w-full border border-gray-300 p-2 rounded-lg bg-white focus:ring-2 focus:ring-[#714B67] outline-none text-xs" placeholder="e.g. Zenith Bank"></div>
+                        <div><label class="block text-[9px] font-bold text-gray-400 uppercase mb-1">Customer's Account Name</label><input v-model="staffPayModal.accountName" type="text" class="w-full border border-gray-300 p-2 rounded-lg bg-white focus:ring-2 focus:ring-[#714B67] outline-none text-xs" placeholder="Sender account name"></div>
                     </div>
                 </div>
                 <!-- Amount Fields -->
@@ -2505,13 +2703,14 @@ input[type=number].no-spinner {
                             </div>
                         </div>
                         <div>
-                            <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Deliver Now (max: {{ l.remainingQty }}) — type quantity directly</label>
+                            <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Deliver Now (max: {{ l.remainingQty }})</label>
                             <input v-model.number="l.deliverNow" type="number" min="0" :max="l.remainingQty"
-                                class="w-full border-2 border-gray-300 p-3 rounded-lg bg-white focus:ring-2 focus:ring-[#714B67] outline-none text-2xl font-black text-center"
+                                class="w-full border-2 border-gray-300 p-3 rounded-lg bg-white focus:ring-2 focus:ring-[#714B67] outline-none text-2xl font-black text-center no-spinner"
                                 :class="l.deliverNow > l.remainingQty ? 'border-red-400 bg-red-50 text-red-600' : 'border-[#714B67]/40 focus:border-[#714B67]'"
                                 placeholder="0"
-                                style="-moz-appearance:textfield"
-                                @wheel.prevent>
+                                @wheel.prevent
+                                @keydown.up.prevent
+                                @keydown.down.prevent>
                             <p v-if="l.deliverNow > 0 && l.deliverNow <= l.remainingQty" class="text-[10px] text-green-600 font-bold mt-1 text-center"><i class="fas fa-check-circle mr-1"></i>{{ l.deliverNow }} unit(s) will be delivered — {{ l.remainingQty - l.deliverNow }} remaining after this</p>
                             <p v-if="l.deliverNow > l.remainingQty" class="text-[10px] text-red-600 font-bold mt-1 text-center"><i class="fas fa-exclamation-circle mr-1"></i>Cannot exceed remaining balance of {{ l.remainingQty }}</p>
                         </div>
@@ -2538,36 +2737,53 @@ input[type=number].no-spinner {
             <div class="p-5 bg-[#714B67] text-white flex justify-between items-center">
                 <div>
                     <h3 class="font-bold text-sm flex items-center gap-2"><i class="fas fa-boxes"></i> Record Receiving</h3>
-                    <p class="text-white/70 text-xs mt-0.5">{{ purchaseReceivingModal.purchase?.id }} — Flexible/Partial Receiving</p>
+                    <p class="text-white/70 text-xs mt-0.5">{{ purchaseReceivingModal.purchase?.id }} — Partial/Full Receiving</p>
                 </div>
                 <button @click="purchaseReceivingModal.show=false" class="text-white/70 hover:text-white"><i class="fas fa-times"></i></button>
             </div>
             <div class="p-6 space-y-4">
+                <!-- Staff info (auto from session) -->
+                <div class="p-3 bg-purple-50 border border-purple-200 rounded-lg text-xs text-purple-800 flex items-center gap-2">
+                    <i class="fas fa-user-check"></i>
+                    <span>Receiving Staff: <strong>{{ session?.fullname }}</strong> <span class="font-mono">({{ session?.username }})</span></span>
+                </div>
                 <div class="bg-gray-50 rounded-lg p-4 border border-gray-100">
                     <p class="text-xs text-gray-500 uppercase font-bold mb-2">Order Summary</p>
                     <div v-for="item in purchaseReceivingModal.purchase?.items" :key="item.name" class="space-y-1">
                         <div class="flex justify-between items-center">
                             <span class="text-sm font-bold text-gray-700">Originally Ordered:</span>
-                            <span class="font-black text-lg text-[#714B67]">{{ item.qty }} units</span>
+                            <span class="font-black text-lg text-[#714B67]">{{ item.qty }} units @ ₦{{ formatMoney(item.price) }}</span>
                         </div>
                         <div class="flex justify-between items-center">
                             <span class="text-sm font-bold text-gray-600">Previously Received:</span>
                             <span class="font-bold text-amber-600">{{ (purchaseReceivingModal.purchase?.receivingHistory || []).reduce((sum, r) => sum + r.receivedQty, 0) }} units</span>
                         </div>
                         <div class="flex justify-between items-center border-t border-gray-200 pt-1">
-                            <span class="text-sm font-bold text-gray-700">Still Need:</span>
+                            <span class="text-sm font-bold text-gray-700">Still Expected:</span>
                             <span class="font-black text-lg text-blue-600">{{ Math.max(0, item.qty - ((purchaseReceivingModal.purchase?.receivingHistory || []).reduce((sum, r) => sum + r.receivedQty, 0))) }} units</span>
                         </div>
                     </div>
                 </div>
                 <div>
-                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-2">Quantity Received Now (units) — type directly</label>
-                    <input v-model.number="purchaseReceivingModal.quantityReceived" type="number" min="0" class="w-full border-2 border-[#714B67]/40 p-3 rounded-lg bg-white focus:ring-2 focus:border-[#714B67] focus:ring-[#714B67] outline-none font-black text-center text-3xl" placeholder="0" style="-moz-appearance:textfield" @wheel.prevent>
-                    <p class="text-xs text-gray-500 mt-2">
-                        <span v-if="purchaseReceivingModal.quantityReceived > 0 && purchaseReceivingModal.quantityReceived < (Math.max(0, (purchaseReceivingModal.purchase?.items[0]?.qty||0) - ((purchaseReceivingModal.purchase?.receivingHistory || []).reduce((sum, r) => sum + r.receivedQty, 0))))" class="text-amber-600"><i class="fas fa-arrow-down mr-1"></i>Partial: {{ (Math.max(0, (purchaseReceivingModal.purchase?.items[0]?.qty||0) - ((purchaseReceivingModal.purchase?.receivingHistory || []).reduce((sum, r) => sum + r.receivedQty, 0)))) - purchaseReceivingModal.quantityReceived }} more will be needed</span>
-                        <span v-else-if="purchaseReceivingModal.quantityReceived === (Math.max(0, (purchaseReceivingModal.purchase?.items[0]?.qty||0) - ((purchaseReceivingModal.purchase?.receivingHistory || []).reduce((sum, r) => sum + r.receivedQty, 0))))" class="text-green-600"><i class="fas fa-check-circle mr-1"></i>Complete delivery!</span>
-                        <span v-else-if="purchaseReceivingModal.quantityReceived > (Math.max(0, (purchaseReceivingModal.purchase?.items[0]?.qty||0) - ((purchaseReceivingModal.purchase?.receivingHistory || []).reduce((sum, r) => sum + r.receivedQty, 0))))" class="text-red-600"><i class="fas fa-plus-circle mr-1"></i>Excess: {{ purchaseReceivingModal.quantityReceived - (Math.max(0, (purchaseReceivingModal.purchase?.items[0]?.qty||0) - ((purchaseReceivingModal.purchase?.receivingHistory || []).reduce((sum, r) => sum + r.receivedQty, 0)))) }} over</span>
-                    </p>
+                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-2">Quantity Received Now (units)</label>
+                    <input v-model.number="purchaseReceivingModal.quantityReceived" type="number" min="0" class="w-full border-2 border-[#714B67]/40 p-3 rounded-lg bg-white focus:ring-2 focus:border-[#714B67] focus:ring-[#714B67] outline-none font-black text-center text-3xl no-spinner" placeholder="0" @wheel.prevent @keydown.up.prevent @keydown.down.prevent>
+                    <!-- Live variance calculation -->
+                    <div v-if="purchaseReceivingModal.quantityReceived > 0" class="mt-2 p-3 rounded-lg border text-xs font-bold"
+                        :class="purchaseReceivingModal.quantityReceived > (Math.max(0,(purchaseReceivingModal.purchase?.items[0]?.qty||0)-((purchaseReceivingModal.purchase?.receivingHistory||[]).reduce((s,r)=>s+r.receivedQty,0)))) ? 'bg-blue-50 border-blue-200 text-blue-700' : purchaseReceivingModal.quantityReceived < (Math.max(0,(purchaseReceivingModal.purchase?.items[0]?.qty||0)-((purchaseReceivingModal.purchase?.receivingHistory||[]).reduce((s,r)=>s+r.receivedQty,0)))) ? 'bg-amber-50 border-amber-200 text-amber-700' : 'bg-green-50 border-green-200 text-green-700'">
+                        <template v-if="purchaseReceivingModal.quantityReceived > (Math.max(0,(purchaseReceivingModal.purchase?.items[0]?.qty||0)-((purchaseReceivingModal.purchase?.receivingHistory||[]).reduce((s,r)=>s+r.receivedQty,0))))">
+                            <p><i class="fas fa-arrow-up mr-1"></i> Status: <span class="uppercase bg-blue-200 px-2 py-0.5 rounded">OVER</span></p>
+                            <p class="mt-1">Variance: +{{ purchaseReceivingModal.quantityReceived - (Math.max(0,(purchaseReceivingModal.purchase?.items[0]?.qty||0)-((purchaseReceivingModal.purchase?.receivingHistory||[]).reduce((s,r)=>s+r.receivedQty,0)))) }} units over expected</p>
+                            <p class="mt-0.5">Variance Amount: +₦{{ formatMoney((purchaseReceivingModal.quantityReceived - (Math.max(0,(purchaseReceivingModal.purchase?.items[0]?.qty||0)-((purchaseReceivingModal.purchase?.receivingHistory||[]).reduce((s,r)=>s+r.receivedQty,0))))) * (purchaseReceivingModal.purchase?.items[0]?.price||0)) }}</p>
+                        </template>
+                        <template v-else-if="purchaseReceivingModal.quantityReceived < (Math.max(0,(purchaseReceivingModal.purchase?.items[0]?.qty||0)-((purchaseReceivingModal.purchase?.receivingHistory||[]).reduce((s,r)=>s+r.receivedQty,0))))">
+                            <p><i class="fas fa-arrow-down mr-1"></i> Status: <span class="uppercase bg-amber-200 px-2 py-0.5 rounded">SHORT</span></p>
+                            <p class="mt-1">Shortfall: {{ (Math.max(0,(purchaseReceivingModal.purchase?.items[0]?.qty||0)-((purchaseReceivingModal.purchase?.receivingHistory||[]).reduce((s,r)=>s+r.receivedQty,0)))) - purchaseReceivingModal.quantityReceived }} units still needed</p>
+                            <p class="mt-0.5">Shortfall Amount: -₦{{ formatMoney(((Math.max(0,(purchaseReceivingModal.purchase?.items[0]?.qty||0)-((purchaseReceivingModal.purchase?.receivingHistory||[]).reduce((s,r)=>s+r.receivedQty,0)))) - purchaseReceivingModal.quantityReceived) * (purchaseReceivingModal.purchase?.items[0]?.price||0)) }}</p>
+                        </template>
+                        <template v-else>
+                            <p><i class="fas fa-check-circle mr-1"></i> Status: <span class="uppercase bg-green-200 px-2 py-0.5 rounded">EXACT MATCH</span> — Complete delivery!</p>
+                        </template>
+                    </div>
                 </div>
                 <div>
                     <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Notes</label>
@@ -2980,30 +3196,61 @@ input[type=number].no-spinner {
                                 <th class="p-3">Items</th>
                                 <th class="p-3 text-right">Total</th>
                                 <th class="p-3 text-right">Paid</th>
-                                <th class="p-3 text-right">Balance</th>
-                                <th class="p-3">Status</th>
+                                <th class="p-3 text-right">Pay Balance</th>
+                                <th class="p-3 text-center">Ordered</th>
+                                <th class="p-3 text-center">Delivered</th>
+                                <th class="p-3 text-center">Del. Balance</th>
+                                <th class="p-3">Confirmed By</th>
+                                <th class="p-3">Delivery Status</th>
                                 <th class="p-3 text-center">Action</th>
                             </tr>
                         </thead>
                         <tbody class="text-sm divide-y divide-gray-100">
-                            <tr v-if="filteredHistoryOrders.length === 0"><td colspan="8" class="p-6 text-center text-gray-400 italic">No orders match selected filters</td></tr>
-                            <tr v-for="o in filteredHistoryOrders" :key="o.id" class="hover:bg-gray-50">
-                                <td class="p-3 font-bold text-[#714B67] text-xs">{{ o.id }}</td>
-                                <td class="p-3 text-xs text-gray-500">{{ formatDate(o.created_at) }}</td>
-                                <td class="p-3 text-xs text-gray-600 max-w-[120px]">{{ o.items.map(i=>i.name).join(', ') }}</td>
-                                <td class="p-3 text-right font-mono text-xs text-gray-700">₦{{ formatMoney(o.total) }}</td>
-                                <td class="p-3 text-right font-mono text-xs text-green-600 font-bold">₦{{ formatMoney(o.amountPaid||0) }}</td>
-                                <td class="p-3 text-right font-mono text-xs font-bold" :class="Math.max(0,o.total-(o.amountPaid||0))>0?'text-red-500':'text-gray-300'">₦{{ formatMoney(Math.max(0,o.total-(o.amountPaid||0))) }}</td>
-                                <td class="p-3">
-                                    <span class="text-[10px] font-bold capitalize px-2 py-0.5 rounded-full" :class="o.paymentStatus==='paid'?'bg-green-100 text-green-700':o.paymentStatus==='partial'?'bg-blue-100 text-blue-700':o.paymentStatus==='pending_confirmation'?'bg-orange-100 text-orange-700':'bg-gray-100 text-gray-500'">{{ o.paymentStatus }}</span>
-                                </td>
-                                <td class="p-3 text-center">
-                                    <button v-if="o.paymentStatus !== 'paid' && session && session.role !== 'Customer'" @click="customerHistoryModal.show=false; openStaffPaymentModal(o)" class="text-xs bg-[#00A09D] hover:bg-teal-700 text-white px-2 py-1 rounded font-bold transition whitespace-nowrap">
-                                        <i class="fas fa-credit-card mr-1"></i>Record Pay
-                                    </button>
-                                    <span v-else-if="o.paymentStatus==='paid'" class="text-green-500 text-xs font-bold"><i class="fas fa-check-circle"></i></span>
-                                </td>
-                            </tr>
+                            <tr v-if="filteredHistoryOrders.length === 0"><td colspan="12" class="p-6 text-center text-gray-400 italic">No orders match selected filters</td></tr>
+                            <template v-for="o in filteredHistoryOrders" :key="o.id">
+                                <tr class="hover:bg-gray-50" :class="o.status==='cancelled'?'opacity-50':''">
+                                    <td class="p-3 font-bold text-[#714B67] text-xs">{{ o.id }}</td>
+                                    <td class="p-3 text-xs text-gray-500">{{ formatDate(o.created_at) }}</td>
+                                    <td class="p-3 text-xs text-gray-600">
+                                        <div v-for="it in o.items" :key="it.name" class="leading-5">{{ it.name }}</div>
+                                    </td>
+                                    <td class="p-3 text-right font-mono text-xs text-gray-700">₦{{ formatMoney(o.total) }}</td>
+                                    <td class="p-3 text-right font-mono text-xs text-green-600 font-bold">₦{{ formatMoney(o.amountPaid||0) }}</td>
+                                    <td class="p-3 text-right font-mono text-xs font-bold" :class="Math.max(0,o.total-(o.amountPaid||0))>0?'text-red-500':'text-gray-300'">₦{{ formatMoney(Math.max(0,o.total-(o.amountPaid||0))) }}</td>
+                                    <!-- Delivery qty columns -->
+                                    <td class="p-3 text-center text-xs font-bold text-gray-700">{{ o.items.reduce((s,i)=>s+i.qty,0) }}</td>
+                                    <td class="p-3 text-center text-xs font-bold text-green-600">{{ o.items.reduce((s,i)=>s+(i.deliveredQty!==undefined?i.deliveredQty:(o.status==='delivered'?i.qty:0)),0) }}</td>
+                                    <td class="p-3 text-center text-xs font-bold" :class="o.items.reduce((s,i)=>s+(i.qty-(i.deliveredQty!==undefined?i.deliveredQty:(o.status==='delivered'?i.qty:0))),0)>0?'text-orange-500':'text-gray-300'">{{ o.items.reduce((s,i)=>s+(i.qty-(i.deliveredQty!==undefined?i.deliveredQty:(o.status==='delivered'?i.qty:0))),0) }}</td>
+                                    <td class="p-3 text-xs">
+                                        <div v-if="o.confirmedBy"><p class="font-bold text-gray-700">{{ o.confirmedBy }}</p><p class="font-mono text-[10px] text-gray-400">{{ o.confirmedById }}</p></div>
+                                        <span v-else class="text-gray-300 text-[10px]">—</span>
+                                    </td>
+                                    <td class="p-3">
+                                        <span class="text-[10px] font-bold capitalize px-2 py-0.5 rounded-full block mb-1" :class="o.status==='delivered'?'bg-green-100 text-green-700':o.status==='partial_delivery'?'bg-orange-100 text-orange-700':o.status==='confirmed'?'bg-blue-100 text-blue-700':o.status==='cancelled'?'bg-red-100 text-red-500':'bg-gray-100 text-gray-500'">{{ o.status }}</span>
+                                        <span class="text-[9px] font-bold capitalize px-1.5 py-0.5 rounded-full" :class="o.paymentStatus==='paid'?'bg-green-100 text-green-600':o.paymentStatus==='partial'?'bg-blue-100 text-blue-600':'bg-gray-100 text-gray-400'">{{ o.paymentStatus }}</span>
+                                    </td>
+                                    <td class="p-3 text-center">
+                                        <button v-if="o.paymentStatus !== 'paid' && o.status !== 'cancelled' && session && session.role !== 'Customer'" @click="customerHistoryModal.show=false; openStaffPaymentModal(o)" class="text-xs bg-[#00A09D] hover:bg-teal-700 text-white px-2 py-1 rounded font-bold transition whitespace-nowrap">
+                                            <i class="fas fa-credit-card mr-1"></i>Pay
+                                        </button>
+                                        <span v-else-if="o.paymentStatus==='paid'" class="text-green-500 text-xs font-bold"><i class="fas fa-check-circle"></i></span>
+                                    </td>
+                                </tr>
+                                <!-- Delivery history sub-row for partial/delivered orders -->
+                                <tr v-if="o.status==='partial_delivery'||o.status==='delivered'" class="bg-blue-50/40">
+                                    <td colspan="12" class="px-6 py-2">
+                                        <p class="text-[10px] font-bold text-blue-600 mb-1"><i class="fas fa-truck mr-1"></i>Delivery History</p>
+                                        <div v-for="it in o.items" :key="it.name" class="text-[10px] text-blue-700 flex gap-4 mb-0.5">
+                                            <span class="font-bold">{{ it.name }}</span>
+                                            <span>Ordered: {{ it.qty }}</span>
+                                            <span>Delivered: {{ it.deliveredQty||0 }}</span>
+                                            <span :class="it.qty-(it.deliveredQty||0)>0?'text-orange-500 font-bold':''">Balance: {{ it.qty-(it.deliveredQty||0) }}</span>
+                                            <span v-if="o.deliveredAt" class="text-blue-500">Date: {{ formatDate(o.deliveredAt) }}</span>
+                                            <span v-if="o.deliveredBy" class="text-blue-500">By: {{ o.deliveredBy }}</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </template>
                         </tbody>
                     </table>
                 </div>
@@ -3086,11 +3333,12 @@ input[type=number].no-spinner {
                             <th class="p-3 text-right">Paid</th>
                             <th class="p-3 text-right">Balance</th>
                             <th class="p-3">Payment</th>
+                            <th class="p-3">Confirmed By</th>
                             <th class="p-3">Status</th>
                         </tr>
                     </thead>
                     <tbody class="text-sm divide-y divide-gray-100">
-                        <tr v-if="filteredGeneralHistory.length===0"><td colspan="9" class="p-8 text-center text-gray-400 italic">No orders found</td></tr>
+                        <tr v-if="filteredGeneralHistory.length===0"><td colspan="10" class="p-8 text-center text-gray-400 italic">No orders found</td></tr>
                         <tr v-for="o in filteredGeneralHistory" :key="o.id" class="hover:bg-gray-50">
                             <td class="p-3 font-bold text-[#714B67] text-xs">{{ o.id }}</td>
                             <td class="p-3">
@@ -3103,6 +3351,14 @@ input[type=number].no-spinner {
                             <td class="p-3 text-right font-mono text-xs text-green-600 font-bold">₦{{ formatMoney(o.amountPaid||0) }}</td>
                             <td class="p-3 text-right font-mono text-xs font-bold" :class="Math.max(0,o.total-(o.amountPaid||0))>0?'text-red-500':'text-gray-300'">₦{{ formatMoney(Math.max(0,o.total-(o.amountPaid||0))) }}</td>
                             <td class="p-3 text-xs text-gray-500 capitalize">{{ o.paymentMethod||'—' }}<span v-if="o.bankName" class="block text-[10px] text-gray-400">{{ o.bankName }}</span></td>
+                            <td class="p-3 text-xs">
+                                <div v-if="o.confirmedBy">
+                                    <p class="font-bold text-gray-700">{{ o.confirmedBy }}</p>
+                                    <p class="font-mono text-[10px] text-gray-400">{{ o.confirmedById }}</p>
+                                    <p class="text-[10px] text-gray-400">{{ formatDate(o.confirmedAt) }}</p>
+                                </div>
+                                <span v-else class="text-gray-300">—</span>
+                            </td>
                             <td class="p-3">
                                 <span class="text-[10px] font-bold capitalize px-2 py-0.5 rounded-full" :class="o.paymentStatus==='paid'?'bg-green-100 text-green-700':o.paymentStatus==='partial'?'bg-blue-100 text-blue-700':o.paymentStatus==='pending_confirmation'?'bg-orange-100 text-orange-700':'bg-gray-100 text-gray-500'">{{ o.paymentStatus }}</span>
                             </td>
@@ -3212,6 +3468,104 @@ input[type=number].no-spinner {
     </div>
 
     <div id="printReceipt" style="display: none;"></div>
+
+    <!-- STOCK HISTORY MODAL -->
+    <div v-if="stockHistoryModal.show" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4" @click.self="stockHistoryModal.show=false">
+        <div class="bg-white w-full max-w-4xl rounded-xl shadow-2xl overflow-hidden animate-fade-in-up flex flex-col max-h-[92vh]">
+            <div class="p-5 bg-[#2A1B26] text-white flex justify-between items-center flex-shrink-0">
+                <div>
+                    <h3 class="font-bold text-sm flex items-center gap-2"><i class="fas fa-history"></i> Stock History — {{ stockHistoryModal.product?.name }}</h3>
+                    <p class="text-white/60 text-xs">Category: {{ stockHistoryModal.product?.category }} | Current Stock: {{ stockHistoryModal.product?.stock }} {{ stockHistoryModal.product?.unit }}</p>
+                </div>
+                <div class="flex gap-2 items-center">
+                    <button @click="downloadStockHistoryPDF()" class="bg-red-600 hover:bg-red-700 text-white text-xs px-3 py-1.5 rounded font-bold flex items-center gap-1"><i class="fas fa-file-pdf mr-1"></i>PDF</button>
+                    <button @click="stockHistoryModal.show=false" class="text-white/70 hover:text-white"><i class="fas fa-times"></i></button>
+                </div>
+            </div>
+            <!-- Filters -->
+            <div class="p-4 bg-gray-50 border-b flex gap-3 flex-wrap items-center flex-shrink-0">
+                <span class="text-xs font-bold text-gray-500 uppercase">Filter:</span>
+                <input type="date" v-model="stockHistoryModal.dateFrom" class="border border-gray-200 rounded px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-[#714B67] bg-white" placeholder="From">
+                <input type="date" v-model="stockHistoryModal.dateTo" class="border border-gray-200 rounded px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-[#714B67] bg-white" placeholder="To">
+                <button @click="stockHistoryModal.dateFrom=localDateStr(); stockHistoryModal.dateTo=localDateStr()" class="text-xs bg-[#714B67] text-white px-3 py-1.5 rounded font-bold">Today</button>
+                <button @click="stockHistoryModal.dateFrom=''; stockHistoryModal.dateTo=''" class="text-xs border border-gray-200 text-gray-600 px-3 py-1.5 rounded font-bold hover:bg-gray-100">All Time</button>
+            </div>
+            <div class="overflow-y-auto flex-1 p-5 space-y-4">
+                <!-- Summary -->
+                <div class="grid grid-cols-3 gap-3">
+                    <div class="bg-blue-50 border border-blue-100 rounded-lg p-3 text-center">
+                        <p class="text-[10px] font-bold text-blue-500 uppercase mb-1">Total Purchased (In)</p>
+                        <p class="font-black text-lg text-blue-700">{{ filteredStockHistory.totalIn }} units</p>
+                    </div>
+                    <div class="bg-red-50 border border-red-100 rounded-lg p-3 text-center">
+                        <p class="text-[10px] font-bold text-red-500 uppercase mb-1">Total Sold (Out)</p>
+                        <p class="font-black text-lg text-red-600">{{ filteredStockHistory.totalOut }} units</p>
+                    </div>
+                    <div class="bg-green-50 border border-green-100 rounded-lg p-3 text-center">
+                        <p class="text-[10px] font-bold text-green-500 uppercase mb-1">Current Balance</p>
+                        <p class="font-black text-lg text-green-700">{{ stockHistoryModal.product?.stock || 0 }} units</p>
+                    </div>
+                </div>
+                <!-- Combined history table -->
+                <div class="bg-white rounded-lg border overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead class="bg-gray-50 text-xs font-bold uppercase text-gray-400 sticky top-0">
+                            <tr><th class="p-3">Date & Time</th><th class="p-3">Type</th><th class="p-3">Reference</th><th class="p-3">Party</th><th class="p-3 text-center">Qty In</th><th class="p-3 text-center">Qty Out</th><th class="p-3">Unit Price</th><th class="p-3">Details</th></tr>
+                        </thead>
+                        <tbody class="text-sm divide-y divide-gray-100">
+                            <tr v-if="filteredStockHistory.rows.length===0"><td colspan="8" class="p-8 text-center text-gray-400 italic">No history found for selected period</td></tr>
+                            <tr v-for="(row, idx) in (stockHistoryModal.showAll ? filteredStockHistory.rows : filteredStockHistory.rows.slice(0,5))" :key="idx" class="hover:bg-gray-50" :class="row.direction==='in'?'':'bg-red-50/30'">
+                                <td class="p-3 text-xs text-gray-500">{{ row.dateTime }}</td>
+                                <td class="p-3"><span class="text-[10px] font-black px-2 py-0.5 rounded-full uppercase" :class="row.direction==='in'?'bg-blue-100 text-blue-700':'bg-red-100 text-red-600'">{{ row.type }}</span></td>
+                                <td class="p-3 font-mono text-xs text-[#714B67] font-bold">{{ row.ref }}</td>
+                                <td class="p-3 text-xs text-gray-700">{{ row.party }}</td>
+                                <td class="p-3 text-center font-bold text-blue-700">{{ row.direction==='in' ? row.qty : '—' }}</td>
+                                <td class="p-3 text-center font-bold text-red-600">{{ row.direction==='out' ? row.qty : '—' }}</td>
+                                <td class="p-3 text-xs text-gray-600">{{ row.unitPrice ? '₦'+formatMoney(row.unitPrice) : '—' }}</td>
+                                <td class="p-3 text-xs text-gray-500">{{ row.details }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div v-if="filteredStockHistory.rows.length > 5" class="p-3 border-t text-center">
+                        <button @click="stockHistoryModal.showAll = !stockHistoryModal.showAll" class="text-xs font-bold text-[#714B67] hover:underline">
+                            {{ stockHistoryModal.showAll ? '↑ Show Less' : '↓ View More (' + (filteredStockHistory.rows.length - 5) + ' more)' }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ADD BANK MODAL -->
+    <div v-if="addBankModal.show" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4" @click.self="addBankModal.show=false">
+        <div class="bg-white w-full max-w-md rounded-xl shadow-2xl overflow-hidden animate-fade-in-up">
+            <div class="p-5 bg-[#00A09D] text-white flex justify-between items-center">
+                <div>
+                    <h3 class="font-bold text-sm flex items-center gap-2"><i class="fas fa-university"></i> Add New Bank</h3>
+                    <p class="text-white/70 text-xs mt-0.5">Register a new bank account for Ladu Investment</p>
+                </div>
+                <button @click="addBankModal.show=false" class="text-white/70 hover:text-white"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="p-6 space-y-4">
+                <div>
+                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Bank Name *</label>
+                    <input v-model="addBankModal.name" type="text" class="w-full border border-gray-300 p-3 rounded-lg bg-gray-50 focus:ring-2 focus:ring-[#00A09D] outline-none text-sm" placeholder="e.g. Access Bank">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Account Number</label>
+                    <input v-model="addBankModal.accountNumber" type="text" class="w-full border border-gray-300 p-3 rounded-lg bg-gray-50 focus:ring-2 focus:ring-[#00A09D] outline-none text-sm" placeholder="e.g. 0123456789">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Opening Balance (₦)</label>
+                    <input v-model.number="addBankModal.openingBalance" type="number" min="0" class="w-full border border-gray-300 p-3 rounded-lg bg-gray-50 focus:ring-2 focus:ring-[#00A09D] outline-none text-sm no-spinner" placeholder="0">
+                </div>
+                <div v-if="addBankModal.error" class="p-3 bg-red-50 text-red-600 text-xs font-bold rounded flex items-center gap-2"><i class="fas fa-exclamation-circle"></i> {{ addBankModal.error }}</div>
+                <button @click="submitAddBank()" class="w-full py-3 bg-[#00A09D] hover:bg-teal-700 text-white rounded-lg font-bold uppercase tracking-widest shadow-lg transition transform active:scale-95">
+                    <i class="fas fa-plus mr-2"></i> Add Bank Account
+                </button>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -3352,9 +3706,9 @@ createApp({
 
             // ---- Expenses ----
             expenses: [
-                { date: '2026-02-08', category: 'Transport', description: 'Fuel for delivery trucks', amount: 45000 },
-                { date: '2026-02-12', category: 'Utilities', description: 'Electricity bill for warehouse', amount: 28000 },
-                { date: '2026-02-17', category: 'Salaries', description: 'Staff salaries for February', amount: 350000 }
+                { id: 'EXP-00001', date: '2026-02-08', category: 'Transport', description: 'Fuel for delivery trucks', amount: 45000, paymentSource: 'cash', approvedBy: 'Administrator', approvedById: 'admin123' },
+                { id: 'EXP-00002', date: '2026-02-12', category: 'Utilities', description: 'Electricity bill for warehouse', amount: 28000, paymentSource: 'Zenith Bank', approvedBy: 'Administrator', approvedById: 'admin123' },
+                { id: 'EXP-00003', date: '2026-02-17', category: 'Salaries', description: 'Staff salaries for February', amount: 350000, paymentSource: 'Touch Bank', approvedBy: 'Administrator', approvedById: 'admin123' }
             ],
 
             // ---- Customer Transactions ----
@@ -3370,7 +3724,7 @@ createApp({
             txnFilter: { method: '', dateFrom: '', dateTo: '' },
             inventoryFilters: { search: '', category: '', stockLevel: '', sortBy: 'name' },
             salesFilters: { search: '', sortBy: 'date_new' },
-            expenseFilters: { search: '', category: '', sortBy: 'date_new' },
+            expenseFilters: { search: '', category: '', sortBy: 'date_new', dateFrom: '', dateTo: '' },
 
             // ---- Modals ----
             modal: { show: false, isEdit: false, activeIndex: null, userError: '' },
@@ -3387,6 +3741,10 @@ createApp({
             purchasePaymentModal: { show: false, purchase: null, paymentAmount: 0, bankRows: [], useCash: false, cashAmount: 0, useBalance: false, balanceAmount: 0, reference: '', error: '' },
             sendMoneyModal: { show: false, supplierName: '', amount: 0, paymentMethod: 'bank', selectedBank: '', bankFrom: '', bankTo: '', accountNumber: '', reference: '', notes: '', error: '' },
             debtCardModal: { show: false, selectedSupplier: null },
+            addBankModal: { show: false, name: '', accountNumber: '', openingBalance: 0, error: '' },
+            stockHistoryModal: { show: false, product: null, dateFrom: '', dateTo: '', showAll: false },
+            bankStmt: { showCount: 5 },
+            bankStmtMonth: new Date().toISOString().slice(0,7), // default to current month e.g. "2026-04"
 
             // ---- Forms ----
             form: {
@@ -3399,9 +3757,9 @@ createApp({
                 custSearchOpen: false,
                 walkinName: '',
                 walkinPhone: '',
-                pName: '', stock: 0, price: 0,
+                pName: '', stock: 0, price: 0, pCategory: '', pUnit: '',
                 uFullname: '', uUsername: '', uPassword: '', uRole: 'Sales',
-                expCategory: '', expDescription: '', expAmount: 0, expDate: today,
+                expCategory: '', expDescription: '', expAmount: 0, expDate: today, expPaymentSource: '',
                 custType: 'regular', custFullname: '', custCompany: '', custPhone: '', custEmail: '', custAddress: '', custState: '', custUsername: '', custPassword: ''
             },
 
@@ -3536,33 +3894,67 @@ createApp({
                 if (this.custOrderFilter.status && o.status !== this.custOrderFilter.status) return false;
                 if (this.custOrderFilter.payStatus && o.paymentStatus !== this.custOrderFilter.payStatus) return false;
                 if (this.custOrderFilter.payMethod && o.paymentMethod !== this.custOrderFilter.payMethod) return false;
-                const d = parseInt((o.created_at||'').slice(0,10).replace(/-/g,''));
-                const df = this.custOrderFilter.dateFrom ? parseInt(this.custOrderFilter.dateFrom.replace(/-/g,'')) : null;
-                const dt = this.custOrderFilter.dateTo ? parseInt(this.custOrderFilter.dateTo.replace(/-/g,'')) : null;
-                if (df && d < df) return false;
-                if (dt && d > dt) return false;
+                if (this.custOrderFilter.dateFrom || this.custOrderFilter.dateTo) {
+                    const d = parseInt((o.created_at||'').slice(0,10).replace(/-/g,''));
+                    const df = this.custOrderFilter.dateFrom ? parseInt(this.custOrderFilter.dateFrom.replace(/-/g,'')) : 0;
+                    const dt = this.custOrderFilter.dateTo ? parseInt(this.custOrderFilter.dateTo.replace(/-/g,'')) : 99999999;
+                    if (d < df || d > dt) return false;
+                }
                 return true;
             });
-            const s = this.custOrderFilter.sort;
-            if (s === 'date_new') result.sort((a,b) => String(b.created_at).localeCompare(String(a.created_at)));
-            else if (s === 'date_old') result.sort((a,b) => String(a.created_at).localeCompare(String(b.created_at)));
-            else if (s === 'amount_high') result.sort((a,b) => b.total-a.total);
-            else if (s === 'amount_low') result.sort((a,b) => a.total-b.total);
+            const s = this.custOrderFilter.sort || 'date_new';
+            if (s === 'date_new') result.sort((a,b) => (b.created_at||'').localeCompare(a.created_at||''));
+            else if (s === 'date_old') result.sort((a,b) => (a.created_at||'').localeCompare(b.created_at||''));
+            else if (s === 'amount_high') result.sort((a,b) => (b.total||0)-(a.total||0));
+            else if (s === 'amount_low') result.sort((a,b) => (a.total||0)-(b.total||0));
             return result;
         },
         filteredMyTransactions() {
-            return this.myTransactions.filter(t => {
+            let result = this.myTransactions.filter(t => {
                 if (this.txnFilter.method && t.method !== this.txnFilter.method) return false;
-                const d = parseInt((t.date||'').slice(0,10).replace(/-/g,''));
-                const df = this.txnFilter.dateFrom ? parseInt(this.txnFilter.dateFrom.replace(/-/g,'')) : null;
-                const dt = this.txnFilter.dateTo ? parseInt(this.txnFilter.dateTo.replace(/-/g,'')) : null;
-                if (df && d < df) return false;
-                if (dt && d > dt) return false;
+                if (this.txnFilter.dateFrom || this.txnFilter.dateTo) {
+                    const d = parseInt((t.date||'').slice(0,10).replace(/-/g,''));
+                    const df = this.txnFilter.dateFrom ? parseInt(this.txnFilter.dateFrom.replace(/-/g,'')) : 0;
+                    const dt = this.txnFilter.dateTo ? parseInt(this.txnFilter.dateTo.replace(/-/g,'')) : 99999999;
+                    if (d < df || d > dt) return false;
+                }
                 return true;
-            }).slice().sort((a,b) => String(b.date).localeCompare(String(a.date)));
+            });
+            return result.slice().sort((a,b) => (b.date||'').localeCompare(a.date||''));
         },
 
-        // ---- Order Builder Totals ----
+        filteredStockHistory() {
+            const p = this.stockHistoryModal.product;
+            if (!p) return { rows: [], totalIn: 0, totalOut: 0 };
+            const df = this.stockHistoryModal.dateFrom ? parseInt(this.stockHistoryModal.dateFrom.replace(/-/g,'')) : 0;
+            const dt = this.stockHistoryModal.dateTo ? parseInt(this.stockHistoryModal.dateTo.replace(/-/g,'')) : 99999999;
+            const inRange = (d) => { const v = parseInt((d||'').slice(0,10).replace(/-/g,'')); return v >= df && v <= dt; };
+            const rows = [];
+            // Purchases IN
+            this.purchases.forEach(po => {
+                (po.receivingHistory || []).forEach(rh => {
+                    if (!po.items.some(i => i.name === p.name)) return;
+                    if (!inRange(rh.date)) return;
+                    const item = po.items.find(i => i.name === p.name);
+                    const statusLabel = rh.status === 'over' ? 'PURCHASE (OVER)' : rh.status === 'short' ? 'PURCHASE (SHORT)' : 'PURCHASE';
+                    rows.push({ direction: 'in', type: statusLabel, ref: po.id, party: po.source, qty: rh.receivedQty, unitPrice: item?.price, dateTime: rh.dateTime ? new Date(rh.dateTime).toLocaleString() : this.formatDate(rh.date), date: rh.date, details: `Received by ${rh.receivedBy||'—'}${rh.varianceQty ? ' | Variance: ' + (rh.varianceQty>0?'+':'') + rh.varianceQty : ''}${rh.notes?' | '+rh.notes:''}` });
+                });
+            });
+            // Sales OUT
+            this.orders.forEach(o => {
+                o.items.forEach(it => {
+                    if (it.name !== p.name) return;
+                    if (!inRange(o.created_at)) return;
+                    const deliveredQty = it.deliveredQty !== undefined ? it.deliveredQty : (o.status === 'delivered' ? it.qty : 0);
+                    if (deliveredQty <= 0) return;
+                    rows.push({ direction: 'out', type: 'SALE', ref: o.id, party: o.customerName || o.customer, qty: deliveredQty, unitPrice: it.amount / (it.qty || 1), dateTime: this.formatDate(o.created_at), date: o.created_at, details: `Status: ${o.status} | Payment: ${o.paymentStatus}${o.confirmedBy?' | Confirmed by '+o.confirmedBy:''}` });
+                });
+            });
+            rows.sort((a, b) => (b.date||'').localeCompare(a.date||''));
+            const totalIn = rows.filter(r => r.direction === 'in').reduce((s, r) => s + r.qty, 0);
+            const totalOut = rows.filter(r => r.direction === 'out').reduce((s, r) => s + r.qty, 0);
+            return { rows, totalIn, totalOut };
+        },
         orderLinesTotal() {
             if (!this.form.orderLines) return 0;
             return this.form.orderLines.reduce((s, l) => s + (l.amount || 0), 0);
@@ -3794,6 +4186,15 @@ createApp({
             if (this.expenseFilters.category) {
                 result = result.filter(e => e.category === this.expenseFilters.category);
             }
+            // Date range filter
+            if (this.expenseFilters.dateFrom) {
+                const df = parseInt(this.expenseFilters.dateFrom.replace(/-/g,''));
+                result = result.filter(e => parseInt((e.date||'').replace(/-/g,'')) >= df);
+            }
+            if (this.expenseFilters.dateTo) {
+                const dt = parseInt(this.expenseFilters.dateTo.replace(/-/g,''));
+                result = result.filter(e => parseInt((e.date||'').replace(/-/g,'')) <= dt);
+            }
             // Sort
             if (this.expenseFilters.sortBy === 'date_new') {
                 result.sort((a, b) => String(b.date).localeCompare(String(a.date)));
@@ -3943,9 +4344,9 @@ createApp({
                 custSearchOpen: false,
                 walkinName: '',
                 walkinPhone: '',
-                pName: '', stock: 0, price: 0,
+                pName: '', stock: 0, price: 0, pCategory: '', pUnit: '',
                 uFullname: '', uUsername: '', uPassword: '', uRole: 'Sales',
-                expCategory: '', expDescription: '', expAmount: 0, expDate: this.localDateStr(),
+                expCategory: '', expDescription: '', expAmount: 0, expDate: this.localDateStr(), expPaymentSource: '',
                 custType: 'regular', custFullname: '', custCompany: '', custPhone: '', custEmail: '', custAddress: '', custState: '', custUsername: '', custPassword: ''
             };
             if (this.view === 'suppliers') { this.openSupplierModal(); return; }
@@ -3974,6 +4375,11 @@ createApp({
         calculateTotal() {},
         updateOrderStatus(order, next) {
             order.status = next;
+            if (next === 'confirmed') {
+                order.confirmedBy = this.session?.fullname || '';
+                order.confirmedById = this.session?.username || '';
+                order.confirmedAt = this.localDateStr();
+            }
             this.notifs.unshift({ title: 'Order Updated', msg: `${order.id} is now ${next}` });
         },
         toggleDeliveryMenu(order) {
@@ -3982,6 +4388,14 @@ createApp({
         completeDelivery(order) {
             this.deliveryMenu.orderId = null;
             order.status = 'delivered';
+            order.deliveredBy = this.session?.fullname || '';
+            order.deliveredById = this.session?.username || '';
+            order.deliveredAt = this.localDateStr();
+            if (!order.confirmedBy) {
+                order.confirmedBy = this.session?.fullname || '';
+                order.confirmedById = this.session?.username || '';
+                order.confirmedAt = this.localDateStr();
+            }
             // Record full delivery quantities and reduce stock
             order.items.forEach(it => {
                 const alreadyDelivered = it.deliveredQty || 0;
@@ -3993,7 +4407,7 @@ createApp({
                     if (prod) prod.stock = Math.max(0, (prod.stock || 0) - nowDelivering);
                 }
             });
-            this.notifs.unshift({ title: 'Order Delivered', msg: `${order.id} fully delivered. Stock updated.` });
+            this.notifs.unshift({ title: 'Order Delivered', msg: `${order.id} fully delivered by ${this.session?.fullname}. Stock updated.` });
         },
         openPartialDelivery(order) {
             this.deliveryMenu.orderId = null;
@@ -4026,10 +4440,19 @@ createApp({
                     if (prod) prod.stock = Math.max(0, (prod.stock || 0) - Number(l.deliverNow));
                 }
             });
+            // Record who did the delivery
+            if (!m.order.confirmedBy) {
+                m.order.confirmedBy = this.session?.fullname || '';
+                m.order.confirmedById = this.session?.username || '';
+                m.order.confirmedAt = this.localDateStr();
+            }
+            m.order.deliveredBy = this.session?.fullname || '';
+            m.order.deliveredById = this.session?.username || '';
+            m.order.deliveredAt = this.localDateStr();
             // Check if everything is now fully delivered
             const allDone = m.order.items.every(it => (it.deliveredQty || 0) >= it.qty);
             m.order.status = allDone ? 'delivered' : 'partial_delivery';
-            this.notifs.unshift({ title: allDone ? 'Order Delivered' : 'Partial Delivery Recorded', msg: `${m.order.id}: ${allDone ? 'All goods delivered.' : 'Partial delivery recorded. Balance remaining.'}` });
+            this.notifs.unshift({ title: allDone ? 'Order Delivered' : 'Partial Delivery Recorded', msg: `${m.order.id}: ${allDone ? 'All goods delivered' : 'Partial delivery recorded'} by ${this.session?.fullname}.` });
             m.show = false;
         },
         confirmPayment(order) {
@@ -4124,25 +4547,84 @@ createApp({
             const totalPaying = bankAmt + cashAmt;
             if (totalPaying <= 0) { alert('Enter a payment amount'); return; }
             if (!this.paymentModal.reference.trim()) { alert('Enter a payment reference'); return; }
-            if ((this.paymentModal.mode === 'bank' || this.paymentModal.mode === 'mixed') && !this.paymentModal.selectedBank && bankAmt > 0) { alert('Please select a bank'); return; }
+            if ((this.paymentModal.mode === 'bank' || this.paymentModal.mode === 'mixed') && !this.paymentModal.selectedBank) { alert('Please select an LDI bank'); return; }
+            if ((this.paymentModal.mode === 'bank' || this.paymentModal.mode === 'mixed') && bankAmt > 0 && !this.paymentModal.bankFrom.trim()) { alert('Please enter your bank name'); return; }
             const o = this.orders.find(x => x.id === this.paymentModal.order.id);
             if (o) {
                 o.paymentStatus = 'pending_confirmation';
                 o.paymentRef = this.paymentModal.reference;
                 o.paymentMethod = this.paymentModal.mode;
                 o.bankName = this.paymentModal.selectedBank || '';
-                o.bankFrom = this.paymentModal.bankFrom||'';
-                o.bankTo = this.paymentModal.bankTo||'';
-                o.accountName = this.paymentModal.accountName||'';
-                o.accountNumber = this.paymentModal.accountNumber||'';
-                o.paymentDate = this.localDateStr();
+                o.accountNumber = this.banks.find(b=>b.name===this.paymentModal.selectedBank)?.accountNumber || '';
+                o.bankFrom = this.paymentModal.bankFrom || '';
+                o.bankTo = this.paymentModal.selectedBank || '';
+                o.accountName = this.paymentModal.accountName || '';
+                o.paymentDate = new Date().toISOString();
+                // Store submitted amount for display in pending card
+                o._submittedAmount = totalPaying;
             }
+            // Push a pending transaction record visible on transactions tab
+            const txnId = 'TXN'+String(this.transactions.length+1).padStart(3,'0');
+            this.transactions.push({ id: txnId, customerId: o.customerId, ref: o.id, description: 'Payment submitted (awaiting confirmation) for '+(o.items[0]?.name||'order'), amount: totalPaying, date: this.localDateStr(), type: 'pending_confirmation', method: o.paymentMethod, bankName: o.bankName, bankFrom: o.bankFrom||'', accountName: o.accountName||'', outstanding: Math.max(0, o.total - (o.amountPaid||0)) });
             const _poid = this.paymentModal.order?.id;
             this.paymentModal = { show: false, order: null, mode: 'bank', selectedBank: this.banks[0]?.name || '', bankAmount: 0, cashAmount: 0, reference: '', bankFrom: '', bankTo: '', accountName: '', accountNumber: '' };
             this.notifs.unshift({ title: 'Payment Submitted', msg: `Payment for ${_poid} awaiting confirmation.` });
-            alert('Payment submitted! The Sales team will confirm your payment shortly.');
+            alert('Payment submitted! The Sales team will confirm your payment shortly. Check "My Orders" for status.');
         },
 
+        directConfirmPayment(order) {
+            // One-click confirm for customer-submitted pending payments — no modal needed
+            const o = this.orders.find(x => x.id === order.id);
+            if (!o) return;
+            const date = this.localDateStr();
+            // The customer already submitted the amount via _submittedAmount or we use the full outstanding
+            const submittedAmt = o._submittedAmount || Math.max(0, o.total - (o.amountPaid || 0));
+            const newPaid = (o.amountPaid || 0) + submittedAmt;
+            const newOutstanding = Math.max(0, o.total - newPaid);
+            o.amountPaid = Math.min(newPaid, o.total);
+            o.paymentStatus = newOutstanding <= 0.01 ? 'paid' : 'partial';
+            o.status = 'confirmed';
+            o.confirmedBy = this.session?.fullname || '';
+            o.confirmedById = this.session?.username || '';
+            o.confirmedAt = date;
+            o.paymentDate = date;
+            delete o._submittedAmount;
+            // Update bank ledger
+            if (o.paymentMethod === 'bank' || o.paymentMethod === 'mixed') {
+                this.bankLedger.push({ date, ref: o.id, customerName: o.customerName, description: 'Confirmed payment - ' + o.customerName, amount: submittedAmt, method: 'bank', bankName: o.bankName, bankFrom: o.bankFrom || '', accountName: o.accountName || '', runningBalance: 0 });
+            } else if (o.paymentMethod === 'cash') {
+                this.bankLedger.push({ date, ref: o.id, customerName: o.customerName, description: 'Confirmed cash payment - ' + o.customerName, amount: submittedAmt, method: 'cash', bankName: '', runningBalance: 0 });
+            }
+            // Update existing pending transaction
+            const existingPending = this.transactions.find(t => t.ref === o.id && t.type === 'pending_confirmation');
+            const finalType = newOutstanding <= 0.01 ? 'payment' : 'partial_payment';
+            if (existingPending) {
+                existingPending.type = finalType;
+                existingPending.amount = submittedAmt;
+                existingPending.date = date;
+                existingPending.outstanding = newOutstanding;
+                existingPending.confirmedBy = this.session?.fullname || '';
+                existingPending.confirmedById = this.session?.username || '';
+                existingPending.description = 'Payment confirmed for ' + (o.items[0]?.name || 'order');
+            } else {
+                const txnId = 'TXN' + String(this.transactions.length + 1).padStart(3, '0');
+                this.transactions.push({ id: txnId, customerId: o.customerId, ref: o.id, description: 'Payment confirmed for ' + (o.items[0]?.name || 'order'), amount: submittedAmt, date, type: finalType, method: o.paymentMethod, bankName: o.bankName, bankFrom: o.bankFrom || '', accountName: o.accountName || '', outstanding: newOutstanding, confirmedBy: this.session?.fullname, confirmedById: this.session?.username });
+            }
+            this.notifs.unshift({ title: 'Payment Confirmed ✓', msg: `₦${this.formatMoney(submittedAmt)} confirmed for ${o.id} by ${this.session?.fullname}${newOutstanding > 0 ? ' | Balance: ₦' + this.formatMoney(newOutstanding) : ' | FULLY PAID!'}` });
+            this.checkStockAlerts();
+        },
+        cancelOrder(order) {
+            if (!confirm(`Cancel order ${order.id}? This cannot be undone.`)) return;
+            order.status = 'cancelled';
+            order.paymentStatus = 'unpaid';
+            this.notifs.unshift({ title: 'Order Cancelled', msg: `${order.id} has been cancelled.` });
+        },
+        deleteOrder(order) {
+            if (!confirm(`Permanently delete order ${order.id}? This cannot be undone.`)) return;
+            const idx = this.orders.indexOf(order);
+            if (idx > -1) this.orders.splice(idx, 1);
+            this.notifs.unshift({ title: 'Order Deleted', msg: `${order.id} has been deleted.` });
+        },
         // ---- Receipt ----
         downloadReceipt(order) {
             const receiptHTML = this.buildReceiptHTML(order);
@@ -4162,46 +4644,109 @@ createApp({
             setTimeout(() => { printWindow.print(); }, 500);
         },
         buildReceiptHTML(order) {
+            const ldiBank = order.bankName || '—';
+            const ldiAccNum = order.accountNumber || (this.banks.find(b=>b.name===order.bankName)?.accountNumber || '—');
+            const fromBank = order.bankFrom || '—';
+            const fromAccName = order.accountName || '—';
+            const confirmedByText = order.confirmedBy ? `${order.confirmedBy} (${order.confirmedById})` : 'Pending';
+            const payDate = order.paymentDate ? new Date(order.paymentDate).toLocaleString() : '—';
+            const itemRows = order.items.map(i => {
+                const delivered = i.deliveredQty !== undefined ? i.deliveredQty : i.qty;
+                const balance = i.qty - delivered;
+                return `<tr><td>${i.name}</td><td style="text-align:center">${i.qty}</td><td style="text-align:center">${delivered}</td><td style="text-align:center;color:${balance>0?'#f97316':'#16a34a'}">${balance}</td><td style="text-align:right">₦${this.formatMoney(i.amount)}</td></tr>`;
+            }).join('');
+            const amountPaid = order.amountPaid || 0;
+            const outstanding = Math.max(0, order.total - amountPaid);
+            const isConfirmed = order.confirmedBy || order.paymentStatus === 'paid';
             return `<!DOCTYPE html>
 <html><head><meta charset="UTF-8"><title>Receipt - ${order.id}</title>
 <style>
-body{font-family:Arial,sans-serif;padding:40px;max-width:800px;margin:0 auto;}
-.header{text-align:center;border-bottom:3px solid #714B67;padding-bottom:20px;margin-bottom:30px;}
-.header h1{color:#714B67;margin:0;font-size:32px;}
-.header p{color:#666;margin:5px 0;}
-.receipt-info{display:flex;justify-content:space-between;margin-bottom:30px;}
-.receipt-info div{flex:1;}
-.receipt-info strong{display:block;color:#714B67;margin-bottom:5px;}
-table{width:100%;border-collapse:collapse;margin:20px 0;}
-th{background:#714B67;color:white;padding:12px;text-align:left;}
-td{padding:12px;border-bottom:1px solid #ddd;}
-.total-row{background:#f9f9f9;font-weight:bold;font-size:18px;}
-.footer{margin-top:40px;padding-top:20px;border-top:2px solid #ddd;text-align:center;color:#666;font-size:12px;}
-.badge{display:inline-block;padding:5px 15px;background:#00A09D;color:white;border-radius:20px;font-size:12px;font-weight:bold;text-transform:uppercase;}
+body{font-family:Arial,sans-serif;padding:40px;max-width:820px;margin:0 auto;}
+.header{text-align:center;border-bottom:3px solid #714B67;padding-bottom:20px;margin-bottom:24px;}
+.header h1{color:#714B67;margin:0;font-size:30px;letter-spacing:-1px;}
+.header p{color:#666;margin:4px 0;font-size:13px;}
+.badge{display:inline-block;padding:5px 18px;border-radius:20px;font-size:12px;font-weight:bold;text-transform:uppercase;margin:8px 0;}
+.badge-confirmed{background:#00A09D;color:white;}
+.badge-pending{background:#f97316;color:white;}
+.section{margin:18px 0;}
+.section-title{font-size:11px;font-weight:bold;text-transform:uppercase;color:#714B67;border-bottom:1px solid #e5e7eb;padding-bottom:4px;margin-bottom:10px;}
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:0;}
+.info-item{padding:7px 0;border-bottom:1px solid #f3f4f6;font-size:13px;}
+.info-label{color:#888;font-size:11px;font-weight:bold;text-transform:uppercase;margin-bottom:2px;}
+.info-value{color:#111;font-weight:600;}
+table{width:100%;border-collapse:collapse;margin:12px 0;font-size:13px;}
+th{background:#714B67;color:white;padding:10px 12px;text-align:left;}
+td{padding:10px 12px;border-bottom:1px solid #f0f0f0;}
+.total-section{background:#f9f9f9;padding:14px 20px;border-radius:8px;margin-top:16px;}
+.total-row{display:flex;justify-content:space-between;padding:5px 0;font-size:14px;}
+.grand-total{font-size:20px;font-weight:900;border-top:2px solid #714B67;margin-top:8px;padding-top:8px;}
+.footer{margin-top:30px;padding-top:16px;border-top:2px solid #ddd;text-align:center;color:#888;font-size:11px;}
 </style></head><body>
-<div class="header"><h1>LADU INVESTMENT</h1><p>Construction Materials & Equipment</p><p style="font-size:12px;margin-top:10px">Lagos, Nigeria | info@laduinvestment.com</p></div>
-<div style="text-align:center;margin:30px 0"><h2 style="color:#714B67;margin:0">OFFICIAL RECEIPT</h2><p style="color:#666;margin:5px 0">Receipt No: ${order.id}</p><span class="badge">PAID</span></div>
-<div class="receipt-info">
-<div><strong>Customer:</strong><p>${order.customerName || order.customer}</p><p style="font-size:12px;color:#999">ID: ${order.customerId || 'Walk-in'}</p><p style="font-size:12px;color:#999">${(order.customerName && order.customer !== order.customerName) ? order.customer.replace(order.customerName, '').replace('—','').trim() : ''}</p></div>
-<div style="text-align:right"><strong>Date:</strong><p>${this.formatDate(order.paymentDate || order.created_at)}</p><strong>Payment Method:</strong><p style="text-transform:capitalize">${order.paymentMethod || 'N/A'}</p>${order.bankName ? '<strong>Bank:</strong><p>' + order.bankName + '</p>' : ''}${order.bankFrom ? '<strong>From Bank:</strong><p>' + order.bankFrom + '</p>' : ''}${order.bankTo ? '<strong>To Bank:</strong><p>' + order.bankTo + '</p>' : ''}${order.accountName ? '<strong>Account Name:</strong><p>' + order.accountName + '</p>' : ''}${order.accountNumber ? '<strong>Account Number:</strong><p style=\"font-family:monospace\">' + order.accountNumber + '</p>' : ''}</div>
+<div class="header">
+  <h1>LADU INVESTMENT</h1>
+  <p>Construction Materials & Equipment</p>
+  <p style="font-size:11px;color:#999">Lagos, Nigeria | info@laduinvestment.com | +234 800 000 0000</p>
 </div>
-<table><thead><tr><th>Item Description</th><th style="text-align:center">Qty</th><th style="text-align:right">Amount (₦)</th></tr></thead>
-<tbody>
-${order.items.map(i => `<tr><td>${i.name}</td><td style="text-align:center">${i.qty}</td><td style="text-align:right">₦${this.formatMoney(i.amount)}</td></tr>`).join('')}
-<tr class="total-row"><td colspan="2" style="text-align:right">TOTAL PAID:</td><td style="text-align:right">₦${this.formatMoney(order.total)}</td></tr>
-</tbody></table>
-<div class="footer"><p><strong>Thank you for your business!</strong></p><p>This is a computer-generated receipt. Payment Ref: ${order.paymentRef || 'N/A'}</p><p>Generated: ${new Date().toLocaleString()}</p></div>
+<div style="text-align:center;margin-bottom:20px">
+  <h2 style="color:#714B67;margin:0;font-size:18px">OFFICIAL RECEIPT</h2>
+  <p style="color:#666;font-size:13px;margin:4px 0">Receipt No: <strong>${order.id}</strong></p>
+  <span class="badge ${isConfirmed ? 'badge-confirmed' : 'badge-pending'}">${isConfirmed ? '✓ PAYMENT CONFIRMED' : '⏳ PENDING CONFIRMATION'}</span>
+</div>
+<div class="info-grid">
+  <div class="info-item"><div class="info-label">Customer</div><div class="info-value">${order.customerName || order.customer}</div></div>
+  <div class="info-item"><div class="info-label">Customer ID</div><div class="info-value" style="font-family:monospace">${order.customerId || 'Walk-in'}</div></div>
+  <div class="info-item"><div class="info-label">Order Date</div><div class="info-value">${this.formatDate(order.created_at)}</div></div>
+  <div class="info-item"><div class="info-label">Payment Date & Time</div><div class="info-value">${payDate}</div></div>
+  <div class="info-item"><div class="info-label">Payment Method</div><div class="info-value" style="text-transform:capitalize">${order.paymentMethod || 'N/A'}</div></div>
+  <div class="info-item"><div class="info-label">Payment Reference</div><div class="info-value" style="font-family:monospace">${order.paymentRef || 'N/A'}</div></div>
+  <div class="info-item"><div class="info-label">Confirmed By</div><div class="info-value" style="color:${isConfirmed ? '#16a34a' : '#f97316'}">${confirmedByText}</div></div>
+  <div class="info-item"><div class="info-label">Confirmation Date</div><div class="info-value">${order.confirmedAt ? this.formatDate(order.confirmedAt) : '—'}</div></div>
+</div>
+<div class="section">
+  <div class="section-title">Bank Transfer Details</div>
+  <div class="info-grid">
+    <div class="info-item"><div class="info-label">From Bank (Customer)</div><div class="info-value">${fromBank}</div></div>
+    <div class="info-item"><div class="info-label">From Account Name</div><div class="info-value">${fromAccName}</div></div>
+    <div class="info-item"><div class="info-label">To Bank (LDI)</div><div class="info-value">${ldiBank}</div></div>
+    <div class="info-item"><div class="info-label">LDI Account Number</div><div class="info-value" style="font-family:monospace">${ldiAccNum}</div></div>
+  </div>
+</div>
+<div class="section">
+  <div class="section-title">Order Items</div>
+  <table>
+    <thead><tr><th>Item Description</th><th style="text-align:center">Ordered</th><th style="text-align:center">Delivered</th><th style="text-align:center">Balance</th><th style="text-align:right">Amount (₦)</th></tr></thead>
+    <tbody>${itemRows}</tbody>
+  </table>
+</div>
+<div class="total-section">
+  <div class="total-row"><span>Order Total</span><span>₦${this.formatMoney(order.total)}</span></div>
+  <div class="total-row" style="color:#16a34a"><span>Amount Paid</span><span>₦${this.formatMoney(amountPaid)}</span></div>
+  <div class="total-row grand-total" style="color:${outstanding>0?'#ef4444':'#16a34a'}"><span>${outstanding>0?'Outstanding Balance':'Fully Paid ✓'}</span><span>₦${this.formatMoney(outstanding)}</span></div>
+</div>
+<div class="footer">
+  <p><strong>Thank you for your business with Ladu Investment!</strong></p>
+  <p>This is a computer-generated receipt. Generated: ${new Date().toLocaleString()}</p>
+  <p style="margin-top:20px">Authorized Signature: ___________________________</p>
+</div>
 </body></html>`;
         },
-
         // ---- Inventory ----
         editProduct(p) {
             this.modal.isEdit = true;
             this.modal.activeIndex = this.products.indexOf(p);
-            this.form = { ...this.form, pName: p.name, stock: p.stock, price: p.price };
+            this.form = { ...this.form, pName: p.name, stock: p.stock, price: p.price, pCategory: p.category || '', pUnit: p.unit || '' };
             this.modal.show = true;
         },
-        deleteProduct(idx) { if (confirm('Delete this product?')) this.products.splice(idx, 1); },
+        deleteProduct(idx) {
+            const p = this.products[idx];
+            if (confirm(`Delete "${p.name}"? This cannot be undone.`)) {
+                // Log the deletion
+                if (!this.stockAuditLog) this.stockAuditLog = [];
+                this.stockAuditLog.push({ action: 'deleted', productName: p.name, category: p.category, stock: p.stock, price: p.price, by: this.session?.fullname || '', byId: this.session?.username || '', dateTime: new Date().toISOString() });
+                this.products.splice(idx, 1);
+                this.notifs.unshift({ title: 'Product Deleted', msg: `"${p.name}" deleted by ${this.session?.fullname}` });
+            }
+        },
 
         // ---- Expenses ----
         deleteExpense(expense) {
@@ -4305,14 +4850,42 @@ ${order.items.map(i => `<tr><td>${i.name}</td><td style="text-align:center">${i.
                 if (!this.form.pName.trim() || this.form.stock === '' || this.form.stock === null || this.form.stock === undefined || !this.form.price) { alert('Fill all required fields'); return; }
                 if (this.modal.isEdit && this.modal.activeIndex !== null) {
                     const p = this.products[this.modal.activeIndex];
+                    const oldSnapshot = { name: p.name, stock: p.stock, price: p.price, category: p.category, unit: p.unit };
                     p.name = this.form.pName; p.stock = this.form.stock; p.price = this.form.price;
+                    if (this.form.pCategory) p.category = this.form.pCategory;
+                    if (this.form.pUnit) p.unit = this.form.pUnit;
+                    // Record audit
+                    if (!p.editHistory) p.editHistory = [];
+                    p.editHistory.push({ action: 'edited', by: this.session?.fullname || '', byId: this.session?.username || '', dateTime: new Date().toISOString(), oldValues: oldSnapshot, newValues: { name: p.name, stock: p.stock, price: p.price, category: p.category, unit: p.unit } });
+                    this.notifs.unshift({ title: 'Product Updated', msg: `"${p.name}" updated by ${this.session?.fullname} at ${new Date().toLocaleTimeString()}` });
                 } else {
-                    this.products.unshift({ name: this.form.pName, category: 'General', stock: this.form.stock, unit: 'units', price: this.form.price });
+                    this.products.unshift({ name: this.form.pName, category: this.form.pCategory || 'General', stock: this.form.stock, unit: this.form.pUnit || 'units', price: this.form.price, editHistory: [] });
+                    this.notifs.unshift({ title: 'Product Added', msg: `"${this.form.pName}" added by ${this.session?.fullname}` });
                 }
             } else if (this.view === 'expenses') {
                 if (!this.form.expCategory || !this.form.expDescription.trim() || !this.form.expAmount || !this.form.expDate) { alert('Fill all required fields'); return; }
-                this.expenses.unshift({ date: this.form.expDate, category: this.form.expCategory, description: this.form.expDescription, amount: this.form.expAmount });
-                this.notifs.unshift({ title: 'Expense Added', msg: `${this.form.expCategory}: ₦${this.formatMoney(this.form.expAmount)}` });
+                if (!this.form.expPaymentSource) { alert('Please select a payment source (bank or cash drawer).'); return; }
+                const expId = 'EXP-' + String(Math.floor(10000 + Math.random() * 90000));
+                const newExp = {
+                    id: expId,
+                    date: this.form.expDate,
+                    category: this.form.expCategory,
+                    description: this.form.expDescription,
+                    amount: this.form.expAmount,
+                    paymentSource: this.form.expPaymentSource,
+                    approvedBy: this.session?.fullname || '',
+                    approvedById: this.session?.username || ''
+                };
+                this.expenses.unshift(newExp);
+                // Deduct from the selected payment source
+                if (this.form.expPaymentSource === 'cash') {
+                    // Deduct from cash drawer
+                    this.bankLedger.push({ date: this.form.expDate, ref: expId, customerName: 'Expense', description: 'Expense - ' + this.form.expCategory + ': ' + this.form.expDescription, amount: -this.form.expAmount, method: 'cash', bankName: '', runningBalance: 0 });
+                } else {
+                    // Deduct from specified bank
+                    this.bankLedger.push({ date: this.form.expDate, ref: expId, customerName: 'Expense', description: 'Expense - ' + this.form.expCategory + ': ' + this.form.expDescription, amount: -this.form.expAmount, method: 'bank', bankName: this.form.expPaymentSource, runningBalance: 0 });
+                }
+                this.notifs.unshift({ title: 'Expense Added', msg: `${this.form.expCategory}: ₦${this.formatMoney(this.form.expAmount)} by ${this.session?.fullname} from ${this.form.expPaymentSource === 'cash' ? 'Cash Drawer' : this.form.expPaymentSource}` });
             } else if (this.view === 'users') {
                 this.modal.userError = '';
                 if (!this.form.uFullname.trim() || !this.form.uUsername.trim() || !this.form.uPassword.trim()) { this.modal.userError = 'All fields required.'; return; }
@@ -4531,7 +5104,7 @@ ${order.items.map(i => `<tr><td>${i.name}</td><td style="text-align:center">${i.
         exportExpenseReport(type) {
             const { doc, lw } = this.createPDFDoc('EXPENSES REPORT');
             let y = 52;
-            doc.autoTable({ startY: y, head: [['Date','Category','Description','Amount (NGN)']], body: (this.expenseReportResults.items||[]).map(e=>[this.formatDate(e.date), e.category||'', e.description||'', this.pdfMoney(e.amount)]), styles: { fontSize: 8, cellPadding: 2 }, headStyles: { fillColor: [220,50,50] }, alternateRowStyles: { fillColor: [255,248,248] }, theme: 'grid', margin: { left: 14, right: 14 } });
+            doc.autoTable({ startY: y, head: [['Date','Category','Description','Payment Source','Approved By','Amount (NGN)']], body: (this.expenseReportResults.items||[]).map(e=>[this.formatDate(e.date), e.category||'', e.description||'', e.paymentSource==='cash'?'Cash Drawer':(e.paymentSource||'—'), (e.approvedBy||'—') + (e.approvedById ? ' ('+e.approvedById+')' : ''), this.pdfMoney(e.amount)]), styles: { fontSize: 7.5, cellPadding: 2 }, headStyles: { fillColor: [220,50,50] }, alternateRowStyles: { fillColor: [255,248,248] }, theme: 'grid', margin: { left: 14, right: 14 } });
             const fy = doc.lastAutoTable.finalY + 6;
             doc.setFontSize(10); doc.setFont(undefined,'bold');
             doc.text('TOTAL EXPENSES: NGN ' + this.formatMoney(this.expenseReportResults.total), 14, fy);
@@ -4550,11 +5123,32 @@ ${order.items.map(i => `<tr><td>${i.name}</td><td style="text-align:center">${i.
             const newPaid = (o.amountPaid||0) + totalPaying; const newOutstanding = Math.max(0, o.total - newPaid);
             const date = this.localDateStr();
             o.amountPaid = newPaid; o.paymentMethod = this.staffPayModal.mode; o.bankName = this.staffPayModal.mode !== 'cash' ? this.staffPayModal.selectedBank : ''; o.bankFrom = this.staffPayModal.bankFrom||''; o.bankTo = this.staffPayModal.bankTo||''; o.accountName = this.staffPayModal.accountName||''; o.accountNumber = this.staffPayModal.accountNumber||''; o.paymentRef = this.staffPayModal.reference || (o.id+'-PAY'); o.paymentDate = date;
+            // Record who confirmed
+            o.confirmedBy = this.session?.fullname || '';
+            o.confirmedById = this.session?.username || '';
+            o.confirmedAt = date;
             if (newOutstanding <= 0.01) { o.paymentStatus = 'paid'; o.status = 'confirmed'; o.amountPaid = o.total; o.items.forEach(it => { const p = this.products.find(x => x.name === it.name); if (p) p.stock = Math.max(0, p.stock - it.qty); }); } else { o.paymentStatus = 'partial'; o.status = 'confirmed'; }
             if (bankAmt > 0) this.bankLedger.push({ date, ref: o.id, customerName: o.customerName, description: 'Bank payment - '+o.customerName, amount: bankAmt, method: 'bank', bankName: this.staffPayModal.selectedBank, bankFrom: this.staffPayModal.bankFrom||'', bankTo: this.staffPayModal.bankTo||'', accountName: this.staffPayModal.accountName||'', accountNumber: this.staffPayModal.accountNumber||'', runningBalance: 0 });
             if (cashAmt > 0) this.bankLedger.push({ date, ref: o.id, customerName: o.customerName, description: 'Cash payment - '+o.customerName, amount: cashAmt, method: 'cash', bankName: '', runningBalance: 0 });
-            const txnId = 'TXN'+String(this.transactions.length+1).padStart(3,'0');
-            this.transactions.push({ id: txnId, customerId: o.customerId, ref: o.id, description: 'Payment for '+(o.items[0]?.name||'order'), amount: totalPaying, date, type: newOutstanding<=0.01?'payment':'partial_payment', method: o.paymentMethod, bankName: o.bankName, outstanding: newOutstanding });
+            // Update the existing pending_confirmation transaction if it exists, otherwise push a new one
+            const existingPending = this.transactions.find(t => t.ref === o.id && t.type === 'pending_confirmation');
+            const finalType = newOutstanding <= 0.01 ? 'payment' : 'partial_payment';
+            if (existingPending) {
+                existingPending.type = finalType;
+                existingPending.amount = totalPaying;
+                existingPending.date = date;
+                existingPending.method = o.paymentMethod;
+                existingPending.bankName = o.bankName;
+                existingPending.bankFrom = o.bankFrom || '';
+                existingPending.accountName = o.accountName || '';
+                existingPending.outstanding = newOutstanding;
+                existingPending.confirmedBy = this.session?.fullname || '';
+                existingPending.confirmedById = this.session?.username || '';
+                existingPending.description = 'Payment confirmed for ' + (o.items[0]?.name || 'order');
+            } else {
+                const txnId = 'TXN' + String(this.transactions.length + 1).padStart(3, '0');
+                this.transactions.push({ id: txnId, customerId: o.customerId, ref: o.id, description: 'Payment confirmed for ' + (o.items[0]?.name || 'order'), amount: totalPaying, date, type: finalType, method: o.paymentMethod, bankName: o.bankName, bankFrom: o.bankFrom || '', accountName: o.accountName || '', outstanding: newOutstanding, confirmedBy: this.session?.fullname, confirmedById: this.session?.username });
+            }
             this.notifs.unshift({ title: 'Payment Recorded', msg: '₦'+this.formatMoney(totalPaying)+' recorded for '+o.id+(newOutstanding>0?' | Balance: ₦'+this.formatMoney(newOutstanding):' | FULLY PAID!') });
             this.staffPayModal = { show: false, order: null, mode: 'bank', selectedBank: this.banks[0]?.name || '', bankAmount: 0, cashAmount: 0, reference: '', bankFrom: '', bankTo: '', accountName: '', accountNumber: '' };
             this.checkStockAlerts();
@@ -4774,15 +5368,16 @@ ${order.items.map(i => `<tr><td>${i.name}</td><td style="text-align:center">${i.
 
             // Build receiving history section
             const receivingHistoryHTML = (p.receivingHistory || []).length > 0 
-                ? `<h3 style="margin-top:30px;color:#714B67;border-bottom:2px solid #714B67;padding-bottom:10px;">Receiving History & Balance</h3>
-                <table><thead><tr><th>Date</th><th>Qty Ordered</th><th>Qty Received</th><th>Variance</th><th>Balance Status</th><th>Money Impact</th></tr></thead><tbody>
-                ${p.receivingHistory.map((rh,idx)=>{
-                    const originalQty = p.items[0]?.qty || 0;
+                ? `<h3 style="margin-top:30px;color:#714B67;border-bottom:2px solid #714B67;padding-bottom:10px;">Receiving History</h3>
+                <table><thead><tr><th>Date & Time</th><th>Expected</th><th>Received</th><th>Variance Qty</th><th>Variance Amt</th><th>Status</th><th>Received By</th><th>Notes</th></tr></thead><tbody>
+                ${p.receivingHistory.map((rh)=>{
+                    const varQty = rh.varianceQty !== undefined ? rh.varianceQty : (rh.excessQty || 0);
                     const unitPrice = p.items[0]?.price || 0;
-                    const shortfall = rh.balance < 0 ? Math.abs(rh.balance) * unitPrice : 0;
-                    const excess = (rh.excessQty || 0) * unitPrice;
-                    const variance = rh.balance < 0 ? 'SHORT' : rh.excessQty > 0 ? 'EXCESS' : 'FULL';
-                    return `<tr><td>${this.formatDate(rh.date)}</td><td>${originalQty}</td><td>${rh.receivedQty}</td><td>${rh.balance}</td><td style="font-weight:bold;color:${variance==='SHORT'?'red':variance==='EXCESS'?'green':'green'}">${variance}</td><td>₦${(shortfall + excess).toLocaleString()}</td></tr>`;
+                    const varAmt = rh.varianceAmt !== undefined ? rh.varianceAmt : (varQty * unitPrice);
+                    const status = rh.status || (varQty > 0 ? 'over' : varQty < 0 ? 'short' : 'exact');
+                    const color = status==='over'?'#1d4ed8':status==='short'?'#c2410c':'#15803d';
+                    const dateStr = rh.dateTime ? new Date(rh.dateTime).toLocaleString() : this.formatDate(rh.date);
+                    return `<tr><td>${dateStr}</td><td>${rh.expectedQty !== undefined ? rh.expectedQty : (p.items[0]?.qty||0)}</td><td>${rh.receivedQty}</td><td style="font-weight:bold;color:${color}">${varQty >= 0 ? '+' : ''}${varQty}</td><td style="font-weight:bold;color:${color}">₦${Math.abs(varAmt).toLocaleString()} ${varQty>0?'EXTRA':varQty<0?'SHORT':''}</td><td style="font-weight:bold;text-transform:uppercase;color:${color}">${status}</td><td>${rh.receivedBy||'—'} ${rh.receivedById?'('+rh.receivedById+')':''}</td><td>${rh.notes||'—'}</td></tr>`;
                 }).join('')}
                 </tbody></table>`
                 : '';
@@ -4861,19 +5456,19 @@ ${receivingHistoryHTML}
             const p = this.purchases.find(x => x.id === purchase.id);
             if (!p) return;
             const originalQty = p.items[0]?.qty || 0;
-            const receiving = { date: this.localDateStr(), receivedQty: originalQty, excessQty: 0, balance: 0 };
+            const unitPrice = p.items[0]?.price || 0;
+            const receiving = { date: this.localDateStr(), dateTime: new Date().toISOString(), receivedQty: originalQty, expectedQty: originalQty, varianceQty: 0, varianceAmt: 0, balance: 0, status: 'exact', notes: 'Full receiving', receivedBy: this.session?.fullname || '', receivedById: this.session?.username || '' };
             if (!p.receivingHistory) p.receivingHistory = [];
             p.receivingHistory.push(receiving);
             p.status = 'arrived';
             p.items[0].receivedQty = originalQty;
-            // Update products.stock (inventory page)
             const itemName = p.items[0]?.name;
             if (itemName) {
                 const prod = this.products.find(x => x.name === itemName);
                 if (prod) { prod.stock = (prod.stock || 0) + originalQty; }
             }
             this.purchaseMenu.purchaseId = null;
-            this.notifs.unshift({ title: 'Stock Updated ✓', msg: `${p.id}: ${originalQty} units received — stock updated` });
+            this.notifs.unshift({ title: 'Stock Updated ✓', msg: `${p.id}: ${originalQty} units fully received by ${this.session?.fullname} — stock updated` });
             this.checkStockAlerts();
         },
         submitPurchaseReceiving() {
@@ -4882,41 +5477,58 @@ ${receivingHistoryHTML}
             if (!p) return;
             if (m.quantityReceived <= 0) { alert('Enter quantity received'); return; }
             
-            // Calculate remaining balance based on previously received quantities
             const totalPreviouslyReceived = (p.receivingHistory || []).reduce((sum, r) => sum + r.receivedQty, 0);
             const originalQty = p.items[0]?.qty || 0;
+            const unitPrice = p.items[0]?.price || 0;
+            const expectedNow = Math.max(0, originalQty - totalPreviouslyReceived);
             const totalNowReceived = totalPreviouslyReceived + m.quantityReceived;
-            const remainingBalance = originalQty - totalNowReceived;
-            const excessQty = remainingBalance < 0 ? Math.abs(remainingBalance) : 0;
             
-            const receiving = { date: this.localDateStr(), receivedQty: m.quantityReceived, excessQty, balance: remainingBalance };
+            // Variance: positive = over, negative = short, relative to what was expected this batch
+            const varianceQty = m.quantityReceived - expectedNow; // +5 means 5 over
+            const varianceAmt = varianceQty * unitPrice;           // e.g. +5 * 200 = +1000
+            const remainingBalance = originalQty - totalNowReceived; // overall balance vs original order
+            
+            let receiveStatus = 'exact';
+            if (varianceQty > 0) receiveStatus = 'over';
+            else if (varianceQty < 0) receiveStatus = 'short';
+            
+            const receiving = {
+                date: this.localDateStr(),
+                dateTime: new Date().toISOString(),
+                receivedQty: m.quantityReceived,
+                expectedQty: expectedNow,
+                varianceQty,
+                varianceAmt,
+                balance: remainingBalance,
+                status: receiveStatus,
+                notes: m.notes || '',
+                receivedBy: this.session?.fullname || '',
+                receivedById: this.session?.username || ''
+            };
             if (!p.receivingHistory) p.receivingHistory = [];
             p.receivingHistory.push(receiving);
-            p.status = remainingBalance <= 0 ? 'arrived' : 'partial';
+            
+            // Order status: 'over' or 'arrived' if total >= ordered, 'partial' otherwise
+            if (totalNowReceived >= originalQty) {
+                p.status = varianceQty > 0 ? 'over' : 'arrived';
+            } else {
+                p.status = 'partial';
+            }
             p.items[0].receivedQty = totalNowReceived;
             
-            // Update products stock (used by inventory page)
+            // Update products stock
             const itemName = p.items[0]?.name;
             if (itemName) {
                 const prod = this.products.find(x => x.name === itemName);
-                if (prod) {
-                    prod.stock = (prod.stock || 0) + m.quantityReceived;
-                } else {
-                    // Product not in products list yet — add it
-                    this.products.push({ name: itemName, category: 'General', stock: m.quantityReceived, unit: 'units', price: p.items[0]?.price || 0 });
-                }
+                if (prod) { prod.stock = (prod.stock || 0) + m.quantityReceived; }
+                else { this.products.push({ name: itemName, category: 'General', stock: m.quantityReceived, unit: 'units', price: unitPrice }); }
             }
-            
-            // Also update the stock array (used elsewhere)
             const stockItem = this.stock.find(s => s.name === itemName);
-            if (stockItem) {
-                stockItem.quantity = (stockItem.quantity || 0) + m.quantityReceived;
-                stockItem.lastUpdated = this.localDateStr();
-            } else if (itemName) {
-                this.stock.push({ name: itemName, quantity: m.quantityReceived, unit: 'units', lastUpdated: this.localDateStr(), source: p.source });
-            }
+            if (stockItem) { stockItem.quantity = (stockItem.quantity || 0) + m.quantityReceived; stockItem.lastUpdated = this.localDateStr(); }
+            else if (itemName) { this.stock.push({ name: itemName, quantity: m.quantityReceived, unit: 'units', lastUpdated: this.localDateStr(), source: p.source }); }
             
-            this.notifs.unshift({ title: 'Receiving Recorded', msg: `${p.id}: ${m.quantityReceived} units received. Stock updated. Remaining to receive: ${Math.max(0, remainingBalance)}` });
+            const statusLabel = receiveStatus === 'over' ? `OVER by +${varianceQty} (₦${this.formatMoney(Math.abs(varianceAmt))})` : receiveStatus === 'short' ? `SHORT by ${Math.abs(varianceQty)} (₦${this.formatMoney(Math.abs(varianceAmt))})` : 'EXACT';
+            this.notifs.unshift({ title: 'Receiving Recorded', msg: `${p.id}: ${m.quantityReceived} units received by ${this.session?.fullname} — ${statusLabel}` });
             m.show = false;
         },
 
@@ -5243,6 +5855,153 @@ ${supplierPurchases.map(p=>`<tr><td><strong>${p.id}</strong></td><td>${this.form
             w.document.close();
             setTimeout(() => w.print(), 500);
         },
+        openStockHistory(product) {
+            this.stockHistoryModal = { show: true, product, dateFrom: '', dateTo: '', showAll: false };
+        },
+        downloadStockHistoryPDF() {
+            const p = this.stockHistoryModal.product;
+            const h = this.filteredStockHistory;
+            const { doc, lw } = this.createPDFDoc('STOCK HISTORY — ' + (p?.name || '').toUpperCase());
+            let y = 52;
+            doc.setFontSize(8); doc.setFont(undefined,'normal'); doc.setTextColor(60,60,60);
+            doc.text(`Product: ${p?.name} | Category: ${p?.category} | Current Stock: ${p?.stock} ${p?.unit}`, 14, y); y += 6;
+            doc.text(`Total In: ${h.totalIn} units | Total Out: ${h.totalOut} units`, 14, y); y += 8;
+            doc.autoTable({ startY: y, head: [['Date & Time','Type','Reference','Party','Qty In','Qty Out','Unit Price','Details']], body: h.rows.map(r=>[r.dateTime, r.type, r.ref, r.party, r.direction==='in'?r.qty:'—', r.direction==='out'?r.qty:'—', r.unitPrice?'NGN '+this.formatMoney(r.unitPrice):'—', r.details||'']), styles: { fontSize: 7, cellPadding: 1.5 }, headStyles: { fillColor: [42,27,38] }, alternateRowStyles: { fillColor: [248,248,248] }, theme: 'grid', margin: { left: 14, right: 14 } });
+            this.addPDFFooter(doc);
+            doc.save('StockHistory-' + (p?.name||'').replace(/\s+/g,'_') + '-' + this.localDateStr() + '.pdf');
+        },
+        bankStmtOpeningBalance(bankName) {
+            const bank = this.banks.find(b => b.name === bankName);
+            const opening = bank?.openingBalance || 0;
+            if (!this.bankStmtMonth) return opening;
+            // Opening balance = opening + all credits/debits BEFORE this month
+            const [yr, mo] = this.bankStmtMonth.split('-').map(Number);
+            const cutoff = yr * 100 + mo - 1; // month before
+            let pre = 0;
+            this.bankLedger.forEach(e => {
+                if (e.bankName !== bankName && !(e.method === 'bank' && e.bankName === bankName)) return;
+                if (e.bankName !== bankName) return;
+                const d = (e.date || '').slice(0, 7).replace('-', '');
+                const em = parseInt(d.slice(0, 4)) * 100 + parseInt(d.slice(4, 6));
+                if (em <= cutoff) pre += e.amount;
+            });
+            return opening + pre;
+        },
+        bankStmtRows(bankName) {
+            let entries = this.bankLedger.filter(e => e.bankName === bankName);
+            if (this.bankStmtMonth) {
+                entries = entries.filter(e => (e.date || '').startsWith(this.bankStmtMonth));
+            }
+            entries = entries.slice().sort((a, b) => (a.date||'').localeCompare(b.date||''));
+            // Compute running balance
+            let running = this.bankStmtOpeningBalance(bankName);
+            return entries.map(e => {
+                running += e.amount;
+                // Find confirmedBy from matching transaction or bankLedger entry itself
+                const matchTxn = this.transactions.find(t => t.ref === e.ref);
+                return { ...e, runningBalance: running, confirmedBy: e.confirmedBy || matchTxn?.confirmedBy || '', confirmedById: e.confirmedById || matchTxn?.confirmedById || '' };
+            });
+        },
+        downloadBankStatementPDF(bankName) {
+            const bank = this.banks.find(b => b.name === bankName);
+            const rows = this.bankStmtRows(bankName);
+            const opening = this.bankStmtOpeningBalance(bankName);
+            const closing = this.bankBalances[bankName] || 0;
+            const periodLabel = this.bankStmtMonth || 'All Time';
+            const { doc, lw } = this.createPDFDoc('BANK STATEMENT — ' + bankName.toUpperCase());
+            let y = 52;
+            doc.setFontSize(9); doc.setFont(undefined,'bold'); doc.setTextColor(0,0,0);
+            doc.text('Bank: ' + bankName + '  |  A/C: ' + (bank?.accountNumber||'—') + '  |  Period: ' + periodLabel, 14, y); y += 6;
+            doc.setFont(undefined,'normal'); doc.setFontSize(8);
+            doc.text('Opening Balance: NGN ' + this.formatMoney(opening) + '    Closing Balance: NGN ' + this.formatMoney(closing), 14, y); y += 8;
+            const totalCredit = rows.filter(r=>r.amount>0).reduce((s,r)=>s+r.amount,0);
+            const totalDebit = rows.filter(r=>r.amount<0).reduce((s,r)=>s+Math.abs(r.amount),0);
+            doc.text('Total Credits: NGN ' + this.formatMoney(totalCredit) + '    Total Debits: NGN ' + this.formatMoney(totalDebit), 14, y); y += 8;
+            doc.autoTable({
+                startY: y,
+                head: [['Date','Reference','Description','From/To','Mode','Confirmed By','Credit (NGN)','Debit (NGN)','Balance (NGN)']],
+                body: rows.map(r => [
+                    this.formatDate(r.date),
+                    r.ref||'—',
+                    r.description||'—',
+                    (r.bankFrom||r.customerName||'—') + (r.accountName?' / '+r.accountName:''),
+                    r.method==='cash'?'Cash':'Bank',
+                    (r.confirmedBy||'—') + (r.confirmedById?' ('+r.confirmedById+')':''),
+                    r.amount>=0?this.formatMoney(r.amount):'—',
+                    r.amount<0?this.formatMoney(Math.abs(r.amount)):'—',
+                    this.formatMoney(r.runningBalance)
+                ]),
+                styles: { fontSize: 7, cellPadding: 1.5 },
+                headStyles: { fillColor: [113,75,103] },
+                alternateRowStyles: { fillColor: [248,248,248] },
+                theme: 'grid',
+                margin: { left: 14, right: 14 }
+            });
+            const fy = doc.lastAutoTable.finalY + 8;
+            doc.setFontSize(9); doc.setFont(undefined,'bold');
+            doc.text('Closing Balance: NGN ' + this.formatMoney(closing), 14, fy);
+            this.addPDFFooter(doc);
+            doc.save('BankStatement-' + bankName.replace(/\s+/g,'_') + '-' + periodLabel + '.pdf');
+        },
+        openAddBankModal() {
+            this.addBankModal = { show: true, name: '', accountNumber: '', openingBalance: 0, error: '' };
+        },
+        submitAddBank() {
+            const m = this.addBankModal;
+            m.error = '';
+            if (!m.name.trim()) { m.error = 'Enter a bank name.'; return; }
+            if (this.banks.find(b => b.name.toLowerCase() === m.name.trim().toLowerCase())) { m.error = 'A bank with this name already exists.'; return; }
+            this.banks.push({ name: m.name.trim(), accountNumber: m.accountNumber.trim() || '—', balance: 0, openingBalance: Number(m.openingBalance) || 0 });
+            this.notifs.unshift({ title: 'Bank Added', msg: m.name.trim() + ' has been added to the bank accounts.' });
+            this.addBankModal.show = false;
+        },
+        printExpenseReceipt(e) {
+            const expId = e.id || ('EXP-' + Math.floor(10000 + Math.random() * 90000));
+            const sourceLabel = e.paymentSource === 'cash' ? 'Cash Drawer' : (e.paymentSource || 'N/A');
+            const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Expense Receipt - ${expId}</title>
+<style>body{font-family:Arial,sans-serif;padding:40px;max-width:600px;margin:0 auto;}.header{text-align:center;border-bottom:3px solid #714B67;padding-bottom:20px;margin-bottom:30px;}.header h1{color:#714B67;margin:0;font-size:28px;}.receipt-row{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f0f0f0;font-size:14px;}.label{color:#666;font-weight:bold;}.value{color:#333;text-align:right;max-width:60%;}.amount{font-size:28px;font-weight:900;color:#cc0000;text-align:center;margin:20px 0;padding:15px;background:#fff5f5;border-radius:10px;border:2px solid #fecaca;}.footer{margin-top:30px;padding-top:20px;border-top:2px solid #ddd;text-align:center;color:#666;font-size:12px;}.badge{display:inline-block;padding:4px 14px;background:#714B67;color:white;border-radius:20px;font-size:11px;font-weight:bold;text-transform:uppercase;margin:10px 0;}</style></head><body>
+<div class="header"><h1>LADU INVESTMENT</h1><p style="color:#666;margin:5px 0">Construction Materials & Equipment</p><p style="font-size:12px;color:#999">Expense Receipt</p></div>
+<div style="text-align:center;margin-bottom:20px"><span class="badge">EXPENSE RECORD</span></div>
+<div class="receipt-row"><span class="label">Receipt ID:</span><span class="value" style="font-family:monospace;font-weight:bold">${expId}</span></div>
+<div class="receipt-row"><span class="label">Date:</span><span class="value">${this.formatDate(e.date)}</span></div>
+<div class="receipt-row"><span class="label">Category:</span><span class="value"><strong>${e.category}</strong></span></div>
+<div class="receipt-row"><span class="label">Description:</span><span class="value">${e.description}</span></div>
+<div class="receipt-row"><span class="label">Payment Source:</span><span class="value" style="color:${e.paymentSource==='cash'?'#15803d':'#1d4ed8'};font-weight:bold">${sourceLabel}</span></div>
+<div class="receipt-row"><span class="label">Approved By:</span><span class="value"><strong>${e.approvedBy || 'N/A'}</strong><br><span style="font-family:monospace;font-size:12px;color:#999">${e.approvedById ? 'ID: ' + e.approvedById : ''}</span></span></div>
+<div class="amount">₦${Number(e.amount).toLocaleString()}</div>
+<div class="footer"><p><strong>This is an official expense record — Ladu Investment</strong></p><p>Generated: ${new Date().toLocaleString()}</p></div>
+</body></html>`;
+            const w = window.open('', '_blank');
+            w.document.write(html);
+            w.document.close();
+            setTimeout(() => w.print(), 500);
+        },
+        downloadExpenseHistory() {
+            const items = this.filteredExpenses;
+            const dateLabel = (this.expenseFilters.dateFrom || this.expenseFilters.dateTo)
+                ? ((this.expenseFilters.dateFrom ? this.formatDate(this.expenseFilters.dateFrom) : 'All') + ' to ' + (this.expenseFilters.dateTo ? this.formatDate(this.expenseFilters.dateTo) : 'All'))
+                : 'All Dates';
+            const total = items.reduce((s, e) => s + e.amount, 0);
+            const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Expense History</title>
+<style>body{font-family:Arial,sans-serif;padding:40px;max-width:1100px;margin:0 auto;}.header{text-align:center;border-bottom:3px solid #714B67;padding-bottom:20px;margin-bottom:30px;}.header h1{color:#714B67;margin:0;}table{width:100%;border-collapse:collapse;margin:20px 0;}th{background:#714B67;color:white;padding:10px 12px;text-align:left;font-size:12px;}td{padding:9px 12px;border-bottom:1px solid #eee;font-size:12px;}.total-row{background:#f9f9f9;font-weight:bold;}.summary{background:#f8f4f7;padding:15px 20px;margin:20px 0;border-left:4px solid #714B67;border-radius:4px;display:flex;gap:30px;flex-wrap:wrap;}.sum-item{}.sum-label{font-size:11px;color:#888;text-transform:uppercase;font-weight:bold;}.sum-val{font-size:18px;font-weight:900;color:#333;}.footer{margin-top:30px;padding-top:20px;border-top:2px solid #ddd;text-align:center;color:#666;font-size:12px;}@media print{body{padding:20px}}</style></head><body>
+<div class="header"><h1>LADU INVESTMENT</h1><p>Construction Materials & Equipment</p></div>
+<h2 style="color:#714B67;text-align:center;margin:10px 0">EXPENSE HISTORY REPORT</h2>
+<p style="text-align:center;color:#888;font-size:13px">Period: ${dateLabel} | Category: ${this.expenseFilters.category || 'All'} | Generated: ${new Date().toLocaleString()}</p>
+<div class="summary">
+<div class="sum-item"><div class="sum-label">Total Expenses</div><div class="sum-val">₦${Number(total).toLocaleString()}</div></div>
+<div class="sum-item"><div class="sum-label">Records</div><div class="sum-val">${items.length}</div></div>
+</div>
+<table><thead><tr><th>Exp ID</th><th>Date</th><th>Category</th><th>Description</th><th>Payment Source</th><th>Approved By</th><th>Staff ID</th><th style="text-align:right">Amount (₦)</th></tr></thead><tbody>
+${items.map(e => `<tr><td style="font-family:monospace">${e.id||'—'}</td><td>${this.formatDate(e.date)}</td><td><strong>${e.category}</strong></td><td>${e.description}</td><td>${e.paymentSource==='cash'?'Cash Drawer':(e.paymentSource||'—')}</td><td>${e.approvedBy||'—'}</td><td style="font-family:monospace;color:#888">${e.approvedById||'—'}</td><td style="text-align:right;font-weight:bold;color:#cc0000">₦${Number(e.amount).toLocaleString()}</td></tr>`).join('')}
+<tr class="total-row"><td colspan="7" style="text-align:right;padding-right:16px">TOTAL:</td><td style="text-align:right;font-size:16px;color:#cc0000">₦${Number(total).toLocaleString()}</td></tr>
+</tbody></table>
+<div class="footer"><p>Authorized Signature: ___________________________</p><p>Manager, Ladu Investment</p></div>
+</body></html>`;
+            const w = window.open('', '_blank');
+            w.document.write(html);
+            w.document.close();
+            setTimeout(() => w.print(), 500);
+        },
         openSendMoneyModal() {
             this.sendMoneyModal = { show: true, supplierName: '', amount: 0, paymentMethod: 'bank', selectedBank: this.banks[0]?.name || '', bankFrom: '', bankTo: '', accountNumber: '', reference: '', notes: '', error: '' };
         },
@@ -5326,4 +6085,4 @@ ${supplierPurchases.map(p=>`<tr><td><strong>${p.id}</strong></td><td>${this.form
 
 </script>
 </body>
-</html>s
+</html>
