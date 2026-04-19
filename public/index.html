@@ -1879,58 +1879,96 @@ input[type=number].no-spinner {
                                 <span class="font-black text-teal-900 text-base">₦{{ formatMoney(bankBalances[selectedBank]||0) }}</span>
                             </div>
                         </div>
-                        <!-- Cash Drawer Transactions -->
-                        <div v-if="selectedBank === '__cash__'" class="border-t border-gray-100 overflow-x-auto">
-                            <div class="p-4 bg-green-50 text-sm font-bold text-green-700"><i class="fas fa-money-bill-wave mr-2"></i>Cash Drawer — Transaction History</div>
-                            <table class="w-full text-left">
-                                <thead class="bg-gray-50 text-xs font-bold uppercase text-gray-400">
-                                    <tr><th class="p-3">Date</th><th class="p-3">Ref</th><th class="p-3">Party</th><th class="p-3">Description</th><th class="p-3 text-right">Amount</th></tr>
-                                </thead>
-                                <tbody class="text-sm divide-y divide-gray-100">
-                                    <tr class="bg-green-50 font-bold">
-                                        <td class="p-3 text-gray-600 text-xs">System Setup</td>
-                                        <td class="p-3 text-gray-500 font-mono text-xs">CASH-INIT</td>
-                                        <td class="p-3 text-gray-500 text-xs">—</td>
-                                        <td class="p-3 text-gray-700">Initial Cash Float</td>
-                                        <td class="p-3 text-right font-bold text-green-600">+₦{{ formatMoney(initialCash) }}</td>
-                                    </tr>
-                                    <tr v-for="(entry,idx) in bankLedger.filter(e=>e.method==='cash')" :key="idx" class="hover:bg-gray-50">
-                                        <td class="p-3 text-xs text-gray-500">{{ formatDate(entry.date) }}</td>
-                                        <td class="p-3 font-mono text-xs text-[#714B67]">{{ entry.ref }}</td>
-                                        <td class="p-3 text-xs text-gray-600">{{ entry.customerName }}</td>
-                                        <td class="p-3 text-gray-700">{{ entry.description }}</td>
-                                        <td class="p-3 text-right font-bold" :class="entry.amount>=0?'text-green-600':'text-red-500'">{{ entry.amount>=0?'+':'' }}₦{{ formatMoney(Math.abs(entry.amount)) }}</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    <!-- Cash Drawer Ledger -->
-                    <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-                        <div class="p-5 border-b border-gray-100 bg-gray-50/50"><h3 class="font-bold text-gray-700">Cash Drawer Ledger</h3></div>
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-left">
-                                <thead class="bg-gray-50 text-xs font-bold uppercase text-gray-400">
-                                    <tr><th class="p-4">Date</th><th class="p-4">Reference</th><th class="p-4">Customer</th><th class="p-4">Description</th><th class="p-4 text-right">Amount</th></tr>
-                                </thead>
-                                <tbody class="text-sm divide-y divide-gray-100">
-                                    <tr class="bg-green-50 font-bold">
-                                        <td class="p-4 text-gray-600 text-xs">System Setup</td>
-                                        <td class="p-4 text-gray-500 font-mono text-xs">CASH-INIT</td>
-                                        <td class="p-4 text-gray-500 text-xs">—</td>
-                                        <td class="p-4 text-gray-700">Initial Cash Float</td>
-                                        <td class="p-4 text-right font-mono font-bold text-green-600">₦{{ formatMoney(initialCash) }}</td>
-                                    </tr>
-                                    <tr v-for="(entry,idx) in bankLedger.filter(e=>e.method==='cash')" :key="idx" class="hover:bg-gray-50">
-                                        <td class="p-4 text-gray-600 text-xs">{{ formatDate(entry.date) }}</td>
-                                        <td class="p-4 text-gray-500 font-mono text-xs">{{ entry.ref }}</td>
-                                        <td class="p-4 text-xs text-gray-600">{{ entry.customerName }}</td>
-                                        <td class="p-4 font-medium text-gray-700">{{ entry.description }}</td>
-                                        <td class="p-4 text-right font-mono font-bold text-green-600">₦{{ formatMoney(entry.amount) }}</td>
-                                    </tr>
-                                </tbody>
-                            </table>
+                        <!-- Cash Drawer Statement -->
+                        <div v-if="selectedBank === '__cash__'" class="border-t border-gray-100">
+                            <!-- Statement header & filters -->
+                            <div class="p-4 bg-gradient-to-r from-green-600/10 to-transparent flex flex-wrap gap-3 items-center justify-between">
+                                <div>
+                                    <p class="font-bold text-gray-700 text-sm"><i class="fas fa-money-bill-wave mr-1 text-green-600"></i>Cash Drawer — Statement</p>
+                                    <p class="text-[10px] text-gray-400">Physical Cash Float: ₦{{ formatMoney(initialCash) }}</p>
+                                </div>
+                                <div class="flex gap-2 flex-wrap items-center">
+                                    <input type="month" v-model="bankStmtMonth" class="border border-gray-200 rounded px-2 py-1.5 text-xs focus:ring-2 focus:ring-green-500 outline-none bg-white font-bold">
+                                    <button @click="bankStmtMonth=''" class="text-xs border border-gray-200 text-gray-600 px-2 py-1.5 rounded hover:bg-gray-100 font-bold">All Time</button>
+                                    <button @click="downloadCashStatementPDF()" class="bg-green-700 hover:bg-green-800 text-white text-xs px-3 py-1.5 rounded font-bold flex items-center gap-1"><i class="fas fa-file-pdf mr-1"></i>Download PDF</button>
+                                </div>
+                            </div>
+                            <!-- Summary row -->
+                            <div class="px-4 py-2 bg-gray-50 border-b border-gray-100 grid grid-cols-3 gap-4 text-xs">
+                                <div class="text-center"><p class="text-gray-400 font-bold uppercase mb-0.5">Total Credits</p><p class="font-black text-green-600">₦{{ formatMoney(cashStmtRows.filter(r=>r.amount>0).reduce((s,r)=>s+r.amount,0)) }}</p></div>
+                                <div class="text-center"><p class="text-gray-400 font-bold uppercase mb-0.5">Total Debits</p><p class="font-black text-red-500">₦{{ formatMoney(cashStmtRows.filter(r=>r.amount<0).reduce((s,r)=>s+Math.abs(r.amount),0)) }}</p></div>
+                                <div class="text-center"><p class="text-gray-400 font-bold uppercase mb-0.5">Transactions</p><p class="font-black text-gray-700">{{ cashStmtRows.length }}</p></div>
+                            </div>
+                            <!-- Opening balance -->
+                            <div class="px-4 py-2 bg-amber-50 border-b border-amber-100 flex justify-between items-center text-xs">
+                                <span class="font-bold text-amber-800"><i class="fas fa-flag mr-1"></i>Opening Balance{{ bankStmtMonth ? ' (' + bankStmtMonth + ')' : '' }} <span class="font-normal text-amber-600">(Float + prior cash transactions)</span></span>
+                                <span class="font-black text-amber-900 text-sm">₦{{ formatMoney(cashStmtOpeningBalance) }}</span>
+                            </div>
+                            <!-- Transactions table -->
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left">
+                                    <thead class="bg-gray-50 text-[10px] font-bold uppercase text-gray-400 border-b border-gray-200">
+                                        <tr>
+                                            <th class="p-3">Date</th>
+                                            <th class="p-3">Reference</th>
+                                            <th class="p-3">Description</th>
+                                            <th class="p-3">Party / Purpose</th>
+                                            <th class="p-3">Type</th>
+                                            <th class="p-3">Confirmed By</th>
+                                            <th class="p-3 text-right text-green-600">Credit (₦)</th>
+                                            <th class="p-3 text-right text-red-500">Debit (₦)</th>
+                                            <th class="p-3 text-right">Balance (₦)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="text-xs divide-y divide-gray-100">
+                                        <!-- Opening float row (always shown) -->
+                                        <tr class="bg-green-50/60 font-bold">
+                                            <td class="p-3 text-gray-500">System Setup</td>
+                                            <td class="p-3 font-mono text-green-700">CASH-INIT</td>
+                                            <td class="p-3 text-gray-700">Initial Cash Float</td>
+                                            <td class="p-3 text-gray-400">—</td>
+                                            <td class="p-3"><span class="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase bg-green-100 text-green-700">Float</span></td>
+                                            <td class="p-3 text-gray-400">—</td>
+                                            <td class="p-3 text-right text-green-600">₦{{ formatMoney(initialCash) }}</td>
+                                            <td class="p-3 text-right text-gray-300">—</td>
+                                            <td class="p-3 text-right text-gray-800 font-bold">₦{{ formatMoney(initialCash) }}</td>
+                                        </tr>
+                                        <tr v-if="cashStmtRows.length===0"><td colspan="9" class="p-6 text-center text-gray-400 italic">No cash transactions for the selected period</td></tr>
+                                        <tr v-for="(e, idx) in (cashStmt.showCount >= cashStmtRows.length ? cashStmtRows : cashStmtRows.slice(0, cashStmt.showCount))" :key="idx" class="hover:bg-gray-50" :class="e.amount>=0?''  :'bg-red-50/20'">
+                                            <td class="p-3 text-gray-500 whitespace-nowrap">{{ formatDate(e.date) }}</td>
+                                            <td class="p-3 font-mono font-bold text-[#714B67]">{{ e.ref }}</td>
+                                            <td class="p-3 text-gray-700 max-w-[180px]">{{ e.description }}</td>
+                                            <td class="p-3 text-gray-600">
+                                                <span class="block font-medium">{{ e.customerName || '—' }}</span>
+                                                <span v-if="e.accountName" class="block text-[10px] text-gray-400">{{ e.accountName }}</span>
+                                            </td>
+                                            <td class="p-3">
+                                                <span class="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase whitespace-nowrap" :class="e.amount>=0?'bg-green-100 text-green-700':'bg-red-100 text-red-600'">
+                                                    {{ e.amount>=0 ? 'Cash In' : 'Cash Out' }}
+                                                </span>
+                                            </td>
+                                            <td class="p-3 text-[10px] text-gray-500">
+                                                {{ e.confirmedBy || '—' }}
+                                                <span v-if="e.confirmedById" class="block font-mono text-gray-400">{{ e.confirmedById }}</span>
+                                            </td>
+                                            <td class="p-3 text-right font-bold text-green-600">{{ e.amount>=0 ? '₦'+formatMoney(e.amount) : '—' }}</td>
+                                            <td class="p-3 text-right font-bold text-red-500">{{ e.amount<0 ? '₦'+formatMoney(Math.abs(e.amount)) : '—' }}</td>
+                                            <td class="p-3 text-right font-bold" :class="e.runningBalance>=0?'text-gray-800':'text-red-600'">₦{{ formatMoney(e.runningBalance) }}</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <!-- View more/less -->
+                            <div v-if="cashStmtRows.length > 5" class="p-3 border-t text-center">
+                                <button @click="cashStmt.showCount = (cashStmt.showCount >= cashStmtRows.length ? 5 : cashStmtRows.length)" class="text-xs font-bold text-green-700 hover:underline">
+                                    {{ cashStmt.showCount >= cashStmtRows.length ? '↑ Show Less' : '↓ View More (' + (cashStmtRows.length - cashStmt.showCount) + ' more)' }}
+                                </button>
+                            </div>
+                            <!-- Closing balance -->
+                            <div class="px-4 py-3 bg-teal-50 border-t border-teal-100 flex justify-between items-center">
+                                <span class="font-bold text-teal-800 text-xs"><i class="fas fa-flag-checkered mr-1"></i>Closing Balance{{ bankStmtMonth ? ' (' + bankStmtMonth + ')' : '' }}</span>
+                                <span class="font-black text-teal-900 text-base">₦{{ formatMoney(drawerBalance) }}</span>
+                            </div>
                         </div>
                     </div>
 
@@ -3744,6 +3782,7 @@ createApp({
             addBankModal: { show: false, name: '', accountNumber: '', openingBalance: 0, error: '' },
             stockHistoryModal: { show: false, product: null, dateFrom: '', dateTo: '', showAll: false },
             bankStmt: { showCount: 5 },
+            cashStmt: { showCount: 5 },
             bankStmtMonth: new Date().toISOString().slice(0,7), // default to current month e.g. "2026-04"
 
             // ---- Forms ----
@@ -3977,6 +4016,33 @@ createApp({
                     (c.email || '').toLowerCase().includes(q)
                 );
             }).slice(0, 8); // limit to 8 results
+        },
+
+        // ---- Cash Drawer Statement ----
+        cashStmtOpeningBalance() {
+            if (!this.bankStmtMonth) return this.initialCash;
+            const [yr, mo] = this.bankStmtMonth.split('-').map(Number);
+            const cutoff = yr * 100 + mo - 1;
+            let pre = 0;
+            this.bankLedger.filter(e => e.method === 'cash').forEach(e => {
+                const d = (e.date || '').slice(0, 7).replace('-', '');
+                const em = parseInt(d.slice(0, 4) || '0') * 100 + parseInt(d.slice(4, 6) || '0');
+                if (em <= cutoff) pre += e.amount;
+            });
+            return this.initialCash + pre;
+        },
+        cashStmtRows() {
+            let entries = this.bankLedger.filter(e => e.method === 'cash');
+            if (this.bankStmtMonth) {
+                entries = entries.filter(e => (e.date || '').startsWith(this.bankStmtMonth));
+            }
+            entries = entries.slice().sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+            let running = this.cashStmtOpeningBalance;
+            return entries.map(e => {
+                running += e.amount;
+                const txn = this.transactions.find(t => t.ref === e.ref);
+                return { ...e, runningBalance: running, confirmedBy: e.confirmedBy || txn?.confirmedBy || '', confirmedById: e.confirmedById || txn?.confirmedById || '' };
+            });
         },
 
         // ---- Inventory Filters & Sort ----
@@ -5942,6 +6008,50 @@ ${supplierPurchases.map(p=>`<tr><td><strong>${p.id}</strong></td><td>${this.form
             doc.text('Closing Balance: NGN ' + this.formatMoney(closing), 14, fy);
             this.addPDFFooter(doc);
             doc.save('BankStatement-' + bankName.replace(/\s+/g,'_') + '-' + periodLabel + '.pdf');
+        },
+        downloadCashStatementPDF() {
+            const rows = this.cashStmtRows;
+            const opening = this.cashStmtOpeningBalance;
+            const closing = this.drawerBalance;
+            const periodLabel = this.bankStmtMonth || 'All Time';
+            const { doc, lw } = this.createPDFDoc('CASH DRAWER STATEMENT');
+            let y = 52;
+            doc.setFontSize(9); doc.setFont(undefined, 'bold'); doc.setTextColor(0, 0, 0);
+            doc.text('Cash Drawer — Physical Cash  |  Float: NGN ' + this.formatMoney(this.initialCash) + '  |  Period: ' + periodLabel, 14, y); y += 6;
+            doc.setFont(undefined, 'normal'); doc.setFontSize(8);
+            doc.text('Opening Balance: NGN ' + this.formatMoney(opening) + '    Closing Balance: NGN ' + this.formatMoney(closing), 14, y); y += 6;
+            const totalCredit = rows.filter(r => r.amount > 0).reduce((s, r) => s + r.amount, 0);
+            const totalDebit = rows.filter(r => r.amount < 0).reduce((s, r) => s + Math.abs(r.amount), 0);
+            doc.text('Total Credits: NGN ' + this.formatMoney(totalCredit) + '    Total Debits: NGN ' + this.formatMoney(totalDebit), 14, y); y += 8;
+            // Opening float row
+            const tableBody = [['System Setup', 'CASH-INIT', 'Initial Cash Float', '—', '—', this.formatMoney(this.initialCash), '—', this.formatMoney(this.initialCash)]];
+            rows.forEach(e => {
+                tableBody.push([
+                    this.formatDate(e.date),
+                    e.ref || '—',
+                    e.description || '—',
+                    e.customerName || '—',
+                    (e.confirmedBy || '—') + (e.confirmedById ? ' (' + e.confirmedById + ')' : ''),
+                    e.amount >= 0 ? this.formatMoney(e.amount) : '—',
+                    e.amount < 0 ? this.formatMoney(Math.abs(e.amount)) : '—',
+                    this.formatMoney(e.runningBalance)
+                ]);
+            });
+            doc.autoTable({
+                startY: y,
+                head: [['Date', 'Reference', 'Description', 'Party', 'Confirmed By', 'Credit (NGN)', 'Debit (NGN)', 'Balance (NGN)']],
+                body: tableBody,
+                styles: { fontSize: 7, cellPadding: 1.5 },
+                headStyles: { fillColor: [21, 128, 61] },
+                alternateRowStyles: { fillColor: [240, 253, 244] },
+                theme: 'grid',
+                margin: { left: 14, right: 14 }
+            });
+            const fy = doc.lastAutoTable.finalY + 8;
+            doc.setFontSize(9); doc.setFont(undefined, 'bold');
+            doc.text('Closing Balance: NGN ' + this.formatMoney(closing), 14, fy);
+            this.addPDFFooter(doc);
+            doc.save('CashStatement-' + periodLabel + '.pdf');
         },
         openAddBankModal() {
             this.addBankModal = { show: true, name: '', accountNumber: '', openingBalance: 0, error: '' };
