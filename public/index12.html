@@ -912,120 +912,32 @@ input[type=number].no-spinner {
                         <div class="overflow-x-auto">
                             <table class="w-full text-left">
                                 <thead class="bg-gray-50 text-xs font-bold uppercase text-gray-400">
-                                    <tr>
-                                        <th class="p-3">Reference</th>
-                                        <th class="p-3">Supplier</th>
-                                        <th class="p-3">Items Ordered</th>
-                                        <th class="p-3 text-center">Qty Ordered</th>
-                                        <th class="p-3 text-center">Qty Received</th>
-                                        <th class="p-3 text-center">Qty Balance</th>
-                                        <th class="p-3 text-right">PO Amount</th>
-                                        <th class="p-3 text-right">Amt Paid (Debit)</th>
-                                        <th class="p-3 text-right">Supplier Credit</th>
-                                        <th class="p-3 text-right">Money Balance</th>
-                                        <th class="p-3">Bank From / To</th>
-                                        <th class="p-3">PO Date</th>
-                                        <th class="p-3">Arrival Date</th>
-                                        <th class="p-3">Status</th>
-                                        <th class="p-3 text-center">Actions</th>
-                                    </tr>
+                                    <tr><th class="p-4">Reference</th><th class="p-4">Supplier</th><th class="p-4">Items</th><th class="p-4">Amount</th><th class="p-4">Payment Source</th><th class="p-4">Date</th><th class="p-4">Status</th><th class="p-4 text-center">Actions</th></tr>
                                 </thead>
                                 <tbody class="text-sm divide-y divide-gray-100">
-                                    <tr v-if="filteredPurchases.length === 0"><td colspan="14" class="p-8 text-center text-gray-400 italic">No purchases found</td></tr>
+                                    <tr v-if="filteredPurchases.length === 0"><td colspan="7" class="p-8 text-center text-gray-400 italic">No purchases found</td></tr>
                                     <tr v-for="(p, idx) in filteredPurchases" :key="idx" class="hover:bg-gray-50 transition">
-                                        <td class="p-3 font-bold text-[#714B67] text-xs">{{ p.id }}</td>
-                                        <td class="p-3 font-bold text-gray-700 text-xs">
-                                            {{ p.source || 'N/A' }}
-                                            <button @click.stop="openSupplierTxnModal(allSuppliersWithCustomers.find(s=>s.name===p.source)||{name:p.source,id:''})" class="block text-[10px] text-[#714B67] hover:underline font-bold mt-0.5"><i class="fas fa-history mr-0.5"></i>View Txns</button>
-                                        </td>
-                                        <td class="p-3">
+                                        <td class="p-4 font-bold text-[#714B67]">{{ p.id }}</td>
+                                        <td class="p-4 font-bold text-gray-700">{{ p.source || 'N/A' }}</td>
+                                        <td class="p-4">
                                             <div v-for="item in p.items" :key="item.name" class="text-xs text-gray-600 leading-5">
-                                                {{ item.name }}
+                                                {{ item.name }} <span class="font-bold text-[#714B67]">×{{ item.qty }}</span>
                                             </div>
                                         </td>
-                                        <!-- Qty Ordered -->
-                                        <td class="p-3 text-center">
-                                            <div v-for="item in p.items" :key="item.name" class="text-xs font-bold text-gray-700">{{ item.qty }}</div>
-                                        </td>
-                                        <!-- Qty Received -->
-                                        <td class="p-3 text-center">
-                                            <div v-for="item in p.items" :key="item.name" class="text-xs font-bold text-blue-700">
-                                                {{ (p.receivingHistory||[]).reduce((s,r)=>s+r.receivedQty,0) }}
-                                            </div>
-                                        </td>
-                                        <!-- Qty Balance: +over / -short -->
-                                        <td class="p-3 text-center">
-                                            <div v-for="item in p.items" :key="item.name">
-                                                <span class="text-xs font-black px-2 py-0.5 rounded-full"
-                                                    :class="(p.receivingHistory||[]).reduce((s,r)=>s+r.receivedQty,0) - item.qty > 0 ? 'bg-blue-100 text-blue-700' : (p.receivingHistory||[]).reduce((s,r)=>s+r.receivedQty,0) - item.qty < 0 ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-700'">
-                                                    {{ ((p.receivingHistory||[]).reduce((s,r)=>s+r.receivedQty,0) - item.qty) >= 0 ? '+' : '' }}{{ (p.receivingHistory||[]).reduce((s,r)=>s+r.receivedQty,0) - item.qty }}
-                                                </span>
-                                            </div>
-                                        </td>
-                                        <!-- PO Amount (Debit to us) -->
-                                        <td class="p-3 text-right font-bold text-gray-800 text-xs">₦{{ formatMoney(p.amount) }}</td>
-                                        <!-- Amount Paid (our debit out) -->
-                                        <td class="p-3 text-right">
-                                            <span class="text-xs font-bold text-red-600">- ₦{{ formatMoney(p.totalAmountPaid||0) }}</span>
-                                        </td>
-                                        <!-- Supplier Credit (they owe us) -->
-                                        <td class="p-3 text-right">
-                                            <span v-if="(p.supplierCredit||0)>0" class="text-xs font-bold text-green-600">+ ₦{{ formatMoney(p.supplierCredit) }}</span>
-                                            <span v-else class="text-xs text-gray-300">—</span>
-                                        </td>
-                                        <!-- Money Balance: positive = we owe, negative = they owe us -->
-                                        <td class="p-3 text-right">
-                                            <div v-if="(p.outstandingBalance||0) > 0">
-                                                <span class="text-xs font-black text-red-600">We owe</span><br>
-                                                <span class="text-xs font-bold text-red-600">₦{{ formatMoney(p.outstandingBalance) }}</span>
-                                            </div>
-                                            <div v-else-if="(p.supplierCredit||0) > 0">
-                                                <span class="text-xs font-black text-green-600">Owed us</span><br>
-                                                <span class="text-xs font-bold text-green-600">₦{{ formatMoney(p.supplierCredit) }}</span>
-                                            </div>
-                                            <div v-else>
-                                                <span class="text-xs text-gray-400 font-bold">Settled</span>
-                                            </div>
-                                        </td>
-                                        <!-- Bank From / To — show ALL payment records -->
-                                        <td class="p-3">
-                                            <div class="text-xs space-y-0.5">
-                                                <!-- From paymentRecords (multiple payments) -->
-                                                <template v-if="(p.paymentRecords||[]).length > 0">
-                                                    <div v-for="(pr, pri) in p.paymentRecords" :key="pri" class="border-b border-gray-100 pb-0.5 last:border-0">
-                                                        <span class="text-[9px] text-gray-400 font-bold uppercase">Pmt {{ pri+1 }} · {{ formatDate(pr.date) }}{{ pr.time ? ' '+pr.time : '' }}</span>
-                                                        <div v-for="(br,bi) in (pr.bankRows||[])" :key="bi" class="leading-4 ml-1">
-                                                            <span class="text-blue-600 font-bold">{{ br.bankName }}</span>
-                                                            <span class="text-gray-400 mx-0.5">→</span>
-                                                            <span class="text-purple-700 font-bold">{{ br.bankTo || '?' }}</span>
-                                                            <span class="text-gray-500 ml-1">₦{{ formatMoney(br.amount) }}</span>
-                                                        </div>
-                                                        <div v-if="(pr.cashAmount||0)>0" class="text-green-700 ml-1"><i class="fas fa-money-bill text-[9px] mr-0.5"></i>Cash ₦{{ formatMoney(pr.cashAmount) }}</div>
-                                                        <div v-if="(pr.balanceAmount||0)>0" class="text-purple-600 ml-1"><i class="fas fa-wallet text-[9px] mr-0.5"></i>Balance ₦{{ formatMoney(pr.balanceAmount) }}</div>
-                                                    </div>
-                                                </template>
+                                        <td class="p-4 font-bold text-gray-800">₦{{ formatMoney(p.amount) }}</td>
+                                        <td class="p-4">
+                                            <div class="text-xs">
+                                                <span v-if="p.paymentMode === 'bank'" class="text-blue-700 font-bold"><i class="fas fa-university mr-1"></i>{{ p.bankName }}</span>
+                                                <span v-else-if="p.paymentMode === 'cash'" class="text-green-700 font-bold"><i class="fas fa-money-bill mr-1"></i>Cash Drawer</span>
+                                                <span v-else-if="p.paymentMode === 'mixed'" class="text-purple-700 font-bold"><i class="fas fa-layer-group mr-1"></i>Mixed</span>
+                                                <span v-else-if="p.paymentMode === 'balance'" class="text-purple-600 font-bold"><i class="fas fa-wallet mr-1"></i>Balance</span>
                                                 <span v-else class="text-orange-500 font-bold"><i class="fas fa-clock mr-1"></i>On Credit</span>
                                             </div>
+                                            <div v-if="p.outstandingBalance > 0" class="text-[10px] text-red-500 font-bold mt-1">Owes: ₦{{ formatMoney(p.outstandingBalance) }}</div>
+                                            <div v-if="p.supplierCredit > 0" class="text-[10px] text-green-600 font-bold mt-1">Credit: ₦{{ formatMoney(p.supplierCredit) }}</div>
                                         </td>
-                                        <td class="p-3 text-gray-500 text-xs">{{ formatDate(p.date) }}</td>
-                                        <!-- Arrival Date -->
-                                        <td class="p-3 text-xs">
-                                            <span v-if="p.lastArrivalDate" class="text-green-700 font-bold">{{ formatDate(p.lastArrivalDate) }}</span>
-                                            <span v-else-if="p.arrivalDate" class="text-green-700 font-bold">{{ formatDate(p.arrivalDate) }}</span>
-                                            <span v-else-if="(p.receivingHistory||[]).length > 0" class="text-green-700 font-bold">{{ formatDate(p.receivingHistory[p.receivingHistory.length-1].date) }}</span>
-                                            <span v-else class="text-gray-300">Pending</span>
-                                        </td>
-                                        <td class="p-3">
-                                            <!-- Receipt/Goods Status -->
-                                            <span :class="p.status==='arrived'?'bg-green-100 text-green-700':p.status==='partial'?'bg-blue-100 text-blue-700':p.status==='over'?'bg-purple-100 text-purple-700':'bg-yellow-100 text-yellow-700'" class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wide">{{ p.status }}</span>
-                                            <!-- Payment Status (auto-computed from records) -->
-                                            <span :class="(p.paymentStatus||'unpaid')==='paid'?'bg-green-600 text-white':(p.paymentStatus||'unpaid')==='partial'?'bg-blue-600 text-white':'bg-red-100 text-red-600'" class="ml-1 px-2 py-0.5 rounded-full text-[10px] font-black uppercase">{{ p.paymentStatus || 'unpaid' }}</span>
-                                            <!-- Received By -->
-                                            <div v-if="(p.receivingHistory||[]).length > 0" class="text-[10px] text-gray-400 mt-1">
-                                                <i class="fas fa-user-check mr-0.5"></i><span class="font-bold text-gray-600">{{ p.receivingHistory[p.receivingHistory.length-1].receivedBy || '—' }}</span>
-                                                <span v-if="p.receivingHistory[p.receivingHistory.length-1].receivedById" class="font-mono text-gray-400"> ({{ p.receivingHistory[p.receivingHistory.length-1].receivedById }})</span>
-                                            </div>
-                                        </td>
+                                        <td class="p-4 text-gray-500 text-xs">{{ formatDate(p.date) }}</td>
+                                        <td class="p-4"><span :class="p.status === 'arrived' ? 'bg-green-100 text-green-700' : p.status === 'partial' ? 'bg-blue-100 text-blue-700' : 'bg-yellow-100 text-yellow-700'" class="px-2 py-1 rounded-full text-[10px] font-black uppercase tracking-wide">{{ p.status }}</span></td>
                                         <td class="p-4 text-center">
                                             <div class="flex items-center justify-center gap-2">
                                                 <div v-if="p.status === 'pending'" class="relative inline-block" @click.stop>
@@ -1165,8 +1077,7 @@ input[type=number].no-spinner {
                                             <p class="text-[10px] text-gray-400">₦{{ formatMoney(purchases.filter(p=>p.source===s.name).reduce((sum,p)=>sum+p.amount,0)) }}</p>
                                         </td>
                                         <td class="p-4 text-center">
-                                            <div class="flex items-center justify-center gap-2 flex-wrap">
-                                                <button @click="openSupplierTxnModal(s)" class="p-1.5 text-[10px] font-bold bg-[#714B67] text-white rounded hover:bg-purple-800 transition flex items-center gap-1" title="View All Transactions"><i class="fas fa-history"></i> Txns</button>
+                                            <div class="flex items-center justify-center gap-2">
                                                 <button v-if="s._source!=='customer'" @click="openSupplierModal(s)" class="p-2 text-[#714B67] hover:bg-purple-50 rounded transition" title="Edit"><i class="fas fa-edit"></i></button>
                                                 <button v-if="s._source!=='customer'" @click="deleteSupplier(s)" class="p-2 text-red-400 hover:bg-red-50 rounded transition" title="Delete"><i class="fas fa-trash-alt"></i></button>
                                                 <span v-if="s._source==='customer'" class="text-[10px] text-teal-600 font-bold flex items-center gap-1"><i class="fas fa-user-check"></i> Manage in Customers</span>
@@ -1540,7 +1451,6 @@ input[type=number].no-spinner {
                                         <td class="p-4 text-center">
                                             <div class="flex justify-center gap-1 flex-wrap">
                                                 <button @click="viewCustomerHistory(c)" class="text-xs bg-[#714B67] hover:bg-[#5a3a52] text-white px-2 py-1 rounded font-bold transition" title="View Account History"><i class="fas fa-eye mr-1"></i>View</button>
-                                                <button @click="openCustomerTxnModal(c)" class="text-xs bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded font-bold transition" title="View All Transactions"><i class="fas fa-history mr-1"></i>Txns</button>
                                                 <button @click="openPayForCustomer(c)" class="text-xs bg-[#00A09D] hover:bg-teal-700 text-white px-2 py-1 rounded font-bold transition" title="Record Payment for Customer"><i class="fas fa-credit-card mr-1"></i>Pay</button>
                                                 <button @click="deleteCustomer(c.customerId)" class="text-xs bg-red-50 hover:bg-red-100 text-red-500 px-2 py-1 rounded font-bold transition" title="Delete Customer"><i class="fas fa-trash-alt"></i></button>
                                             </div>
@@ -2733,120 +2643,68 @@ input[type=number].no-spinner {
 
     <!-- STAFF PAYMENT RECORDING MODAL -->
     <div v-if="staffPayModal.show" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
-        <div class="bg-white w-full max-w-lg rounded-xl shadow-2xl overflow-hidden animate-fade-in-up max-h-[92vh] flex flex-col">
-            <div class="p-5 bg-[#714B67] text-white flex justify-between items-center flex-shrink-0">
-                <div>
-                    <h3 class="font-bold text-sm flex items-center gap-2"><i class="fas fa-check-circle"></i> Record Payment</h3>
-                    <p class="text-white/70 text-xs mt-0.5">{{ staffPayModal.order?.id }} — {{ staffPayModal.order?.customerName }}</p>
-                </div>
+        <div class="bg-white w-full max-w-md rounded-xl shadow-2xl overflow-hidden animate-fade-in-up">
+            <div class="p-5 bg-[#714B67] text-white flex justify-between items-center">
+                <h3 class="font-bold text-sm flex items-center gap-2"><i class="fas fa-check-circle"></i> Record Payment</h3>
                 <button @click="staffPayModal.show = false" class="text-white/70 hover:text-white"><i class="fas fa-times"></i></button>
             </div>
-            <div class="p-5 space-y-4 overflow-y-auto flex-1">
-                <!-- Order Summary -->
+            <div class="p-6 space-y-4">
                 <div class="bg-gray-50 rounded-lg p-4 border border-gray-100">
+                    <p class="text-xs text-gray-500 uppercase font-bold mb-2">{{ staffPayModal.order?.id }} — {{ staffPayModal.order?.customerName }}</p>
                     <div class="flex justify-between items-center">
-                        <span class="text-xs text-gray-500 uppercase font-bold">Order Total</span>
+                        <span class="text-sm text-gray-600">Order Total</span>
                         <span class="font-black text-gray-800">₦{{ formatMoney(staffPayModal.order?.total||0) }}</span>
                     </div>
                     <div class="flex justify-between items-center mt-1">
-                        <span class="text-xs text-gray-500 uppercase font-bold">Already Paid</span>
+                        <span class="text-sm text-gray-600">Already Paid</span>
                         <span class="font-bold text-green-600">₦{{ formatMoney(staffPayModal.order?.amountPaid||0) }}</span>
                     </div>
                     <div class="flex justify-between items-center mt-1 pt-2 border-t border-gray-200">
-                        <span class="text-xs font-bold text-gray-700">Outstanding Balance</span>
+                        <span class="text-sm font-bold text-gray-700">Outstanding</span>
                         <span class="font-black text-red-600">₦{{ formatMoney(Math.max(0,(staffPayModal.order?.total||0)-(staffPayModal.order?.amountPaid||0))) }}</span>
                     </div>
                 </div>
-
                 <!-- Payment Mode -->
-                <div>
-                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-2">Payment Mode</label>
-                    <div class="grid grid-cols-4 gap-2">
-                        <button @click="staffPayModal.mode='bank'; staffPayModal.cashAmount=0; staffPayModal.balanceAmount=0; staffPayModal.useBalance=false; staffPayModal.bankAmount=Math.max(0,(staffPayModal.order?.total||0)-(staffPayModal.order?.amountPaid||0))"
-                            :class="staffPayModal.mode==='bank'?'bg-[#714B67] text-white border-[#714B67]':'bg-white text-gray-600 border-gray-300'"
-                            class="p-2 border rounded-lg text-xs font-bold transition text-center"><i class="fas fa-university block text-base mb-1"></i>Bank</button>
-                        <button @click="staffPayModal.mode='cash'; staffPayModal.bankAmount=0; staffPayModal.balanceAmount=0; staffPayModal.useBalance=false; staffPayModal.cashAmount=Math.max(0,(staffPayModal.order?.total||0)-(staffPayModal.order?.amountPaid||0))"
-                            :class="staffPayModal.mode==='cash'?'bg-[#714B67] text-white border-[#714B67]':'bg-white text-gray-600 border-gray-300'"
-                            class="p-2 border rounded-lg text-xs font-bold transition text-center"><i class="fas fa-money-bill block text-base mb-1"></i>Cash</button>
-                        <button @click="staffPayModal.mode='mixed'"
-                            :class="staffPayModal.mode==='mixed'?'bg-[#714B67] text-white border-[#714B67]':'bg-white text-gray-600 border-gray-300'"
-                            class="p-2 border rounded-lg text-xs font-bold transition text-center"><i class="fas fa-layer-group block text-base mb-1"></i>Mixed</button>
-                        <button @click="staffPayModal.mode='balance'; staffPayModal.bankAmount=0; staffPayModal.cashAmount=0; staffPayModal.useBalance=true; staffPayModal.balanceAmount=Math.max(0,(staffPayModal.order?.total||0)-(staffPayModal.order?.amountPaid||0))"
-                            :class="staffPayModal.mode==='balance'?'bg-purple-700 text-white border-purple-700':'bg-white text-purple-700 border-purple-300'"
-                            class="p-2 border rounded-lg text-xs font-bold transition text-center"><i class="fas fa-wallet block text-base mb-1"></i>Balance</button>
+                <div><label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Payment Mode</label>
+                    <div class="grid grid-cols-3 gap-2">
+                        <button @click="staffPayModal.mode='bank'; staffPayModal.cashAmount=0; staffPayModal.bankAmount=Math.max(0,(staffPayModal.order?.total||0)-(staffPayModal.order?.amountPaid||0))" :class="staffPayModal.mode==='bank'?'bg-[#714B67] text-white border-[#714B67]':'bg-white text-gray-600 border-gray-300'" class="p-2 border rounded-lg text-xs font-bold transition text-center"><i class="fas fa-university block text-lg mb-1"></i>Bank</button>
+                        <button @click="staffPayModal.mode='cash'; staffPayModal.bankAmount=0; staffPayModal.cashAmount=Math.max(0,(staffPayModal.order?.total||0)-(staffPayModal.order?.amountPaid||0))" :class="staffPayModal.mode==='cash'?'bg-[#714B67] text-white border-[#714B67]':'bg-white text-gray-600 border-gray-300'" class="p-2 border rounded-lg text-xs font-bold transition text-center"><i class="fas fa-money-bill block text-lg mb-1"></i>Cash</button>
+                        <button @click="staffPayModal.mode='mixed'" :class="staffPayModal.mode==='mixed'?'bg-[#714B67] text-white border-[#714B67]':'bg-white text-gray-600 border-gray-300'" class="p-2 border rounded-lg text-xs font-bold transition text-center"><i class="fas fa-layer-group block text-lg mb-1"></i>Mixed</button>
                     </div>
                 </div>
-
-                <!-- Bank Details -->
+                <!-- Bank Selection + Details -->
                 <div v-if="staffPayModal.mode==='bank'||staffPayModal.mode==='mixed'" class="space-y-3">
                     <div>
-                        <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Our Bank Receiving Payment *</label>
-                        <select v-model="staffPayModal.selectedBank" @change="staffPayModal.accountNumber=banks.find(b=>b.name===staffPayModal.selectedBank)?.accountNumber||''" class="w-full border border-gray-300 p-2.5 rounded-lg bg-gray-50 focus:ring-2 focus:ring-[#714B67] outline-none text-sm">
-                            <option value="" disabled>-- Select bank --</option>
+                        <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">LDI Bank Receiving Payment *</label>
+                        <select v-model="staffPayModal.selectedBank" @change="staffPayModal.bankTo=staffPayModal.selectedBank; staffPayModal.accountNumber=banks.find(b=>b.name===staffPayModal.selectedBank)?.accountNumber||''" class="w-full border border-gray-300 p-2.5 rounded-lg bg-gray-50 focus:ring-2 focus:ring-[#714B67] outline-none text-sm">
+                            <option value="" disabled>-- Select LDI bank --</option>
                             <option v-for="b in banks" :key="b.name" :value="b.name">{{ b.name }} — A/C: {{ b.accountNumber }}</option>
                         </select>
+                        <div v-if="staffPayModal.selectedBank" class="mt-1.5 p-2.5 bg-purple-50 border border-purple-200 rounded-lg text-xs text-purple-800">
+                            <span class="font-bold">{{ staffPayModal.selectedBank }}</span>
+                            <span class="ml-2 font-mono">{{ banks.find(b=>b.name===staffPayModal.selectedBank)?.accountNumber }}</span>
+                            <span class="ml-2 text-purple-500">Ladu Investment Ltd</span>
+                        </div>
                     </div>
                     <div class="grid grid-cols-2 gap-2">
-                        <div>
-                            <label class="block text-[9px] font-bold text-gray-400 uppercase mb-1">Customer's Bank (Sent From)</label>
-                            <input v-model="staffPayModal.bankFrom" type="text" class="w-full border border-gray-300 p-2 rounded-lg bg-white focus:ring-2 focus:ring-[#714B67] outline-none text-xs" placeholder="e.g. Zenith Bank">
-                        </div>
-                        <div>
-                            <label class="block text-[9px] font-bold text-gray-400 uppercase mb-1">Customer's Account Name</label>
-                            <input v-model="staffPayModal.accountName" type="text" class="w-full border border-gray-300 p-2 rounded-lg bg-white focus:ring-2 focus:ring-[#714B67] outline-none text-xs" placeholder="Sender account name">
-                        </div>
+                        <div><label class="block text-[9px] font-bold text-gray-400 uppercase mb-1">Customer's Bank (Sending From)</label><input v-model="staffPayModal.bankFrom" type="text" class="w-full border border-gray-300 p-2 rounded-lg bg-white focus:ring-2 focus:ring-[#714B67] outline-none text-xs" placeholder="e.g. Zenith Bank"></div>
+                        <div><label class="block text-[9px] font-bold text-gray-400 uppercase mb-1">Customer's Account Name</label><input v-model="staffPayModal.accountName" type="text" class="w-full border border-gray-300 p-2 rounded-lg bg-white focus:ring-2 focus:ring-[#714B67] outline-none text-xs" placeholder="Sender account name"></div>
                     </div>
                 </div>
-
-                <!-- Amount fields -->
-                <div class="grid gap-2" :class="staffPayModal.mode==='mixed'?'grid-cols-2':''">
-                    <div v-if="staffPayModal.mode!=='cash' && staffPayModal.mode!=='balance' && staffPayModal.mode!=='mixed' || staffPayModal.mode==='bank' || staffPayModal.mode==='mixed'">
+                <!-- Amount Fields -->
+                <div class="grid" :class="staffPayModal.mode==='mixed'?'grid-cols-2 gap-2':'grid-cols-1'">
+                    <div v-if="staffPayModal.mode!=='cash'">
                         <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Bank Amount (₦)</label>
-                        <input v-model.number="staffPayModal.bankAmount" type="number" min="0" class="w-full border border-gray-300 p-3 rounded-lg bg-gray-50 focus:ring-2 focus:ring-[#714B67] outline-none text-sm no-spinner">
+                        <input v-model.number="staffPayModal.bankAmount" type="number" min="0" class="w-full border border-gray-300 p-3 rounded-lg bg-gray-50 focus:ring-2 focus:ring-[#714B67] outline-none text-sm">
                     </div>
-                    <div v-if="staffPayModal.mode==='cash' || staffPayModal.mode==='mixed'">
+                    <div v-if="staffPayModal.mode!=='bank'">
                         <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Cash Amount (₦)</label>
-                        <input v-model.number="staffPayModal.cashAmount" type="number" min="0" class="w-full border border-gray-300 p-3 rounded-lg bg-gray-50 focus:ring-2 focus:ring-[#714B67] outline-none text-sm no-spinner">
+                        <input v-model.number="staffPayModal.cashAmount" type="number" min="0" class="w-full border border-gray-300 p-3 rounded-lg bg-gray-50 focus:ring-2 focus:ring-[#714B67] outline-none text-sm">
                     </div>
                 </div>
-
-                <!-- Balance (Account Credit) payment -->
-                <div v-if="staffPayModal.mode==='balance' || staffPayModal.useBalance" class="bg-purple-50 border border-purple-200 rounded-lg p-3 space-y-2">
-                    <div class="flex items-center justify-between">
-                        <span class="text-[10px] font-bold text-purple-700 uppercase"><i class="fas fa-wallet mr-1"></i>Pay from Customer's Credit Balance</span>
-                    </div>
-                    <div class="p-2 bg-purple-100 rounded text-[10px] text-purple-800 font-bold">
-                        <i class="fas fa-info-circle mr-1"></i>
-                        Customer's available credit: ₦{{ formatMoney(customers.find(c=>c.customerId===staffPayModal.order?.customerId)?.creditBalance||0) }}
-                        <span class="block text-purple-500 font-normal mt-0.5">Credit is applied when customer overpaid on previous orders</span>
-                    </div>
-                    <div>
-                        <label class="block text-[9px] font-bold text-purple-600 uppercase mb-1">Balance Amount to Apply (₦)</label>
-                        <input v-model.number="staffPayModal.balanceAmount" type="number" min="0" class="w-full border border-purple-200 p-2 rounded-lg bg-white text-xs focus:ring-2 focus:ring-purple-400 outline-none no-spinner">
-                    </div>
-                </div>
-
-                <!-- Total preview -->
-                <div class="bg-gray-100 rounded-lg p-3 text-xs">
-                    <div class="flex justify-between font-bold text-gray-700">
-                        <span>Total Recording:</span>
-                        <span class="text-[#714B67] text-sm">₦{{ formatMoney((staffPayModal.bankAmount||0)+(staffPayModal.cashAmount||0)+(staffPayModal.balanceAmount||0)) }}</span>
-                    </div>
-                    <div class="flex justify-between text-gray-500 mt-1">
-                        <span>Balance After:</span>
-                        <span :class="Math.max(0,(staffPayModal.order?.total||0)-(staffPayModal.order?.amountPaid||0)-(staffPayModal.bankAmount||0)-(staffPayModal.cashAmount||0)-(staffPayModal.balanceAmount||0)) > 0 ? 'text-red-600 font-bold' : 'text-green-600 font-bold'">
-                            ₦{{ formatMoney(Math.max(0,(staffPayModal.order?.total||0)-(staffPayModal.order?.amountPaid||0)-(staffPayModal.bankAmount||0)-(staffPayModal.cashAmount||0)-(staffPayModal.balanceAmount||0))) }}
-                        </span>
-                    </div>
-                </div>
-
-                <div>
-                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Reference / Teller No.</label>
-                    <input v-model="staffPayModal.reference" type="text" class="w-full border border-gray-300 p-3 rounded-lg bg-gray-50 focus:ring-2 focus:ring-[#714B67] outline-none text-sm" :placeholder="staffPayModal.order?.id+'-PAY'">
-                </div>
-
+                <div><label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Reference</label><input v-model="staffPayModal.reference" type="text" class="w-full border border-gray-300 p-3 rounded-lg bg-gray-50 focus:ring-2 focus:ring-[#714B67] outline-none text-sm"></div>
                 <button @click="submitStaffPayment()" class="w-full py-3 bg-[#714B67] hover:bg-[#5a3a52] text-white rounded-lg font-bold transition shadow-lg">
-                    <i class="fas fa-check mr-2"></i> Record ₦{{ formatMoney((staffPayModal.bankAmount||0)+(staffPayModal.cashAmount||0)+(staffPayModal.balanceAmount||0)) }} Payment
+                    <i class="fas fa-check mr-2"></i> Record ₦{{ formatMoney((staffPayModal.bankAmount||0)+(staffPayModal.cashAmount||0)) }} Payment
                 </button>
             </div>
         </div>
@@ -2926,11 +2784,6 @@ input[type=number].no-spinner {
                 <div class="p-3 bg-purple-50 border border-purple-200 rounded-lg text-xs text-purple-800 flex items-center gap-2">
                     <i class="fas fa-user-check"></i>
                     <span>Receiving Staff: <strong>{{ session?.fullname }}</strong> <span class="font-mono">({{ session?.username }})</span></span>
-                </div>
-                <!-- Arrival date -->
-                <div>
-                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Date of Arrival *</label>
-                    <input v-model="purchaseReceivingModal.arrivalDate" type="date" class="w-full border border-gray-300 p-2.5 rounded-lg bg-gray-50 focus:ring-2 focus:ring-[#714B67] outline-none text-sm">
                 </div>
                 <div class="bg-gray-50 rounded-lg p-4 border border-gray-100">
                     <p class="text-xs text-gray-500 uppercase font-bold mb-2">Order Summary</p>
@@ -3194,169 +3047,118 @@ input[type=number].no-spinner {
 
     <!-- DEBT CARD MODAL -->
     <div v-if="debtCardModal.show" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[70] flex items-center justify-center p-4" @click.self="debtCardModal.show=false">
-        <div class="bg-white w-full max-w-5xl rounded-xl shadow-2xl overflow-hidden animate-fade-in-up flex flex-col max-h-[92vh]">
-            <div class="p-5 bg-[#714B67] text-white flex justify-between items-center flex-shrink-0">
+        <div class="bg-white w-full max-w-2xl rounded-xl shadow-2xl overflow-hidden animate-fade-in-up">
+            <div class="p-5 bg-[#714B67] text-white flex justify-between items-center">
                 <div>
-                    <h3 class="font-bold text-sm flex items-center gap-2"><i class="fas fa-handshake"></i> {{ debtCardModal.selectedSupplier ? debtCardModal.selectedSupplier + ' — Full Ledger' : 'Debt Management Summary' }}</h3>
-                    <p class="text-white/70 text-xs mt-0.5">Every purchase order and every individual payment transaction</p>
+                    <h3 class="font-bold text-sm flex items-center gap-2"><i class="fas fa-handshake"></i> {{ debtCardModal.selectedSupplier ? debtCardModal.selectedSupplier + ' — Debt & Balance' : 'Debt Management Summary' }}</h3>
+                    <p class="text-white/70 text-xs mt-0.5">{{ debtCardModal.selectedSupplier ? 'Debt & credit history with this supplier' : 'Supplier & Customer Financial Balances' }}</p>
                 </div>
                 <button @click="debtCardModal.show=false" class="text-white/70 hover:text-white"><i class="fas fa-times"></i></button>
             </div>
-            <div class="overflow-y-auto flex-1 p-5 space-y-5">
+            <div class="p-6 space-y-6 max-h-[80vh] overflow-y-auto">
                 <!-- Specific Supplier View -->
-                <div v-if="debtCardModal.selectedSupplier" class="space-y-5">
-                    <!-- Summary cards -->
-                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                        <div class="bg-gray-50 border rounded-lg p-3 text-center">
-                            <p class="text-[10px] font-bold text-gray-500 uppercase mb-1">Total PO Value</p>
-                            <p class="font-black text-lg text-gray-800">₦{{ formatMoney(purchases.filter(px=>px.source===debtCardModal.selectedSupplier).reduce((s,px)=>s+px.amount,0)) }}</p>
+                <div v-if="debtCardModal.selectedSupplier" class="space-y-4">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="bg-red-50 rounded-lg p-4 border border-red-200">
+                            <p class="text-xs text-red-600 uppercase font-bold mb-1"><i class="fas fa-arrow-up mr-1"></i>We Owe This Supplier</p>
+                            <p class="font-black text-2xl text-red-700">₦{{ formatMoney((supplierDebt.suppliers.find(s=>s.name===debtCardModal.selectedSupplier)||{totalOwed:0}).totalOwed) }}</p>
                         </div>
-                        <div class="bg-green-50 border border-green-100 rounded-lg p-3 text-center">
-                            <p class="text-[10px] font-bold text-green-600 uppercase mb-1">Total Paid</p>
-                            <p class="font-black text-lg text-green-700">₦{{ formatMoney(purchases.filter(px=>px.source===debtCardModal.selectedSupplier).reduce((s,px)=>s+(px.totalAmountPaid||0),0)) }}</p>
-                        </div>
-                        <div class="bg-red-50 border border-red-100 rounded-lg p-3 text-center">
-                            <p class="text-[10px] font-bold text-red-500 uppercase mb-1">We Owe Supplier</p>
-                            <p class="font-black text-lg text-red-600">₦{{ formatMoney(purchases.filter(px=>px.source===debtCardModal.selectedSupplier).reduce((s,px)=>s+(px.outstandingBalance||0),0)) }}</p>
-                        </div>
-                        <div class="bg-blue-50 border border-blue-100 rounded-lg p-3 text-center">
-                            <p class="text-[10px] font-bold text-blue-500 uppercase mb-1">Supplier Owes Us</p>
-                            <p class="font-black text-lg text-blue-700">₦{{ formatMoney(purchases.filter(px=>px.source===debtCardModal.selectedSupplier).reduce((s,px)=>s+(px.supplierCredit||0),0)) }}</p>
+                        <div class="bg-green-50 rounded-lg p-4 border border-green-200">
+                            <p class="text-xs text-green-600 uppercase font-bold mb-1"><i class="fas fa-arrow-down mr-1"></i>Supplier Owes Us (Credit)</p>
+                            <p class="font-black text-2xl text-green-700">₦{{ formatMoney((supplierDebt.suppliers.find(s=>s.name===debtCardModal.selectedSupplier)||{creditHeld:0}).creditHeld) }}</p>
                         </div>
                     </div>
-
-                    <!-- FULL TRANSACTION LEDGER — one row per payment event -->
                     <div>
-                        <h4 class="font-bold text-gray-700 mb-2 flex items-center gap-2 text-sm"><i class="fas fa-list-alt text-[#714B67]"></i> All Transactions — Every Order & Every Payment</h4>
+                        <h4 class="font-bold text-gray-700 mb-2 flex items-center gap-2"><i class="fas fa-file-invoice text-amber-600"></i> Purchase Orders with {{ debtCardModal.selectedSupplier }}</h4>
                         <div class="overflow-x-auto rounded-lg border border-gray-200">
-                            <table class="w-full text-left" style="min-width:1000px">
-                                <thead class="bg-gray-100 text-[10px] font-bold uppercase text-gray-500 sticky top-0">
-                                    <tr>
-                                        <th class="p-2">Date</th>
-                                        <th class="p-2">Type</th>
-                                        <th class="p-2">PO #</th>
-                                        <th class="p-2">Items</th>
-                                        <th class="p-2 text-center">Qty Ordered</th>
-                                        <th class="p-2 text-center">Qty Received</th>
-                                        <th class="p-2 text-center">Qty Balance</th>
-                                        <th class="p-2 text-right">PO Amount</th>
-                                        <th class="p-2 text-right">This Payment</th>
-                                        <th class="p-2 text-right">Total Paid</th>
-                                        <th class="p-2 text-right">Outstanding</th>
-                                        <th class="p-2 text-right">Supplier Credit</th>
-                                        <th class="p-2">Bank From → To</th>
-                                        <th class="p-2">Goods Status</th>
-                                        <th class="p-2">Pay Status</th>
-                                    </tr>
+                            <table class="w-full text-left">
+                                <thead class="bg-gray-100 text-xs font-bold uppercase text-gray-500">
+                                    <tr><th class="p-3">PO#</th><th class="p-3">Date</th><th class="p-3">Items</th><th class="p-3 text-right">Amount</th><th class="p-3 text-right">Paid</th><th class="p-3 text-right">Outstanding</th><th class="p-3 text-right">Credit</th><th class="p-3">Status</th></tr>
                                 </thead>
-                                <tbody class="divide-y divide-gray-100 text-xs">
-                                    <!-- PO creation row (no payment) -->
-                                    <template v-for="po in purchases.filter(px=>px.source===debtCardModal.selectedSupplier).slice().sort((a,b)=>String(b.date).localeCompare(String(a.date)))" :key="po.id">
-                                        <!-- If no payment records, show the PO row itself -->
-                                        <tr v-if="!(po.paymentRecords||[]).length" class="bg-yellow-50/40 hover:bg-yellow-50">
-                                            <td class="p-2 text-gray-500 whitespace-nowrap">{{ formatDate(po.date) }}</td>
-                                            <td class="p-2"><span class="bg-yellow-100 text-yellow-700 text-[9px] font-black px-1.5 py-0.5 rounded-full uppercase">PO (Unpaid)</span></td>
-                                            <td class="p-2 font-mono font-bold text-[#714B67]">{{ po.id }}</td>
-                                            <td class="p-2 text-gray-600">{{ po.items.map(i=>i.name+' ×'+i.qty).join(', ') }}</td>
-                                            <td class="p-2 text-center font-bold text-gray-700">{{ po.items.reduce((s,i)=>s+i.qty,0) }}</td>
-                                            <td class="p-2 text-center font-bold text-blue-700">{{ (po.receivingHistory||[]).reduce((s,r)=>s+r.receivedQty,0) }}</td>
-                                            <td class="p-2 text-center font-black" :class="(po.receivingHistory||[]).reduce((s,r)=>s+r.receivedQty,0) < po.items.reduce((s,i)=>s+i.qty,0) ? 'text-red-500' : 'text-green-600'">
-                                                {{ (po.receivingHistory||[]).reduce((s,r)=>s+r.receivedQty,0) - po.items.reduce((s,i)=>s+i.qty,0) >= 0 ? '+' : '' }}{{ (po.receivingHistory||[]).reduce((s,r)=>s+r.receivedQty,0) - po.items.reduce((s,i)=>s+i.qty,0) }}
-                                            </td>
-                                            <td class="p-2 text-right font-bold text-gray-800">₦{{ formatMoney(po.amount) }}</td>
-                                            <td class="p-2 text-right text-gray-300">—</td>
-                                            <td class="p-2 text-right text-gray-300">₦0</td>
-                                            <td class="p-2 text-right font-bold text-red-600">₦{{ formatMoney(po.outstandingBalance||po.amount) }}</td>
-                                            <td class="p-2 text-right text-gray-300">—</td>
-                                            <td class="p-2 text-gray-400">—</td>
-                                            <td class="p-2"><span :class="po.status==='arrived'?'bg-green-100 text-green-700':po.status==='partial'?'bg-blue-100 text-blue-700':'bg-yellow-100 text-yellow-700'" class="text-[9px] font-black px-1.5 py-0.5 rounded-full uppercase">{{ po.status }}</span></td>
-                                            <td class="p-2"><span class="bg-red-100 text-red-700 text-[9px] font-black px-1.5 py-0.5 rounded-full uppercase">{{ po.paymentStatus || 'unpaid' }}</span></td>
-                                        </tr>
-                                        <!-- One row per payment record -->
-                                        <tr v-for="(pr, pri) in (po.paymentRecords||[])" :key="po.id+'-pmt-'+pri" class="hover:bg-blue-50/30 bg-blue-50/10">
-                                            <td class="p-2 text-gray-500 whitespace-nowrap">{{ formatDate(pr.date) }}<span v-if="pr.time" class="block text-[9px] text-gray-400">{{ pr.time }}</span></td>
-                                            <td class="p-2"><span class="bg-blue-100 text-blue-700 text-[9px] font-black px-1.5 py-0.5 rounded-full uppercase">Payment {{ pri+1 }}</span></td>
-                                            <td class="p-2 font-mono font-bold text-[#714B67]">{{ po.id }}</td>
-                                            <td class="p-2 text-gray-600">{{ po.items.map(i=>i.name+' ×'+i.qty).join(', ') }}</td>
-                                            <td class="p-2 text-center font-bold text-gray-700">{{ po.items.reduce((s,i)=>s+i.qty,0) }}</td>
-                                            <td class="p-2 text-center font-bold text-blue-700">{{ (po.receivingHistory||[]).reduce((s,r)=>s+r.receivedQty,0) }}</td>
-                                            <td class="p-2 text-center font-black" :class="(po.receivingHistory||[]).reduce((s,r)=>s+r.receivedQty,0) < po.items.reduce((s,i)=>s+i.qty,0) ? 'text-red-500' : 'text-green-600'">
-                                                {{ (po.receivingHistory||[]).reduce((s,r)=>s+r.receivedQty,0) - po.items.reduce((s,i)=>s+i.qty,0) >= 0 ? '+' : '' }}{{ (po.receivingHistory||[]).reduce((s,r)=>s+r.receivedQty,0) - po.items.reduce((s,i)=>s+i.qty,0) }}
-                                            </td>
-                                            <td class="p-2 text-right font-bold text-gray-800">₦{{ formatMoney(po.amount) }}</td>
-                                            <!-- This payment amount -->
-                                            <td class="p-2 text-right font-black text-[#714B67]">−₦{{ formatMoney(pr.amount) }}</td>
-                                            <!-- Running total paid up to this payment -->
-                                            <td class="p-2 text-right font-bold text-green-700">₦{{ formatMoney(po.paymentRecords.slice(0,pri+1).reduce((s,r)=>s+(r.amount||0),0)) }}</td>
-                                            <!-- Outstanding after this payment -->
-                                            <td class="p-2 text-right font-black" :class="Math.max(0, po.amount - po.paymentRecords.slice(0,pri+1).reduce((s,r)=>s+(r.amount||0),0)) > 0 ? 'text-red-600' : 'text-gray-400'">
-                                                {{ Math.max(0, po.amount - po.paymentRecords.slice(0,pri+1).reduce((s,r)=>s+(r.amount||0),0)) > 0 ? '₦'+formatMoney(Math.max(0, po.amount - po.paymentRecords.slice(0,pri+1).reduce((s,r)=>s+(r.amount||0),0))) : 'Settled ✓' }}
-                                            </td>
-                                            <!-- Supplier credit (overpaid) -->
-                                            <td class="p-2 text-right font-bold text-blue-600">
-                                                {{ Math.max(0, po.paymentRecords.slice(0,pri+1).reduce((s,r)=>s+(r.amount||0),0) - po.amount) > 0 ? '+₦'+formatMoney(Math.max(0, po.paymentRecords.slice(0,pri+1).reduce((s,r)=>s+(r.amount||0),0) - po.amount)) : '—' }}
-                                            </td>
-                                            <!-- Bank details -->
-                                            <td class="p-2 text-xs">
-                                                <div v-for="(br,bi) in (pr.bankRows||[])" :key="bi" class="leading-4">
-                                                    <span class="text-blue-600 font-bold">{{ br.bankName }}</span><span class="text-gray-400 mx-0.5">→</span><span class="text-purple-700 font-bold">{{ br.bankTo || '?' }}</span>
-                                                    <span class="block text-[9px] text-gray-500">{{ br.accountName }}{{ br.accountNumber ? ' ('+br.accountNumber+')' : '' }} — ₦{{ formatMoney(br.amount) }}</span>
-                                                </div>
-                                                <div v-if="(pr.cashAmount||0)>0" class="text-green-700"><i class="fas fa-money-bill text-[9px] mr-0.5"></i>Cash ₦{{ formatMoney(pr.cashAmount) }}</div>
-                                                <div v-if="(pr.balanceAmount||0)>0" class="text-purple-600"><i class="fas fa-wallet text-[9px] mr-0.5"></i>Balance ₦{{ formatMoney(pr.balanceAmount) }}</div>
-                                                <span v-if="!(pr.bankRows||[]).length && !(pr.cashAmount>0) && !(pr.balanceAmount>0)" class="text-gray-300">—</span>
-                                            </td>
-                                            <td class="p-2"><span :class="po.status==='arrived'?'bg-green-100 text-green-700':po.status==='partial'?'bg-blue-100 text-blue-700':'bg-yellow-100 text-yellow-700'" class="text-[9px] font-black px-1.5 py-0.5 rounded-full uppercase">{{ po.status }}</span></td>
-                                            <td class="p-2"><span :class="po.paymentStatus==='paid'?'bg-green-100 text-green-700':po.paymentStatus==='partial'?'bg-blue-100 text-blue-700':'bg-red-100 text-red-700'" class="text-[9px] font-black px-1.5 py-0.5 rounded-full uppercase">{{ po.paymentStatus || 'unpaid' }}</span></td>
-                                        </tr>
-                                    </template>
-                                    <tr v-if="!purchases.filter(px=>px.source===debtCardModal.selectedSupplier).length">
-                                        <td colspan="15" class="p-8 text-center text-gray-400 italic">No purchases found for this supplier</td>
+                                <tbody class="divide-y divide-gray-100 text-sm">
+                                    <tr v-if="!purchases.filter(p=>p.source===debtCardModal.selectedSupplier).length"><td colspan="8" class="p-6 text-center text-gray-400 italic">No purchases found</td></tr>
+                                    <tr v-for="p in purchases.filter(p=>p.source===debtCardModal.selectedSupplier)" :key="p.id" class="hover:bg-gray-50">
+                                        <td class="p-3 font-bold text-[#714B67] text-xs">{{ p.id }}</td>
+                                        <td class="p-3 text-xs text-gray-500">{{ formatDate(p.date) }}</td>
+                                        <td class="p-3 text-xs text-gray-600">{{ p.items.map(i=>i.name+' x'+i.qty).join(', ') }}</td>
+                                        <td class="p-3 text-right font-mono text-xs">₦{{ formatMoney(p.amount) }}</td>
+                                        <td class="p-3 text-right font-mono text-xs text-green-600 font-bold">₦{{ formatMoney(p.totalAmountPaid||0) }}</td>
+                                        <td class="p-3 text-right font-mono text-xs font-bold" :class="(p.outstandingBalance||0)>0?'text-red-500':'text-gray-400'">₦{{ formatMoney(p.outstandingBalance||0) }}</td>
+                                        <td class="p-3 text-right font-mono text-xs text-green-600">₦{{ formatMoney(p.supplierCredit||0) }}</td>
+                                        <td class="p-3"><span :class="p.paymentStatus==='paid'?'bg-green-100 text-green-700':'bg-red-100 text-red-700'" class="text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">{{ p.paymentStatus }}</span></td>
                                     </tr>
                                 </tbody>
-                                <tfoot class="bg-gray-50 text-xs font-bold border-t-2 border-gray-300">
+                                <tfoot class="bg-gray-50 text-xs font-bold border-t-2 border-gray-200">
                                     <tr>
-                                        <td colspan="7" class="p-3 text-right text-gray-600 uppercase">Grand Totals:</td>
-                                        <td class="p-3 text-right font-mono text-gray-800">₦{{ formatMoney(purchases.filter(px=>px.source===debtCardModal.selectedSupplier).reduce((s,px)=>s+px.amount,0)) }}</td>
-                                        <td class="p-3"></td>
-                                        <td class="p-3 text-right font-mono text-green-700">₦{{ formatMoney(purchases.filter(px=>px.source===debtCardModal.selectedSupplier).reduce((s,px)=>s+(px.totalAmountPaid||0),0)) }}</td>
-                                        <td class="p-3 text-right font-mono text-red-600">₦{{ formatMoney(purchases.filter(px=>px.source===debtCardModal.selectedSupplier).reduce((s,px)=>s+(px.outstandingBalance||0),0)) }}</td>
-                                        <td class="p-3 text-right font-mono text-blue-600">₦{{ formatMoney(purchases.filter(px=>px.source===debtCardModal.selectedSupplier).reduce((s,px)=>s+(px.supplierCredit||0),0)) }}</td>
-                                        <td colspan="3"></td>
+                                        <td colspan="3" class="p-3 text-right text-gray-500 uppercase">Totals:</td>
+                                        <td class="p-3 text-right font-mono">₦{{ formatMoney(purchases.filter(p=>p.source===debtCardModal.selectedSupplier).reduce((s,p)=>s+p.amount,0)) }}</td>
+                                        <td class="p-3 text-right font-mono text-green-600">₦{{ formatMoney(purchases.filter(p=>p.source===debtCardModal.selectedSupplier).reduce((s,p)=>s+(p.totalAmountPaid||0),0)) }}</td>
+                                        <td class="p-3 text-right font-mono text-red-600">₦{{ formatMoney(purchases.filter(p=>p.source===debtCardModal.selectedSupplier).reduce((s,p)=>s+(p.outstandingBalance||0),0)) }}</td>
+                                        <td class="p-3 text-right font-mono text-green-600">₦{{ formatMoney(purchases.filter(p=>p.source===debtCardModal.selectedSupplier).reduce((s,p)=>s+(p.supplierCredit||0),0)) }}</td>
+                                        <td></td>
                                     </tr>
                                 </tfoot>
                             </table>
                         </div>
                     </div>
-                </div>
-
-                <!-- All Suppliers Summary (when no supplier selected) -->
-                <div v-else class="space-y-4">
-                    <div class="grid grid-cols-2 gap-4">
-                        <div class="bg-red-50 rounded-lg p-4 border border-red-200">
-                            <p class="text-xs text-red-600 uppercase font-bold mb-1"><i class="fas fa-arrow-up mr-1"></i>We Owe All Suppliers</p>
-                            <p class="font-black text-2xl text-red-700">₦{{ formatMoney(supplierDebt.totalOwed) }}</p>
-                        </div>
-                        <div class="bg-green-50 rounded-lg p-4 border border-green-200">
-                            <p class="text-xs text-green-600 uppercase font-bold mb-1"><i class="fas fa-arrow-down mr-1"></i>All Supplier Credits (They Owe Us)</p>
-                            <p class="font-black text-2xl text-green-700">₦{{ formatMoney(supplierDebt.totalCreditHeld) }}</p>
+                    <div>
+                        <h4 class="font-bold text-gray-700 mb-2 flex items-center gap-2"><i class="fas fa-history text-blue-500"></i> Payment History</h4>
+                        <div class="overflow-x-auto rounded-lg border border-gray-200">
+                            <table class="w-full text-left">
+                                <thead class="bg-gray-100 text-xs font-bold uppercase text-gray-500">
+                                    <tr><th class="p-3">Date / Time</th><th class="p-3">PO#</th><th class="p-3">Method</th><th class="p-3">Bank Details</th><th class="p-3 text-right">Amount</th></tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-100 text-xs">
+                                    <template v-for="p in purchases.filter(p=>p.source===debtCardModal.selectedSupplier)" :key="p.id">
+                                        <tr v-for="(pr, pri) in (p.paymentRecords||[])" :key="pri" class="hover:bg-blue-50">
+                                            <td class="p-3 text-gray-500">{{ formatDate(pr.date) }}<span v-if="pr.time" class="block text-gray-400">{{ pr.time }}</span></td>
+                                            <td class="p-3 font-bold text-[#714B67]">{{ p.id }}</td>
+                                            <td class="p-3 capitalize text-gray-600">{{ pr.method }}</td>
+                                            <td class="p-3">
+                                                <div v-for="(row,ri) in (pr.bankRows||[])" :key="ri" class="mb-1 leading-5">
+                                                    <span class="font-bold text-blue-700">{{ row.bankName }}</span><span v-if="row.bankTo"> → <span class="font-bold text-purple-700">{{ row.bankTo }}</span></span><br>
+                                                    <span class="text-gray-600">{{ row.accountName }}</span> <span class="font-mono text-gray-400">({{ row.accountNumber }})</span> <span class="font-bold text-[#714B67]">₦{{ formatMoney(row.amount) }}</span>
+                                                </div>
+                                                <div v-if="pr.cashAmount>0" class="text-green-700"><i class="fas fa-money-bill mr-1"></i>Cash: ₦{{ formatMoney(pr.cashAmount) }}</div>
+                                            </td>
+                                            <td class="p-3 text-right font-mono font-bold text-gray-800">₦{{ formatMoney(pr.amount) }}</td>
+                                        </tr>
+                                    </template>
+                                    <tr v-if="purchases.filter(p=>p.source===debtCardModal.selectedSupplier).every(p=>!(p.paymentRecords||[]).length)"><td colspan="5" class="p-6 text-center text-gray-400 italic">No payments recorded yet</td></tr>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
-                    <div class="overflow-x-auto rounded-lg border border-gray-200">
-                        <table class="w-full text-left">
-                            <thead class="bg-gray-100 text-xs font-bold uppercase text-gray-500">
-                                <tr><th class="p-3">Supplier</th><th class="p-3 text-right">We Owe</th><th class="p-3 text-right">They Owe Us</th><th class="p-3 text-center">Action</th></tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-100 text-sm">
-                                <tr v-if="!supplierDebt.suppliers.length"><td colspan="4" class="p-6 text-center text-gray-400 italic">All accounts settled — no outstanding balances</td></tr>
-                                <tr v-for="s in supplierDebt.suppliers" :key="s.name" class="hover:bg-gray-50">
-                                    <td class="p-3 font-bold text-gray-700">{{ s.name }}</td>
-                                    <td class="p-3 text-right font-mono text-xs" :class="s.totalOwed>0?'font-bold text-red-600':'text-gray-300'">₦{{ formatMoney(s.totalOwed) }}</td>
-                                    <td class="p-3 text-right font-mono text-xs" :class="s.creditHeld>0?'font-bold text-green-600':'text-gray-300'">₦{{ formatMoney(s.creditHeld) }}</td>
-                                    <td class="p-3 text-center"><button @click="debtCardModal.selectedSupplier=s.name; calculateDebt()" class="text-[10px] bg-[#714B67] text-white px-2 py-1 rounded font-bold hover:bg-purple-800">View Ledger</button></td>
-                                </tr>
-                            </tbody>
-                        </table>
+                </div>
+
+                <!-- All Suppliers View -->
+                <div v-else class="space-y-4">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div @click="viewDebtHistory('owed')" class="bg-red-50 rounded-lg p-4 border border-red-200 cursor-pointer hover:shadow-lg hover:border-red-400 transition">
+                            <p class="text-xs text-red-600 uppercase font-bold mb-1"><i class="fas fa-arrow-up mr-1"></i>Money Owed to Suppliers</p>
+                            <p class="font-black text-2xl text-red-700">₦{{ formatMoney(supplierDebt.totalOwed) }}</p>
+                            <p class="text-[10px] text-red-500 mt-1">Click to view all suppliers we owe</p>
+                        </div>
+                        <div @click="viewDebtHistory('held')" class="bg-green-50 rounded-lg p-4 border border-green-200 cursor-pointer hover:shadow-lg hover:border-green-400 transition">
+                            <p class="text-xs text-green-600 uppercase font-bold mb-1"><i class="fas fa-arrow-down mr-1"></i>Money Held from Suppliers</p>
+                            <p class="font-black text-2xl text-green-700">₦{{ formatMoney(supplierDebt.totalCreditHeld) }}</p>
+                            <p class="text-[10px] text-green-500 mt-1">Click to view all supplier credits</p>
+                        </div>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-gray-700 mb-3 flex items-center gap-2"><i class="fas fa-building text-amber-600"></i> Supplier Balances (Click to view history)</h4>
+                        <div class="space-y-2">
+                            <div v-if="supplierDebt.suppliers.length === 0" class="text-center py-6 text-gray-400 text-sm italic">No supplier debts recorded</div>
+                            <div v-for="s in supplierDebt.suppliers" :key="s.name" @click="viewSupplierDebtHistory(s.name)" class="bg-gray-50 rounded-lg p-4 border border-gray-200 hover:border-[#714B67] hover:shadow-md transition cursor-pointer">
+                                <div class="flex justify-between items-start">
+                                    <span class="font-bold text-gray-800 text-sm">{{ s.name }}</span>
+                                    <div class="flex gap-2">
+                                        <span v-if="s.totalOwed > 0" class="text-xs bg-red-100 text-red-700 px-3 py-1.5 rounded font-bold">We Owe: ₦{{ formatMoney(s.totalOwed) }}</span>
+                                        <span v-if="s.creditHeld > 0" class="text-xs bg-green-100 text-green-700 px-3 py-1.5 rounded font-bold">We Hold: ₦{{ formatMoney(s.creditHeld) }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -3719,489 +3521,52 @@ input[type=number].no-spinner {
                 </div>
             </div>
             <!-- Filters -->
-            <div class="p-3 bg-gray-50 border-b flex-shrink-0">
-                <div class="flex gap-2 flex-wrap items-center">
-                    <span class="text-xs font-bold text-gray-500 uppercase">Filter:</span>
-                    <input type="date" v-model="stockHistoryModal.dateFrom" class="border border-gray-200 rounded px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-[#714B67] bg-white" placeholder="From">
-                    <input type="date" v-model="stockHistoryModal.dateTo" class="border border-gray-200 rounded px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-[#714B67] bg-white" placeholder="To">
-                    <select v-model="stockHistoryModal.filterType" class="border border-gray-200 rounded px-2 py-1.5 text-xs focus:ring-2 focus:ring-[#714B67] outline-none bg-white">
-                        <option value="">All Transactions</option>
-                        <option value="in">Purchases Only (In)</option>
-                        <option value="out">Sales Only (Out)</option>
-                    </select>
-                    <select v-model="stockHistoryModal.filterParty" class="border border-gray-200 rounded px-2 py-1.5 text-xs focus:ring-2 focus:ring-[#714B67] outline-none bg-white min-w-[140px]">
-                        <option value="">All Suppliers/Customers</option>
-                        <optgroup label="Suppliers">
-                            <option v-for="s in allSuppliersWithCustomers" :key="'sup-'+s.name" :value="s.name">{{ s.name }}</option>
-                        </optgroup>
-                        <optgroup label="Customers">
-                            <option v-for="c in customers" :key="'cust-'+c.customerId" :value="c.fullname||c.customerName">{{ c.fullname||c.customerName }}</option>
-                        </optgroup>
-                    </select>
-                    <select v-model="stockHistoryModal.sortBy" class="border border-gray-200 rounded px-2 py-1.5 text-xs focus:ring-2 focus:ring-[#714B67] outline-none bg-white">
-                        <option value="date_new">Newest First</option>
-                        <option value="date_old">Oldest First</option>
-                        <option value="qty_high">Qty (High→Low)</option>
-                        <option value="qty_low">Qty (Low→High)</option>
-                    </select>
-                    <input type="month" v-model="stockHistoryModal.viewMonth" class="border border-gray-200 rounded px-2 py-1.5 text-xs focus:ring-2 focus:ring-[#714B67] outline-none bg-white" title="Filter by month">
-                    <button @click="stockHistoryModal.dateFrom=localDateStr(); stockHistoryModal.dateTo=localDateStr(); stockHistoryModal.viewMonth=''" class="text-xs bg-[#714B67] text-white px-3 py-1.5 rounded font-bold">Today</button>
-                    <button @click="stockHistoryModal.dateFrom=''; stockHistoryModal.dateTo=''; stockHistoryModal.filterType=''; stockHistoryModal.filterParty=''; stockHistoryModal.viewMonth=''" class="text-xs border border-gray-200 text-gray-600 px-3 py-1.5 rounded font-bold hover:bg-gray-100">All / Reset</button>
-                </div>
-            </div>
-            <div class="overflow-y-auto flex-1 p-4 space-y-4">
-                <!-- Monthly Opening/Closing Balance (shown when viewMonth is set or always) -->
-                <div v-if="filteredStockHistory.months.length > 0" class="bg-white rounded-lg border overflow-hidden">
-                    <div class="bg-gray-800 text-white px-4 py-2 flex items-center gap-2">
-                        <i class="fas fa-calendar-alt text-xs"></i>
-                        <span class="text-xs font-black uppercase tracking-wide">Monthly Stock Balance Summary</span>
-                    </div>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left text-xs">
-                            <thead class="bg-gray-50 text-[10px] font-bold uppercase text-gray-400">
-                                <tr>
-                                    <th class="px-4 py-2">Month</th>
-                                    <th class="px-4 py-2 text-center">Opening Stock</th>
-                                    <th class="px-4 py-2 text-center text-blue-600">+ Purchased</th>
-                                    <th class="px-4 py-2 text-center text-red-500">− Sold</th>
-                                    <th class="px-4 py-2 text-center">Closing Stock</th>
-                                    <th class="px-4 py-2 text-right text-red-500">Debit (Bought ₦)</th>
-                                    <th class="px-4 py-2 text-right text-green-600">Credit (Sold ₦)</th>
-                                    <th class="px-4 py-2 text-right">Net (₦)</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-100">
-                                <tr v-for="mo in filteredStockHistory.months" :key="mo.label" class="hover:bg-gray-50">
-                                    <td class="px-4 py-2 font-bold text-gray-700">{{ mo.label }}</td>
-                                    <td class="px-4 py-2 text-center font-bold text-gray-600">{{ mo.opening }}</td>
-                                    <td class="px-4 py-2 text-center font-bold text-blue-700">+{{ mo.totalIn }}</td>
-                                    <td class="px-4 py-2 text-center font-bold text-red-600">−{{ mo.totalOut }}</td>
-                                    <td class="px-4 py-2 text-center font-black" :class="mo.closing < 0 ? 'text-red-600' : mo.closing < 20 ? 'text-orange-500' : 'text-green-700'">{{ mo.closing }}</td>
-                                    <td class="px-4 py-2 text-right font-bold text-red-600">₦{{ formatMoney(mo.debit) }}</td>
-                                    <td class="px-4 py-2 text-right font-bold text-green-600">₦{{ formatMoney(mo.credit) }}</td>
-                                    <td class="px-4 py-2 text-right font-black" :class="mo.net >= 0 ? 'text-green-700' : 'text-red-600'">{{ mo.net >= 0 ? '+' : '' }}₦{{ formatMoney(mo.net) }}</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <!-- Summary Cards -->
-                <div class="grid grid-cols-2 sm:grid-cols-5 gap-3">
-                    <div class="bg-blue-50 border border-blue-100 rounded-lg p-3 text-center">
-                        <p class="text-[10px] font-bold text-blue-500 uppercase mb-1">Total Received (In)</p>
-                        <p class="font-black text-lg text-blue-700">+{{ filteredStockHistory.totalIn }}</p>
-                        <p class="text-[10px] text-blue-400">units purchased</p>
-                    </div>
-                    <div class="bg-red-50 border border-red-100 rounded-lg p-3 text-center">
-                        <p class="text-[10px] font-bold text-red-500 uppercase mb-1">Total Delivered (Out)</p>
-                        <p class="font-black text-lg text-red-600">−{{ filteredStockHistory.totalOut }}</p>
-                        <p class="text-[10px] text-red-400">units sold</p>
-                    </div>
-                    <div class="bg-green-50 border border-green-100 rounded-lg p-3 text-center">
-                        <p class="text-[10px] font-bold text-green-500 uppercase mb-1">Stock Balance Now</p>
-                        <p class="font-black text-lg text-green-700">{{ stockHistoryModal.product?.stock || 0 }}</p>
-                        <p class="text-[10px] text-green-400">units on hand</p>
-                    </div>
-                    <div class="bg-orange-50 border border-orange-100 rounded-lg p-3 text-center">
-                        <p class="text-[10px] font-bold text-orange-500 uppercase mb-1">We Spent (Debit)</p>
-                        <p class="font-black text-base text-orange-600">₦{{ formatMoney(filteredStockHistory.totalDebit) }}</p>
-                        <p class="text-[10px] text-orange-400">on purchases</p>
-                    </div>
-                    <div class="bg-teal-50 border border-teal-100 rounded-lg p-3 text-center">
-                        <p class="text-[10px] font-bold text-teal-500 uppercase mb-1">We Earned (Credit)</p>
-                        <p class="font-black text-base text-teal-700">₦{{ formatMoney(filteredStockHistory.totalCredit) }}</p>
-                        <p class="text-[10px] text-teal-400">from sales</p>
-                    </div>
-                </div>
-
-                <!-- Ledger Table -->
-                <div class="bg-white rounded-lg border overflow-x-auto">
-                    <table class="w-full text-left" style="min-width:1300px">
-                        <thead class="bg-gray-50 text-[10px] font-bold uppercase text-gray-400 sticky top-0">
-                            <tr>
-                                <th class="p-2">Date</th>
-                                <th class="p-2">Type</th>
-                                <th class="p-2">Ref</th>
-                                <th class="p-2">Party (Supplier / Customer)</th>
-                                <th class="p-2 text-center bg-blue-50">Qty<br>Ordered</th>
-                                <th class="p-2 text-center bg-blue-50">Qty<br>Received/Delivered</th>
-                                <th class="p-2 text-center bg-blue-50">Qty<br>Balance</th>
-                                <th class="p-2 text-center bg-green-50">Stock<br>After</th>
-                                <th class="p-2 text-right">Unit ₦</th>
-                                <th class="p-2 text-right bg-red-50">Debit ₦<br>(We Paid/Cost)</th>
-                                <th class="p-2 text-right bg-green-50">Credit ₦<br>(We Received)</th>
-                                <th class="p-2 text-right bg-yellow-50">Amount<br>Ordered ₦</th>
-                                <th class="p-2 text-right bg-yellow-50">Amount<br>Paid ₦</th>
-                                <th class="p-2 text-right bg-orange-50">Balance<br>(Owed) ₦</th>
-                                <th class="p-2 text-right">Running<br>Money Balance</th>
-                                <th class="p-2">Bank From→To</th>
-                                <th class="p-2">Staff</th>
-                            </tr>
-                        </thead>
-                        <tbody class="text-xs divide-y divide-gray-100">
-                            <tr v-if="filteredStockHistory.rows.length===0">
-                                <td colspan="17" class="p-8 text-center text-gray-400 italic">No history found for selected filters</td>
-                            </tr>
-                            <tr v-for="(row, idx) in (stockHistoryModal.showAll ? filteredStockHistory.rows : filteredStockHistory.rows.slice(0,20))"
-                                :key="idx"
-                                :class="row.direction==='in' ? 'hover:bg-blue-50/40 bg-blue-50/10' : 'hover:bg-orange-50/40 bg-orange-50/10'">
-                                <td class="p-2 text-gray-500 whitespace-nowrap">{{ row.dateDisplay }}</td>
-                                <td class="p-2 whitespace-nowrap">
-                                    <span class="text-[9px] font-black px-1.5 py-0.5 rounded-full uppercase"
-                                        :class="row.direction==='in' ? 'bg-blue-100 text-blue-700' : 'bg-orange-100 text-orange-700'">
-                                        {{ row.type }}
-                                    </span>
-                                    <span v-if="row.qtyStatus==='over'"  class="ml-0.5 text-[8px] font-black text-purple-600 bg-purple-100 px-1 rounded">OVER</span>
-                                    <span v-if="row.qtyStatus==='short'" class="ml-0.5 text-[8px] font-black text-amber-600 bg-amber-100 px-1 rounded">SHORT</span>
-                                </td>
-                                <td class="p-2 font-mono text-[#714B67] font-bold whitespace-nowrap">{{ row.ref }}</td>
-                                <td class="p-2 text-gray-700 font-medium max-w-[130px] truncate">{{ row.party }}</td>
-
-                                <!-- Qty Ordered -->
-                                <td class="p-2 text-center text-gray-500 bg-blue-50/30 font-medium">{{ row.qtyOrdered }}</td>
-
-                                <!-- Qty Actually Received (purchase) or Delivered (sale) — with sign -->
-                                <td class="p-2 text-center font-black bg-blue-50/30"
-                                    :class="row.direction==='in' ? 'text-blue-700' : 'text-orange-700'">
-                                    {{ row.direction==='in' ? '+' : '−' }}{{ row.qty }}
-                                </td>
-
-                                <!-- Qty Balance vs order: +over, -short, 0 exact -->
-                                <td class="p-2 text-center font-black bg-blue-50/30"
-                                    :class="row.qtyVariance > 0 ? 'text-purple-600' : row.qtyVariance < 0 ? 'text-red-600' : 'text-green-600'">
-                                    {{ row.qtyVariance > 0 ? '+' : '' }}{{ row.qtyVariance }}
-                                </td>
-
-                                <!-- Running stock after this transaction -->
-                                <td class="p-2 text-center font-black text-base bg-green-50/30"
-                                    :class="row.runningQty < 0 ? 'text-red-700' : row.runningQty < 20 ? 'text-orange-500' : 'text-green-700'">
-                                    {{ row.runningQty }}
-                                </td>
-
-                                <!-- Unit price -->
-                                <td class="p-2 text-right text-gray-500">₦{{ formatMoney(row.unitPrice) }}</td>
-
-                                <!-- Debit: money we paid/cost of purchase (only for IN rows) -->
-                                <td class="p-2 text-right font-bold bg-red-50/30"
-                                    :class="row.direction==='in' ? 'text-red-600' : 'text-gray-300'">
-                                    {{ row.direction==='in' ? '−₦'+formatMoney(row.lineDebit) : '—' }}
-                                </td>
-
-                                <!-- Credit: revenue we received from sale (only for OUT rows) -->
-                                <td class="p-2 text-right font-bold bg-green-50/30"
-                                    :class="row.direction==='out' ? 'text-green-700' : 'text-gray-300'">
-                                    {{ row.direction==='out' ? '+₦'+formatMoney(row.lineCredit) : '—' }}
-                                </td>
-
-                                <!-- Total amount ordered/invoiced -->
-                                <td class="p-2 text-right text-gray-600 bg-yellow-50/30">₦{{ formatMoney(row.poOrdered) }}</td>
-
-                                <!-- Amount actually paid (us to supplier, or customer to us) -->
-                                <td class="p-2 text-right font-bold bg-yellow-50/30"
-                                    :class="row.poPaid >= row.poOrdered ? 'text-green-700' : 'text-blue-700'">
-                                    ₦{{ formatMoney(row.poPaid) }}
-                                </td>
-
-                                <!-- Money balance: outstanding (positive = owed, negative = overpaid) -->
-                                <td class="p-2 text-right font-black bg-orange-50/30">
-                                    <span v-if="row.poOutstanding > 0" class="text-red-600">
-                                        {{ row.direction==='in' ? 'We owe' : 'Cust owes' }}<br>₦{{ formatMoney(row.poOutstanding) }}
-                                    </span>
-                                    <span v-else-if="row.poOverpaid > 0" class="text-green-600">
-                                        {{ row.direction==='in' ? 'They owe us' : 'We owe cust' }}<br>₦{{ formatMoney(row.poOverpaid) }}
-                                    </span>
-                                    <span v-else class="text-gray-400">Settled ✓</span>
-                                </td>
-
-                                <!-- Cumulative running money balance across ALL transactions -->
-                                <td class="p-2 text-right font-black whitespace-nowrap"
-                                    :class="row.runningMoney >= 0 ? 'text-green-700' : 'text-red-600'">
-                                    {{ row.runningMoney >= 0 ? '+' : '−' }}₦{{ formatMoney(Math.abs(row.runningMoney)) }}
-                                </td>
-
-                                <!-- Bank -->
-                                <td class="p-2 whitespace-nowrap">
-                                    <span v-if="row.bankFrom||row.bankTo">
-                                        <span class="text-blue-600 font-bold">{{ row.bankFrom||'?' }}</span>
-                                        <span class="text-gray-400 mx-0.5">→</span>
-                                        <span class="text-gray-600">{{ row.bankTo||'?' }}</span>
-                                    </span>
-                                    <span v-else class="text-gray-300">—</span>
-                                </td>
-
-                                <!-- Staff -->
-                                <td class="p-2">
-                                    <span v-if="row.staffName" class="font-bold text-gray-700 block">{{ row.staffName }}</span>
-                                    <span v-if="row.staffId" class="font-mono text-[9px] text-gray-400 block">{{ row.staffId }}</span>
-                                    <span v-if="!row.staffName" class="text-gray-300">—</span>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                    <div v-if="filteredStockHistory.rows.length > 20" class="p-3 border-t text-center">
-                        <button @click="stockHistoryModal.showAll=!stockHistoryModal.showAll" class="text-xs font-bold text-[#714B67] hover:underline">
-                            {{ stockHistoryModal.showAll ? '↑ Show Less' : '↓ View All ('+filteredStockHistory.rows.length+' total rows)' }}
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- SUPPLIER TRANSACTIONS MODAL -->
-    <div v-if="supplierTxnModal.show" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[75] flex items-center justify-center p-4" @click.self="supplierTxnModal.show=false">
-        <div class="bg-white w-full max-w-5xl rounded-xl shadow-2xl overflow-hidden animate-fade-in-up flex flex-col max-h-[92vh]">
-            <div class="p-5 bg-[#714B67] text-white flex justify-between items-center flex-shrink-0">
-                <div>
-                    <h3 class="font-bold text-sm flex items-center gap-2"><i class="fas fa-history"></i> Supplier Transactions — {{ supplierTxnModal.supplier?.name }}</h3>
-                    <p class="text-white/60 text-xs">All purchases, payments & balances for this supplier</p>
-                </div>
-                <button @click="supplierTxnModal.show=false" class="text-white/70 hover:text-white"><i class="fas fa-times"></i></button>
-            </div>
-            <!-- Filters -->
-            <div class="p-4 bg-gray-50 border-b flex gap-2 flex-wrap items-center flex-shrink-0">
-                <div class="relative flex-1 min-w-[160px]">
-                    <i class="fas fa-search absolute left-3 top-2.5 text-gray-400 text-xs"></i>
-                    <input v-model="supplierTxnModal.search" type="text" placeholder="Search by ref or item..." class="w-full pl-8 pr-3 py-2 border border-gray-200 rounded-lg text-xs focus:ring-2 focus:ring-[#714B67] outline-none bg-white">
-                </div>
-                <input type="date" v-model="supplierTxnModal.dateFrom" class="border border-gray-200 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-[#714B67] outline-none bg-white" placeholder="From">
-                <input type="date" v-model="supplierTxnModal.dateTo" class="border border-gray-200 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-[#714B67] outline-none bg-white" placeholder="To">
-                <select v-model="supplierTxnModal.statusFilter" class="border border-gray-200 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-[#714B67] outline-none bg-white">
-                    <option value="">All Status</option>
-                    <option value="pending">Pending</option>
-                    <option value="partial">Partial</option>
-                    <option value="arrived">Arrived</option>
-                    <option value="over">Over</option>
-                </select>
-                <select v-model="supplierTxnModal.sortBy" class="border border-gray-200 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-[#714B67] outline-none bg-white">
-                    <option value="date_new">Newest First</option>
-                    <option value="date_old">Oldest First</option>
-                    <option value="amount_high">Amount (High→Low)</option>
-                    <option value="amount_low">Amount (Low→High)</option>
-                </select>
-                <button @click="supplierTxnModal.search='';supplierTxnModal.dateFrom='';supplierTxnModal.dateTo='';supplierTxnModal.statusFilter=''" class="text-xs border border-gray-200 px-3 py-2 rounded-lg font-bold text-gray-500 hover:bg-gray-100"><i class="fas fa-times mr-1"></i>Reset</button>
-            </div>
-            <div class="overflow-y-auto flex-1 p-5 space-y-4">
-                <!-- Summary cards -->
-                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                    <div class="bg-[#714B67]/10 border border-[#714B67]/20 rounded-lg p-3 text-center">
-                        <p class="text-[10px] font-bold text-[#714B67] uppercase mb-1">Total Purchased</p>
-                        <p class="font-black text-base text-[#714B67]">₦{{ formatMoney(filteredSupplierTxns.totalPurchased) }}</p>
-                    </div>
-                    <div class="bg-red-50 border border-red-100 rounded-lg p-3 text-center">
-                        <p class="text-[10px] font-bold text-red-500 uppercase mb-1">Total Paid (Debited)</p>
-                        <p class="font-black text-base text-red-600">₦{{ formatMoney(filteredSupplierTxns.totalPaid) }}</p>
-                    </div>
-                    <div class="bg-orange-50 border border-orange-100 rounded-lg p-3 text-center">
-                        <p class="text-[10px] font-bold text-orange-500 uppercase mb-1">We Still Owe</p>
-                        <p class="font-black text-base text-orange-600">₦{{ formatMoney(filteredSupplierTxns.weOwe) }}</p>
-                    </div>
-                    <div class="bg-green-50 border border-green-100 rounded-lg p-3 text-center">
-                        <p class="text-[10px] font-bold text-green-500 uppercase mb-1">Supplier Credit (Owes Us)</p>
-                        <p class="font-black text-base text-green-700">₦{{ formatMoney(filteredSupplierTxns.theyOwe) }}</p>
-                    </div>
-                </div>
-                <!-- Transactions table -->
-                <div class="bg-white rounded-lg border overflow-x-auto">
-                    <table class="w-full text-left">
-                        <thead class="bg-gray-50 text-xs font-bold uppercase text-gray-400 sticky top-0">
-                            <tr>
-                                <th class="p-3">PO Ref</th>
-                                <th class="p-3">PO Date</th>
-                                <th class="p-3">Arrival Date</th>
-                                <th class="p-3">Items</th>
-                                <th class="p-3 text-center">Ordered</th>
-                                <th class="p-3 text-center">Received</th>
-                                <th class="p-3 text-center">Qty Balance</th>
-                                <th class="p-3 text-right">PO Amount</th>
-                                <th class="p-3 text-right">Debit (Paid)</th>
-                                <th class="p-3 text-right">Credit (Owed Us)</th>
-                                <th class="p-3 text-right">Money Balance</th>
-                                <th class="p-3">Bank From → To</th>
-                                <th class="p-3">Received By</th>
-                                <th class="p-3">Status</th>
-                            </tr>
-                        </thead>
-                        <tbody class="text-sm divide-y divide-gray-100">
-                            <tr v-if="filteredSupplierTxns.rows.length===0"><td colspan="14" class="p-8 text-center text-gray-400 italic">No transactions found</td></tr>
-                            <tr v-for="(row, idx) in (supplierTxnModal.showAll ? filteredSupplierTxns.rows : filteredSupplierTxns.rows.slice(0,15))" :key="idx" class="hover:bg-gray-50">
-                                <td class="p-3 font-mono text-xs text-[#714B67] font-bold">{{ row.id }}</td>
-                                <td class="p-3 text-xs text-gray-500 whitespace-nowrap">{{ formatDate(row.date) }}</td>
-                                <!-- Arrival Date -->
-                                <td class="p-3 text-xs">
-                                    <span v-if="row.lastArrivalDate||row.arrivalDate" class="text-green-700 font-bold">{{ formatDate(row.lastArrivalDate||row.arrivalDate) }}</span>
-                                    <span v-else-if="(row.receivingHistory||[]).length" class="text-green-700 font-bold">{{ formatDate(row.receivingHistory[row.receivingHistory.length-1].arrivalDate||row.receivingHistory[row.receivingHistory.length-1].date) }}</span>
-                                    <span v-else class="text-gray-300">Pending</span>
-                                </td>
-                                <td class="p-3 text-xs text-gray-700">
-                                    <div v-for="it in row.items" :key="it.name" class="leading-5">{{ it.name }} <span class="font-bold text-[#714B67]">×{{ it.qty }}</span></div>
-                                </td>
-                                <td class="p-3 text-center text-xs font-bold text-gray-700">{{ row.items.reduce((s,i)=>s+i.qty,0) }}</td>
-                                <td class="p-3 text-center text-xs font-bold text-blue-700">{{ (row.receivingHistory||[]).reduce((s,r)=>s+r.receivedQty,0) }}</td>
-                                <td class="p-3 text-center">
-                                    <span class="text-xs font-black px-2 py-0.5 rounded-full"
-                                        :class="(row.receivingHistory||[]).reduce((s,r)=>s+r.receivedQty,0) - row.items.reduce((s,i)=>s+i.qty,0) > 0 ? 'bg-blue-100 text-blue-700' : (row.receivingHistory||[]).reduce((s,r)=>s+r.receivedQty,0) - row.items.reduce((s,i)=>s+i.qty,0) < 0 ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-700'">
-                                        {{ ((row.receivingHistory||[]).reduce((s,r)=>s+r.receivedQty,0) - row.items.reduce((s,i)=>s+i.qty,0)) >= 0 ? '+' : '' }}{{ (row.receivingHistory||[]).reduce((s,r)=>s+r.receivedQty,0) - row.items.reduce((s,i)=>s+i.qty,0) }}
-                                    </span>
-                                </td>
-                                <td class="p-3 text-right text-xs font-bold text-gray-800">₦{{ formatMoney(row.amount) }}</td>
-                                <td class="p-3 text-right text-xs font-bold text-red-600">- ₦{{ formatMoney(row.totalAmountPaid||0) }}</td>
-                                <td class="p-3 text-right text-xs font-bold text-green-600">
-                                    <span v-if="(row.supplierCredit||0)>0">+ ₦{{ formatMoney(row.supplierCredit) }}</span>
-                                    <span v-else class="text-gray-300">—</span>
-                                </td>
-                                <td class="p-3 text-right text-xs">
-                                    <span v-if="(row.outstandingBalance||0)>0" class="font-black text-red-600">We owe ₦{{ formatMoney(row.outstandingBalance) }}</span>
-                                    <span v-else-if="(row.supplierCredit||0)>0" class="font-black text-green-600">Owed us ₦{{ formatMoney(row.supplierCredit) }}</span>
-                                    <span v-else class="text-gray-400 font-bold">Settled</span>
-                                </td>
-                                <td class="p-3 text-xs text-gray-500">
-                                    <span v-if="row.bankRows && row.bankRows.length">
-                                        <div v-for="(br,bi) in row.bankRows.slice(0,2)" :key="bi" class="leading-4">
-                                            <span class="text-blue-600 font-bold">{{ br.bankName }}</span><span class="mx-0.5 text-gray-400">→</span><span class="text-gray-600">{{ br.bankTo || '?' }}</span>
-                                        </div>
-                                    </span>
-                                    <span v-else-if="row.paymentMode==='cash'" class="text-green-700 font-bold">Cash</span>
-                                    <span v-else class="text-gray-300">—</span>
-                                </td>
-                                <td class="p-3 text-xs">
-                                    <span v-if="(row.receivingHistory||[]).length">
-                                        <span class="font-bold text-gray-700">{{ row.receivingHistory[row.receivingHistory.length-1].receivedBy || '—' }}</span>
-                                        <span class="block text-[10px] font-mono text-gray-400">{{ row.receivingHistory[row.receivingHistory.length-1].receivedById || '' }}</span>
-                                    </span>
-                                    <span v-else class="text-gray-300">—</span>
-                                </td>
-                                <td class="p-3">
-                                    <span :class="row.status==='arrived'?'bg-green-100 text-green-700':row.status==='partial'?'bg-blue-100 text-blue-700':row.status==='over'?'bg-purple-100 text-purple-700':'bg-yellow-100 text-yellow-700'" class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase">{{ row.status }}</span>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                    <div v-if="filteredSupplierTxns.rows.length > 15" class="p-3 border-t text-center">
-                        <button @click="supplierTxnModal.showAll=!supplierTxnModal.showAll" class="text-xs font-bold text-[#714B67] hover:underline">
-                            {{ supplierTxnModal.showAll ? '↑ Show Less' : '↓ Load More (' + (filteredSupplierTxns.rows.length - 15) + ' more)' }}
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- CUSTOMER TRANSACTIONS MODAL -->
-    <div v-if="customerTxnModal.show" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[75] flex items-center justify-center p-4" @click.self="customerTxnModal.show=false">
-        <div class="bg-white w-full max-w-5xl rounded-xl shadow-2xl overflow-hidden animate-fade-in-up flex flex-col max-h-[92vh]">
-            <div class="p-5 bg-[#00A09D] text-white flex justify-between items-center flex-shrink-0">
-                <div>
-                    <h3 class="font-bold text-sm flex items-center gap-2"><i class="fas fa-history"></i> Customer Transactions — {{ customerTxnModal.customer?.fullname || customerTxnModal.customer?.customerName }}</h3>
-                    <p class="text-white/70 text-xs">All orders, payments & balances for this customer</p>
-                </div>
-                <button @click="customerTxnModal.show=false" class="text-white/70 hover:text-white"><i class="fas fa-times"></i></button>
-            </div>
-            <!-- Filters -->
-            <div class="p-4 bg-gray-50 border-b flex gap-2 flex-wrap items-center flex-shrink-0">
-                <div class="relative flex-1 min-w-[160px]">
-                    <i class="fas fa-search absolute left-3 top-2.5 text-gray-400 text-xs"></i>
-                    <input v-model="customerTxnModal.search" type="text" placeholder="Search by ref or item..." class="w-full pl-8 pr-3 py-2 border border-gray-200 rounded-lg text-xs focus:ring-2 focus:ring-[#00A09D] outline-none bg-white">
-                </div>
-                <input type="date" v-model="customerTxnModal.dateFrom" class="border border-gray-200 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-[#00A09D] outline-none bg-white">
-                <input type="date" v-model="customerTxnModal.dateTo" class="border border-gray-200 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-[#00A09D] outline-none bg-white">
-                <select v-model="customerTxnModal.statusFilter" class="border border-gray-200 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-[#00A09D] outline-none bg-white">
-                    <option value="">All Payment Status</option>
-                    <option value="paid">Paid</option>
-                    <option value="partial">Partial</option>
-                    <option value="unpaid">Unpaid</option>
-                    <option value="pending_confirmation">Pending</option>
-                </select>
-                <select v-model="customerTxnModal.sortBy" class="border border-gray-200 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-[#00A09D] outline-none bg-white">
-                    <option value="date_new">Newest First</option>
-                    <option value="date_old">Oldest First</option>
-                    <option value="amount_high">Amount (High→Low)</option>
-                    <option value="amount_low">Amount (Low→High)</option>
-                </select>
-                <button @click="customerTxnModal.search='';customerTxnModal.dateFrom='';customerTxnModal.dateTo='';customerTxnModal.statusFilter=''" class="text-xs border border-gray-200 px-3 py-2 rounded-lg font-bold text-gray-500 hover:bg-gray-100"><i class="fas fa-times mr-1"></i>Reset</button>
+            <div class="p-4 bg-gray-50 border-b flex gap-3 flex-wrap items-center flex-shrink-0">
+                <span class="text-xs font-bold text-gray-500 uppercase">Filter:</span>
+                <input type="date" v-model="stockHistoryModal.dateFrom" class="border border-gray-200 rounded px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-[#714B67] bg-white" placeholder="From">
+                <input type="date" v-model="stockHistoryModal.dateTo" class="border border-gray-200 rounded px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-[#714B67] bg-white" placeholder="To">
+                <button @click="stockHistoryModal.dateFrom=localDateStr(); stockHistoryModal.dateTo=localDateStr()" class="text-xs bg-[#714B67] text-white px-3 py-1.5 rounded font-bold">Today</button>
+                <button @click="stockHistoryModal.dateFrom=''; stockHistoryModal.dateTo=''" class="text-xs border border-gray-200 text-gray-600 px-3 py-1.5 rounded font-bold hover:bg-gray-100">All Time</button>
             </div>
             <div class="overflow-y-auto flex-1 p-5 space-y-4">
                 <!-- Summary -->
-                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                    <div class="bg-teal-50 border border-teal-100 rounded-lg p-3 text-center">
-                        <p class="text-[10px] font-bold text-teal-600 uppercase mb-1">Total Sales (Credited)</p>
-                        <p class="font-black text-base text-teal-700">₦{{ formatMoney(filteredCustomerTxns.totalSales) }}</p>
-                    </div>
-                    <div class="bg-green-50 border border-green-100 rounded-lg p-3 text-center">
-                        <p class="text-[10px] font-bold text-green-500 uppercase mb-1">Total Received</p>
-                        <p class="font-black text-base text-green-700">₦{{ formatMoney(filteredCustomerTxns.totalPaid) }}</p>
+                <div class="grid grid-cols-3 gap-3">
+                    <div class="bg-blue-50 border border-blue-100 rounded-lg p-3 text-center">
+                        <p class="text-[10px] font-bold text-blue-500 uppercase mb-1">Total Purchased (In)</p>
+                        <p class="font-black text-lg text-blue-700">{{ filteredStockHistory.totalIn }} units</p>
                     </div>
                     <div class="bg-red-50 border border-red-100 rounded-lg p-3 text-center">
-                        <p class="text-[10px] font-bold text-red-500 uppercase mb-1">Customer Owes Us</p>
-                        <p class="font-black text-base text-red-600">₦{{ formatMoney(filteredCustomerTxns.outstanding) }}</p>
+                        <p class="text-[10px] font-bold text-red-500 uppercase mb-1">Total Sold (Out)</p>
+                        <p class="font-black text-lg text-red-600">{{ filteredStockHistory.totalOut }} units</p>
                     </div>
-                    <div class="bg-blue-50 border border-blue-100 rounded-lg p-3 text-center">
-                        <p class="text-[10px] font-bold text-blue-500 uppercase mb-1">Total Orders</p>
-                        <p class="font-black text-base text-blue-700">{{ filteredCustomerTxns.rows.length }}</p>
+                    <div class="bg-green-50 border border-green-100 rounded-lg p-3 text-center">
+                        <p class="text-[10px] font-bold text-green-500 uppercase mb-1">Current Balance</p>
+                        <p class="font-black text-lg text-green-700">{{ stockHistoryModal.product?.stock || 0 }} units</p>
                     </div>
                 </div>
-                <!-- Transactions table -->
+                <!-- Combined history table -->
                 <div class="bg-white rounded-lg border overflow-x-auto">
                     <table class="w-full text-left">
                         <thead class="bg-gray-50 text-xs font-bold uppercase text-gray-400 sticky top-0">
-                            <tr>
-                                <th class="p-3">Order Ref</th>
-                                <th class="p-3">Date</th>
-                                <th class="p-3">Items</th>
-                                <th class="p-3 text-right">Order Total (Credit)</th>
-                                <th class="p-3 text-right">Amount Paid</th>
-                                <th class="p-3 text-right">Customer Owes</th>
-                                <th class="p-3 text-right">Money Balance</th>
-                                <th class="p-3">Bank (From Customer → To Us)</th>
-                                <th class="p-3">Order Status</th>
-                                <th class="p-3">Payment</th>
-                            </tr>
+                            <tr><th class="p-3">Date & Time</th><th class="p-3">Type</th><th class="p-3">Reference</th><th class="p-3">Party</th><th class="p-3 text-center">Qty In</th><th class="p-3 text-center">Qty Out</th><th class="p-3">Unit Price</th><th class="p-3">Details</th></tr>
                         </thead>
                         <tbody class="text-sm divide-y divide-gray-100">
-                            <tr v-if="filteredCustomerTxns.rows.length===0"><td colspan="10" class="p-8 text-center text-gray-400 italic">No transactions found</td></tr>
-                            <tr v-for="(row, idx) in (customerTxnModal.showAll ? filteredCustomerTxns.rows : filteredCustomerTxns.rows.slice(0,15))" :key="idx" class="hover:bg-gray-50">
-                                <td class="p-3 font-mono text-xs text-[#00A09D] font-bold">{{ row.id }}</td>
-                                <td class="p-3 text-xs text-gray-500 whitespace-nowrap">{{ formatDate(row.created_at) }}</td>
-                                <td class="p-3 text-xs text-gray-700">
-                                    <div v-for="it in row.items" :key="it.name" class="leading-5">{{ it.name }} <span class="font-bold text-[#00A09D]">×{{ it.qty }}</span></div>
-                                </td>
-                                <!-- Credit to us (sale) -->
-                                <td class="p-3 text-right text-xs font-bold text-green-600">+ ₦{{ formatMoney(row.total) }}</td>
-                                <!-- Amount paid by customer -->
-                                <td class="p-3 text-right text-xs font-bold text-blue-700">₦{{ formatMoney(row.amountPaid||0) }}</td>
-                                <!-- What customer still owes -->
-                                <td class="p-3 text-right text-xs font-bold" :class="Math.max(0,row.total-(row.amountPaid||0))>0?'text-red-600':'text-gray-300'">
-                                    {{ Math.max(0,row.total-(row.amountPaid||0))>0 ? '₦'+formatMoney(Math.max(0,row.total-(row.amountPaid||0))) : '—' }}
-                                </td>
-                                <!-- Money balance: positive = they owe us -->
-                                <td class="p-3 text-right text-xs">
-                                    <span v-if="Math.max(0,row.total-(row.amountPaid||0))>0" class="font-black text-red-600">Owes ₦{{ formatMoney(Math.max(0,row.total-(row.amountPaid||0))) }}</span>
-                                    <span v-else class="font-bold text-green-600">Settled ✓</span>
-                                </td>
-                                <!-- Bank info -->
-                                <td class="p-3 text-xs text-gray-500">
-                                    <span v-if="row.bankName">
-                                        <span class="text-blue-600 font-bold">{{ row.bankFrom || row.bankName }}</span>
-                                        <span v-if="row.bankName" class="mx-0.5 text-gray-400">→</span>
-                                        <span class="text-gray-600">{{ row.bankName }}</span>
-                                    </span>
-                                    <span v-else-if="row.paymentMethod==='cash'" class="text-green-700 font-bold"><i class="fas fa-money-bill mr-1"></i>Cash</span>
-                                    <span v-else class="text-gray-300">—</span>
-                                </td>
-                                <td class="p-3"><span :class="row.status==='delivered'?'bg-green-100 text-green-700':row.status==='confirmed'?'bg-blue-100 text-blue-700':row.status==='partial_delivery'?'bg-orange-100 text-orange-700':'bg-gray-100 text-gray-600'" class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase">{{ row.status }}</span></td>
-                                <td class="p-3">
-                                    <span v-if="row.paymentStatus==='paid'" class="text-green-600 font-black text-xs flex items-center gap-1"><i class="fas fa-check-circle"></i> Paid</span>
-                                    <span v-else-if="row.paymentStatus==='partial'" class="text-blue-500 font-black text-xs flex items-center gap-1"><i class="fas fa-adjust"></i> Partial</span>
-                                    <span v-else-if="row.paymentStatus==='pending_confirmation'" class="text-orange-500 font-black text-xs flex items-center gap-1"><i class="fas fa-clock"></i> Pending</span>
-                                    <span v-else class="text-gray-400 text-xs flex items-center gap-1"><i class="fas fa-minus-circle"></i> Unpaid</span>
-                                </td>
+                            <tr v-if="filteredStockHistory.rows.length===0"><td colspan="8" class="p-8 text-center text-gray-400 italic">No history found for selected period</td></tr>
+                            <tr v-for="(row, idx) in (stockHistoryModal.showAll ? filteredStockHistory.rows : filteredStockHistory.rows.slice(0,5))" :key="idx" class="hover:bg-gray-50" :class="row.direction==='in'?'':'bg-red-50/30'">
+                                <td class="p-3 text-xs text-gray-500">{{ row.dateTime }}</td>
+                                <td class="p-3"><span class="text-[10px] font-black px-2 py-0.5 rounded-full uppercase" :class="row.direction==='in'?'bg-blue-100 text-blue-700':'bg-red-100 text-red-600'">{{ row.type }}</span></td>
+                                <td class="p-3 font-mono text-xs text-[#714B67] font-bold">{{ row.ref }}</td>
+                                <td class="p-3 text-xs text-gray-700">{{ row.party }}</td>
+                                <td class="p-3 text-center font-bold text-blue-700">{{ row.direction==='in' ? row.qty : '—' }}</td>
+                                <td class="p-3 text-center font-bold text-red-600">{{ row.direction==='out' ? row.qty : '—' }}</td>
+                                <td class="p-3 text-xs text-gray-600">{{ row.unitPrice ? '₦'+formatMoney(row.unitPrice) : '—' }}</td>
+                                <td class="p-3 text-xs text-gray-500">{{ row.details }}</td>
                             </tr>
                         </tbody>
                     </table>
-                    <div v-if="filteredCustomerTxns.rows.length > 15" class="p-3 border-t text-center">
-                        <button @click="customerTxnModal.showAll=!customerTxnModal.showAll" class="text-xs font-bold text-[#00A09D] hover:underline">
-                            {{ customerTxnModal.showAll ? '↑ Show Less' : '↓ Load More (' + (filteredCustomerTxns.rows.length - 15) + ' more)' }}
+                    <div v-if="filteredStockHistory.rows.length > 5" class="p-3 border-t text-center">
+                        <button @click="stockHistoryModal.showAll = !stockHistoryModal.showAll" class="text-xs font-bold text-[#714B67] hover:underline">
+                            {{ stockHistoryModal.showAll ? '↑ Show Less' : '↓ View More (' + (filteredStockHistory.rows.length - 5) + ' more)' }}
                         </button>
                     </div>
                 </div>
@@ -4415,9 +3780,7 @@ createApp({
             sendMoneyModal: { show: false, supplierName: '', amount: 0, paymentMethod: 'bank', selectedBank: '', bankFrom: '', bankTo: '', accountNumber: '', reference: '', notes: '', error: '' },
             debtCardModal: { show: false, selectedSupplier: null },
             addBankModal: { show: false, name: '', accountNumber: '', openingBalance: 0, error: '' },
-            stockHistoryModal: { show: false, product: null, dateFrom: '', dateTo: '', showAll: false, sortBy: 'date_new', filterType: '', filterParty: '', viewMonth: '' },
-            supplierTxnModal: { show: false, supplier: null, dateFrom: '', dateTo: '', search: '', sortBy: 'date_new', statusFilter: '', showAll: false },
-            customerTxnModal: { show: false, customer: null, dateFrom: '', dateTo: '', search: '', sortBy: 'date_new', statusFilter: '', showAll: false },
+            stockHistoryModal: { show: false, product: null, dateFrom: '', dateTo: '', showAll: false },
             bankStmt: { showCount: 5 },
             cashStmt: { showCount: 5 },
             bankStmtMonth: new Date().toISOString().slice(0,7), // default to current month e.g. "2026-04"
@@ -4601,202 +3964,35 @@ createApp({
 
         filteredStockHistory() {
             const p = this.stockHistoryModal.product;
-            if (!p) return { rows: [], totalIn: 0, totalOut: 0, totalDebit: 0, totalCredit: 0, months: [] };
-            const m = this.stockHistoryModal;
-
-            // ---- Build date range ----
-            let dfInt = 0, dtInt = 99999999;
-            if (m.viewMonth) {
-                const [vy, vmo] = m.viewMonth.split('-').map(Number);
-                dfInt = parseInt(m.viewMonth.replace('-','') + '01');
-                dtInt = parseInt(m.viewMonth.replace('-','') + String(new Date(vy, vmo, 0).getDate()).padStart(2,'0'));
-            } else {
-                if (m.dateFrom) dfInt = parseInt(m.dateFrom.replace(/-/g,''));
-                if (m.dateTo)   dtInt = parseInt(m.dateTo.replace(/-/g,''));
-            }
-            const inRange = d => { const v = parseInt((d||'').slice(0,10).replace(/-/g,'')||'0'); return v >= dfInt && v <= dtInt; };
-
-            // ---- 1. Collect ALL rows (full history, no date filter yet) ----
-            const allRows = [];
-
-            // PURCHASES IN — one ledger row per receiving event
+            if (!p) return { rows: [], totalIn: 0, totalOut: 0 };
+            const df = this.stockHistoryModal.dateFrom ? parseInt(this.stockHistoryModal.dateFrom.replace(/-/g,'')) : 0;
+            const dt = this.stockHistoryModal.dateTo ? parseInt(this.stockHistoryModal.dateTo.replace(/-/g,'')) : 99999999;
+            const inRange = (d) => { const v = parseInt((d||'').slice(0,10).replace(/-/g,'')); return v >= df && v <= dt; };
+            const rows = [];
+            // Purchases IN
             this.purchases.forEach(po => {
-                if (!po.items.some(i => i.name === p.name)) return;
-                const item = po.items.find(i => i.name === p.name);
-                if (!item) return;
-
-                // Bank info
-                let bankFrom = '', bankTo = '';
-                if (po.bankRows && po.bankRows.length > 0) {
-                    bankFrom = po.bankRows.map(r => r.bankName).filter(Boolean).join(', ');
-                    bankTo   = po.bankRows.map(r => r.bankTo || r.accountName || '').filter(Boolean).join(', ');
-                } else if (po.paymentRecords && po.paymentRecords.length > 0) {
-                    const pr = po.paymentRecords[0];
-                    if (pr.bankRows && pr.bankRows.length > 0) {
-                        bankFrom = pr.bankRows.map(r => r.bankName).filter(Boolean).join(', ');
-                        bankTo   = pr.bankRows.map(r => r.bankTo || r.accountName || '').filter(Boolean).join(', ');
-                    } else { bankFrom = pr.bankFrom || pr.bankName || ''; bankTo = pr.bankTo || ''; }
-                }
-
-                // Money amounts for this PO (for the specific item, proportional if multi-item)
-                const itemShare = po.items.length > 1 ? (item.price * item.qty) / (po.amount || 1) : 1;
-                const poAmountForItem   = item.price * item.qty;         // what we should pay for this item
-                const poPaidForItem     = (po.totalAmountPaid || 0) * (po.items.length === 1 ? 1 : itemShare); // what we actually paid
-                const poOutstanding     = Math.max(0, poAmountForItem - poPaidForItem);
-                const poOverpaid        = Math.max(0, poPaidForItem - poAmountForItem);
-
                 (po.receivingHistory || []).forEach(rh => {
-                    const rowDate    = rh.arrivalDate || rh.date || po.date || '';
-                    const expected   = rh.expectedQty != null ? rh.expectedQty : item.qty;
-                    const received   = rh.receivedQty || 0;
-                    const varQ       = rh.varianceQty != null ? rh.varianceQty : (received - expected);
-                    const qtyStatus  = varQ > 0 ? 'over' : varQ < 0 ? 'short' : 'exact';
-                    const lineDebit  = received * (item.price || 0);   // cost of goods received
-
-                    allRows.push({
-                        direction:   'in',
-                        type:        'PURCHASE',
-                        ref:         po.id,
-                        party:       po.source,
-                        // Qty columns
-                        qtyOrdered:  item.qty,
-                        qtyExpected: expected,
-                        qty:         received,
-                        qtyVariance: varQ,
-                        qtyStatus,
-                        // remaining qty balance vs original PO order
-                        qtyPoBalance: item.qty - ((po.receivingHistory||[]).reduce((s,r)=>s+r.receivedQty,0)),
-                        // Money columns (our perspective — debit = money out)
-                        unitPrice:   item.price || 0,
-                        lineDebit,               // debit: cost of what arrived
-                        lineCredit:  0,          // no credit on purchase
-                        poOrdered:   poAmountForItem,
-                        poPaid:      poPaidForItem,
-                        poOutstanding,
-                        poOverpaid,
-                        // Meta
-                        date:        rowDate,
-                        dateDisplay: this.formatDate(rowDate),
-                        staffName:   rh.receivedBy || '',
-                        staffId:     rh.receivedById || '',
-                        bankFrom, bankTo,
-                        notes:       rh.notes || ''
-                    });
+                    if (!po.items.some(i => i.name === p.name)) return;
+                    if (!inRange(rh.date)) return;
+                    const item = po.items.find(i => i.name === p.name);
+                    const statusLabel = rh.status === 'over' ? 'PURCHASE (OVER)' : rh.status === 'short' ? 'PURCHASE (SHORT)' : 'PURCHASE';
+                    rows.push({ direction: 'in', type: statusLabel, ref: po.id, party: po.source, qty: rh.receivedQty, unitPrice: item?.price, dateTime: rh.dateTime ? new Date(rh.dateTime).toLocaleString() : this.formatDate(rh.date), date: rh.date, details: `Received by ${rh.receivedBy||'—'}${rh.varianceQty ? ' | Variance: ' + (rh.varianceQty>0?'+':'') + rh.varianceQty : ''}${rh.notes?' | '+rh.notes:''}` });
                 });
             });
-
-            // SALES OUT — one ledger row per order (delivery)
+            // Sales OUT
             this.orders.forEach(o => {
                 o.items.forEach(it => {
                     if (it.name !== p.name) return;
-                    const orderedQty   = it.qty || 0;
-                    const deliveredQty = (it.deliveredQty != null && it.deliveredQty > 0)
-                        ? it.deliveredQty
-                        : ((o.status === 'delivered' || o.status === 'partial_delivery') ? orderedQty : 0);
+                    if (!inRange(o.created_at)) return;
+                    const deliveredQty = it.deliveredQty !== undefined ? it.deliveredQty : (o.status === 'delivered' ? it.qty : 0);
                     if (deliveredQty <= 0) return;
-
-                    const unitPrice  = orderedQty > 0 ? (it.amount / orderedQty) : (it.unitPrice || 0);
-                    const lineCredit = deliveredQty * unitPrice;    // revenue from goods delivered
-                    const orderTotal = it.amount || lineCredit;
-                    const amtPaid    = o.amountPaid || 0;           // total paid on the whole order
-                    // Proportion this item's share of payment
-                    const orderItemRatio = o.total > 0 ? orderTotal / o.total : 1;
-                    const itemPaid  = amtPaid * orderItemRatio;
-                    const itemOwed  = Math.max(0, lineCredit - itemPaid);   // customer still owes us
-                    const itemOverpaid = Math.max(0, itemPaid - lineCredit); // we owe customer
-
-                    const varQ       = deliveredQty - orderedQty;
-                    const qtyStatus  = varQ > 0 ? 'over' : varQ < 0 ? 'short' : 'exact';
-                    let bankFrom = '', bankTo = '';
-                    if (o.paymentMethod === 'bank') { bankFrom = o.bankFrom || ''; bankTo = o.bankName || ''; }
-
-                    allRows.push({
-                        direction:   'out',
-                        type:        'SALE',
-                        ref:         o.id,
-                        party:       o.customerName || o.customer || '',
-                        // Qty columns
-                        qtyOrdered:  orderedQty,
-                        qtyExpected: orderedQty,
-                        qty:         deliveredQty,
-                        qtyVariance: varQ,
-                        qtyStatus,
-                        qtyPoBalance: deliveredQty - orderedQty,  // +over, -short
-                        // Money columns (our perspective — credit = money in)
-                        unitPrice,
-                        lineDebit:   0,          // no debit on sale
-                        lineCredit,              // credit: revenue from delivery
-                        poOrdered:   orderTotal, // order value
-                        poPaid:      itemPaid,   // what customer paid (this item's share)
-                        poOutstanding: itemOwed, // customer still owes us (positive = they owe)
-                        poOverpaid:  itemOverpaid, // we owe customer (positive = we owe)
-                        // Meta
-                        date:        o.created_at || '',
-                        dateDisplay: this.formatDate(o.created_at),
-                        staffName:   o.confirmedBy || '',
-                        staffId:     o.confirmedById || '',
-                        bankFrom, bankTo,
-                        notes:       `Pay status: ${o.paymentStatus} | Paid ₦${this.formatMoney(amtPaid)} of ₦${this.formatMoney(o.total)}`
-                    });
+                    rows.push({ direction: 'out', type: 'SALE', ref: o.id, party: o.customerName || o.customer, qty: deliveredQty, unitPrice: it.amount / (it.qty || 1), dateTime: this.formatDate(o.created_at), date: o.created_at, details: `Status: ${o.status} | Payment: ${o.paymentStatus}${o.confirmedBy?' | Confirmed by '+o.confirmedBy:''}` });
                 });
             });
-
-            // ---- 2. Sort ALL rows oldest→newest, compute running balances ----
-            allRows.sort((a, b) => (a.date||'').localeCompare(b.date||''));
-
-            let runQty = 0, runMoney = 0;
-            allRows.forEach(r => {
-                if (r.direction === 'in') {
-                    runQty   += r.qty;
-                    runMoney -= r.lineDebit;   // debit: money we paid out
-                } else {
-                    runQty   -= r.qty;
-                    runMoney += r.lineCredit;  // credit: money we received
-                }
-                r.runningQty   = runQty;
-                r.runningMoney = runMoney;
-            });
-
-            // ---- 3. Monthly summary (from all rows before filtering) ----
-            const monthMap = {};
-            const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-            allRows.forEach(r => {
-                const mo = (r.date||'').slice(0,7);
-                if (!mo || mo.length < 7) return;
-                if (!monthMap[mo]) {
-                    const [yr, mn] = mo.split('-');
-                    monthMap[mo] = { label: (MONTHS[parseInt(mn)-1]||mn)+' '+yr, totalIn:0, totalOut:0, debit:0, credit:0, opening:0, closing:0, net:0 };
-                }
-                if (r.direction === 'in') { monthMap[mo].totalIn += r.qty; monthMap[mo].debit += r.lineDebit; }
-                else                      { monthMap[mo].totalOut += r.qty; monthMap[mo].credit += r.lineCredit; }
-            });
-            const monthKeys = Object.keys(monthMap).sort();
-            monthKeys.forEach(mk => {
-                // Opening stock = runningQty of the last row BEFORE this month
-                const firstInMonth = allRows.findIndex(r => (r.date||'').startsWith(mk));
-                monthMap[mk].opening = firstInMonth > 0 ? allRows[firstInMonth - 1].runningQty : 0;
-                monthMap[mk].closing = monthMap[mk].opening + monthMap[mk].totalIn - monthMap[mk].totalOut;
-                monthMap[mk].net     = monthMap[mk].credit - monthMap[mk].debit;
-            });
-            const months = monthKeys.map(k => monthMap[k]).reverse(); // newest month first
-
-            // ---- 4. Apply display filters ----
-            let rows = allRows.slice().reverse(); // newest first
-            if (m.filterType)  rows = rows.filter(r => r.direction === m.filterType);
-            if (m.filterParty) rows = rows.filter(r => r.party === m.filterParty);
-            if (dfInt > 0 || dtInt < 99999999) rows = rows.filter(r => inRange(r.date));
-
-            if (m.sortBy === 'date_old') rows.sort((a,b)=>(a.date||'').localeCompare(b.date||''));
-            else if (m.sortBy === 'date_new') rows.sort((a,b)=>(b.date||'').localeCompare(a.date||''));
-            else if (m.sortBy === 'qty_high') rows.sort((a,b)=>b.qty - a.qty);
-            else if (m.sortBy === 'qty_low')  rows.sort((a,b)=>a.qty - b.qty);
-
-            const totalIn     = rows.filter(r=>r.direction==='in').reduce((s,r)=>s+r.qty,0);
-            const totalOut    = rows.filter(r=>r.direction==='out').reduce((s,r)=>s+r.qty,0);
-            const totalDebit  = rows.filter(r=>r.direction==='in').reduce((s,r)=>s+r.lineDebit,0);
-            const totalCredit = rows.filter(r=>r.direction==='out').reduce((s,r)=>s+r.lineCredit,0);
-
-            return { rows, totalIn, totalOut, totalDebit, totalCredit, months };
+            rows.sort((a, b) => (b.date||'').localeCompare(a.date||''));
+            const totalIn = rows.filter(r => r.direction === 'in').reduce((s, r) => s + r.qty, 0);
+            const totalOut = rows.filter(r => r.direction === 'out').reduce((s, r) => s + r.qty, 0);
+            return { rows, totalIn, totalOut };
         },
         orderLinesTotal() {
             if (!this.form.orderLines) return 0;
@@ -5041,52 +4237,6 @@ createApp({
             else if (f.sort === 'customer') result.sort((a,b) => (a.customerName||a.customer||'').localeCompare(b.customerName||b.customer||''));
             return result;
         },
-        // ---- Supplier Transaction Modal Computed ----
-        filteredSupplierTxns() {
-            const m = this.supplierTxnModal;
-            if (!m.supplier) return { rows: [], totalPurchased: 0, totalPaid: 0, weOwe: 0, theyOwe: 0 };
-            let rows = this.purchases.filter(p => p.source === m.supplier.name);
-            if (m.search) {
-                const q = m.search.toLowerCase();
-                rows = rows.filter(p => p.id.toLowerCase().includes(q) || p.items.some(i => i.name.toLowerCase().includes(q)));
-            }
-            if (m.statusFilter) rows = rows.filter(p => p.status === m.statusFilter);
-            if (m.dateFrom) { const df = parseInt(m.dateFrom.replace(/-/g,'')); rows = rows.filter(p => parseInt((p.date||'').replace(/-/g,'')) >= df); }
-            if (m.dateTo) { const dt = parseInt(m.dateTo.replace(/-/g,'')); rows = rows.filter(p => parseInt((p.date||'').replace(/-/g,'')) <= dt); }
-            if (m.sortBy === 'date_new') rows.sort((a,b) => String(b.date).localeCompare(String(a.date)));
-            else if (m.sortBy === 'date_old') rows.sort((a,b) => String(a.date).localeCompare(String(b.date)));
-            else if (m.sortBy === 'amount_high') rows.sort((a,b) => b.amount - a.amount);
-            else if (m.sortBy === 'amount_low') rows.sort((a,b) => a.amount - b.amount);
-            const totalPurchased = rows.reduce((s,p) => s + p.amount, 0);
-            const totalPaid = rows.reduce((s,p) => s + (p.totalAmountPaid||0), 0);
-            const weOwe = rows.reduce((s,p) => s + (p.outstandingBalance||0), 0);
-            const theyOwe = rows.reduce((s,p) => s + (p.supplierCredit||0), 0);
-            return { rows, totalPurchased, totalPaid, weOwe, theyOwe };
-        },
-
-        // ---- Customer Transaction Modal Computed ----
-        filteredCustomerTxns() {
-            const m = this.customerTxnModal;
-            if (!m.customer) return { rows: [], totalSales: 0, totalPaid: 0, outstanding: 0 };
-            const custId = m.customer.customerId;
-            let rows = this.orders.filter(o => o.customerId === custId);
-            if (m.search) {
-                const q = m.search.toLowerCase();
-                rows = rows.filter(o => o.id.toLowerCase().includes(q) || o.items.some(i => i.name.toLowerCase().includes(q)));
-            }
-            if (m.statusFilter) rows = rows.filter(o => o.paymentStatus === m.statusFilter);
-            if (m.dateFrom) { const df = parseInt(m.dateFrom.replace(/-/g,'')); rows = rows.filter(o => parseInt((o.created_at||'').slice(0,10).replace(/-/g,'')) >= df); }
-            if (m.dateTo) { const dt = parseInt(m.dateTo.replace(/-/g,'')); rows = rows.filter(o => parseInt((o.created_at||'').slice(0,10).replace(/-/g,'')) <= dt); }
-            if (m.sortBy === 'date_new') rows.sort((a,b) => String(b.created_at).localeCompare(String(a.created_at)));
-            else if (m.sortBy === 'date_old') rows.sort((a,b) => String(a.created_at).localeCompare(String(b.created_at)));
-            else if (m.sortBy === 'amount_high') rows.sort((a,b) => b.total - a.total);
-            else if (m.sortBy === 'amount_low') rows.sort((a,b) => a.total - b.total);
-            const totalSales = rows.reduce((s,o) => s + o.total, 0);
-            const totalPaid = rows.reduce((s,o) => s + (o.amountPaid||0), 0);
-            const outstanding = rows.reduce((s,o) => s + Math.max(0, o.total - (o.amountPaid||0)), 0);
-            return { rows, totalSales, totalPaid, outstanding };
-        },
-
         // ---- Expenses Filters & Sort ----
         filteredExpenses() {
             let result = this.expenses.slice();
@@ -6028,48 +5178,45 @@ td{padding:10px 12px;border-bottom:1px solid #f0f0f0;}
             doc.save('ExpenseReport-' + this.localDateStr() + '.pdf');
         },
                 openStaffPaymentModal(order) {
-            this.staffPayModal = { show: true, order, mode: 'bank', selectedBank: this.banks[0]?.name || '', bankAmount: Math.max(0, order.total - (order.amountPaid||0)), cashAmount: 0, balanceAmount: 0, useBalance: false, reference: order.id + '-PAY', bankFrom: '', bankTo: '', accountName: '', accountNumber: '' };
+            this.staffPayModal = { show: true, order, mode: 'bank', selectedBank: this.banks[0]?.name || '', bankAmount: Math.max(0, order.total - (order.amountPaid||0)), cashAmount: 0, reference: order.id + '-PAY', bankFrom: '', bankTo: '', accountName: '', accountNumber: '' };
         },
         submitStaffPayment() {
-            const o = this.staffPayModal.order;
-            const bankAmt = Number(this.staffPayModal.bankAmount)||0;
-            const cashAmt = Number(this.staffPayModal.cashAmount)||0;
-            const balAmt  = Number(this.staffPayModal.balanceAmount)||0;
-            const totalPaying = bankAmt + cashAmt + balAmt;
+            const o = this.staffPayModal.order; const bankAmt = Number(this.staffPayModal.bankAmount)||0; const cashAmt = Number(this.staffPayModal.cashAmount)||0; const totalPaying = bankAmt + cashAmt;
             const remaining = Math.max(0, o.total - (o.amountPaid||0));
             if (totalPaying <= 0) { alert('Enter a payment amount'); return; }
+            if (totalPaying > remaining + 0.01) { alert('Payment exceeds outstanding balance of ₦' + this.formatMoney(remaining)); return; }
             if ((this.staffPayModal.mode === 'bank' || this.staffPayModal.mode === 'mixed') && bankAmt > 0 && !this.staffPayModal.selectedBank) { alert('Please select a bank'); return; }
-            const newPaid = (o.amountPaid||0) + totalPaying;
-            const newOutstanding = Math.max(0, o.total - newPaid);
+            const newPaid = (o.amountPaid||0) + totalPaying; const newOutstanding = Math.max(0, o.total - newPaid);
             const date = this.localDateStr();
-            o.amountPaid = newPaid;
-            o.paymentMethod = this.staffPayModal.mode;
-            o.bankName = this.staffPayModal.mode !== 'cash' && this.staffPayModal.mode !== 'balance' ? this.staffPayModal.selectedBank : '';
-            o.bankFrom = this.staffPayModal.bankFrom||'';
-            o.bankTo = this.staffPayModal.selectedBank||'';
-            o.accountName = this.staffPayModal.accountName||'';
-            o.accountNumber = this.staffPayModal.accountNumber||'';
-            o.paymentRef = this.staffPayModal.reference || (o.id+'-PAY');
-            o.paymentDate = date;
+            o.amountPaid = newPaid; o.paymentMethod = this.staffPayModal.mode; o.bankName = this.staffPayModal.mode !== 'cash' ? this.staffPayModal.selectedBank : ''; o.bankFrom = this.staffPayModal.bankFrom||''; o.bankTo = this.staffPayModal.bankTo||''; o.accountName = this.staffPayModal.accountName||''; o.accountNumber = this.staffPayModal.accountNumber||''; o.paymentRef = this.staffPayModal.reference || (o.id+'-PAY'); o.paymentDate = date;
+            // Record who confirmed
             o.confirmedBy = this.session?.fullname || '';
             o.confirmedById = this.session?.username || '';
             o.confirmedAt = date;
-            if (newOutstanding <= 0.01) {
-                o.paymentStatus = 'paid'; o.status = 'confirmed'; o.amountPaid = o.total;
-                o.items.forEach(it => { const p = this.products.find(x=>x.name===it.name); if (p) p.stock = Math.max(0, p.stock - it.qty); });
-            } else { o.paymentStatus = 'partial'; o.status = 'confirmed'; }
-            // Ledger entries
-            if (bankAmt > 0) this.bankLedger.push({ date, ref: o.id, customerName: o.customerName, description: 'Bank payment - '+o.customerName, amount: bankAmt, method: 'bank', bankName: this.staffPayModal.selectedBank, bankFrom: this.staffPayModal.bankFrom||'', bankTo: this.staffPayModal.selectedBank||'', accountName: this.staffPayModal.accountName||'', accountNumber: this.staffPayModal.accountNumber||'', runningBalance: 0 });
+            if (newOutstanding <= 0.01) { o.paymentStatus = 'paid'; o.status = 'confirmed'; o.amountPaid = o.total; o.items.forEach(it => { const p = this.products.find(x => x.name === it.name); if (p) p.stock = Math.max(0, p.stock - it.qty); }); } else { o.paymentStatus = 'partial'; o.status = 'confirmed'; }
+            if (bankAmt > 0) this.bankLedger.push({ date, ref: o.id, customerName: o.customerName, description: 'Bank payment - '+o.customerName, amount: bankAmt, method: 'bank', bankName: this.staffPayModal.selectedBank, bankFrom: this.staffPayModal.bankFrom||'', bankTo: this.staffPayModal.bankTo||'', accountName: this.staffPayModal.accountName||'', accountNumber: this.staffPayModal.accountNumber||'', runningBalance: 0 });
             if (cashAmt > 0) this.bankLedger.push({ date, ref: o.id, customerName: o.customerName, description: 'Cash payment - '+o.customerName, amount: cashAmt, method: 'cash', bankName: '', runningBalance: 0 });
-            if (balAmt > 0)  this.bankLedger.push({ date, ref: o.id, customerName: o.customerName, description: 'Balance payment - '+o.customerName, amount: balAmt, method: 'balance', bankName: '', runningBalance: 0 });
-            // Transaction record
+            // Update the existing pending_confirmation transaction if it exists, otherwise push a new one
             const existingPending = this.transactions.find(t => t.ref === o.id && t.type === 'pending_confirmation');
             const finalType = newOutstanding <= 0.01 ? 'payment' : 'partial_payment';
-            const txnData = { type: finalType, amount: totalPaying, date, method: o.paymentMethod, bankName: o.bankName, bankFrom: o.bankFrom||'', accountName: o.accountName||'', outstanding: newOutstanding, confirmedBy: this.session?.fullname, confirmedById: this.session?.username, description: 'Payment confirmed for '+(o.items[0]?.name||'order') };
-            if (existingPending) { Object.assign(existingPending, txnData); }
-            else { this.transactions.push({ id: 'TXN'+String(this.transactions.length+1).padStart(3,'0'), customerId: o.customerId, ref: o.id, ...txnData }); }
-            this.notifs.unshift({ title: 'Payment Recorded', msg: '₦'+this.formatMoney(totalPaying)+' for '+o.id+(newOutstanding>0?' | Balance: ₦'+this.formatMoney(newOutstanding):' | FULLY PAID!') });
-            this.staffPayModal = { show: false, order: null, mode: 'bank', selectedBank: this.banks[0]?.name||'', bankAmount: 0, cashAmount: 0, balanceAmount: 0, useBalance: false, reference: '', bankFrom: '', bankTo: '', accountName: '', accountNumber: '' };
+            if (existingPending) {
+                existingPending.type = finalType;
+                existingPending.amount = totalPaying;
+                existingPending.date = date;
+                existingPending.method = o.paymentMethod;
+                existingPending.bankName = o.bankName;
+                existingPending.bankFrom = o.bankFrom || '';
+                existingPending.accountName = o.accountName || '';
+                existingPending.outstanding = newOutstanding;
+                existingPending.confirmedBy = this.session?.fullname || '';
+                existingPending.confirmedById = this.session?.username || '';
+                existingPending.description = 'Payment confirmed for ' + (o.items[0]?.name || 'order');
+            } else {
+                const txnId = 'TXN' + String(this.transactions.length + 1).padStart(3, '0');
+                this.transactions.push({ id: txnId, customerId: o.customerId, ref: o.id, description: 'Payment confirmed for ' + (o.items[0]?.name || 'order'), amount: totalPaying, date, type: finalType, method: o.paymentMethod, bankName: o.bankName, bankFrom: o.bankFrom || '', accountName: o.accountName || '', outstanding: newOutstanding, confirmedBy: this.session?.fullname, confirmedById: this.session?.username });
+            }
+            this.notifs.unshift({ title: 'Payment Recorded', msg: '₦'+this.formatMoney(totalPaying)+' recorded for '+o.id+(newOutstanding>0?' | Balance: ₦'+this.formatMoney(newOutstanding):' | FULLY PAID!') });
+            this.staffPayModal = { show: false, order: null, mode: 'bank', selectedBank: this.banks[0]?.name || '', bankAmount: 0, cashAmount: 0, reference: '', bankFrom: '', bankTo: '', accountName: '', accountNumber: '' };
             this.checkStockAlerts();
         },
         setInitialCash() {
@@ -6366,33 +5513,20 @@ ${receivingHistoryHTML}
             }
         },
 
-        // ---- Supplier Transaction Modal ----
-        openSupplierTxnModal(supplier) {
-            this.supplierTxnModal = { show: true, supplier, dateFrom: '', dateTo: '', search: '', sortBy: 'date_new', statusFilter: '', showAll: false };
-        },
-
-        // ---- Customer Transaction Modal ----
-        openCustomerTxnModal(customer) {
-            this.customerTxnModal = { show: true, customer, dateFrom: '', dateTo: '', search: '', sortBy: 'date_new', statusFilter: '', showAll: false };
-        },
-
         // ---- Purchase Receiving (Flexible/Partial) ----
         openPurchaseReceiving(purchase) {
             this.purchaseMenu.purchaseId = null;
-            this.purchaseReceivingModal = { show: true, purchase: { ...purchase }, quantityReceived: 0, notes: '', arrivalDate: this.localDateStr() };
+            this.purchaseReceivingModal = { show: true, purchase: { ...purchase }, quantityReceived: 0, notes: '' };
         },
         submitFullReceiving(purchase) {
             const p = this.purchases.find(x => x.id === purchase.id);
             if (!p) return;
             const originalQty = p.items[0]?.qty || 0;
             const unitPrice = p.items[0]?.price || 0;
-            const today = this.localDateStr();
-            const receiving = { date: today, arrivalDate: today, recordedAt: today, dateTime: new Date().toISOString(), receivedQty: originalQty, expectedQty: originalQty, varianceQty: 0, varianceAmt: 0, balance: 0, status: 'exact', notes: 'Full receiving', receivedBy: this.session?.fullname || '', receivedById: this.session?.username || '' };
+            const receiving = { date: this.localDateStr(), dateTime: new Date().toISOString(), receivedQty: originalQty, expectedQty: originalQty, varianceQty: 0, varianceAmt: 0, balance: 0, status: 'exact', notes: 'Full receiving', receivedBy: this.session?.fullname || '', receivedById: this.session?.username || '' };
             if (!p.receivingHistory) p.receivingHistory = [];
             p.receivingHistory.push(receiving);
             p.status = 'arrived';
-            p.arrivalDate = today;
-            p.lastArrivalDate = today;
             p.items[0].receivedQty = originalQty;
             const itemName = p.items[0]?.name;
             if (itemName) {
@@ -6400,7 +5534,7 @@ ${receivingHistoryHTML}
                 if (prod) { prod.stock = (prod.stock || 0) + originalQty; }
             }
             this.purchaseMenu.purchaseId = null;
-            this.notifs.unshift({ title: 'Stock Updated ✓', msg: `${p.id}: ${originalQty} units fully received on ${this.formatDate(today)} by ${this.session?.fullname} — stock updated` });
+            this.notifs.unshift({ title: 'Stock Updated ✓', msg: `${p.id}: ${originalQty} units fully received by ${this.session?.fullname} — stock updated` });
             this.checkStockAlerts();
         },
         submitPurchaseReceiving() {
@@ -6408,7 +5542,6 @@ ${receivingHistoryHTML}
             const p = this.purchases.find(x => x.id === m.purchase.id);
             if (!p) return;
             if (m.quantityReceived <= 0) { alert('Enter quantity received'); return; }
-            if (!m.arrivalDate) { alert('Please select the date of arrival'); return; }
             
             const totalPreviouslyReceived = (p.receivingHistory || []).reduce((sum, r) => sum + r.receivedQty, 0);
             const originalQty = p.items[0]?.qty || 0;
@@ -6426,10 +5559,8 @@ ${receivingHistoryHTML}
             else if (varianceQty < 0) receiveStatus = 'short';
             
             const receiving = {
-                date: m.arrivalDate,
+                date: this.localDateStr(),
                 dateTime: new Date().toISOString(),
-                arrivalDate: m.arrivalDate,
-                recordedAt: this.localDateStr(),
                 receivedQty: m.quantityReceived,
                 expectedQty: expectedNow,
                 varianceQty,
@@ -6442,9 +5573,6 @@ ${receivingHistoryHTML}
             };
             if (!p.receivingHistory) p.receivingHistory = [];
             p.receivingHistory.push(receiving);
-            // Store arrival date on purchase itself
-            if (!p.arrivalDate) p.arrivalDate = m.arrivalDate;
-            p.lastArrivalDate = m.arrivalDate;
             
             // Order status: 'over' or 'arrived' if total >= ordered, 'partial' otherwise
             if (totalNowReceived >= originalQty) {
@@ -6462,11 +5590,11 @@ ${receivingHistoryHTML}
                 else { this.products.push({ name: itemName, category: 'General', stock: m.quantityReceived, unit: 'units', price: unitPrice }); }
             }
             const stockItem = this.stock.find(s => s.name === itemName);
-            if (stockItem) { stockItem.quantity = (stockItem.quantity || 0) + m.quantityReceived; stockItem.lastUpdated = m.arrivalDate; }
-            else if (itemName) { this.stock.push({ name: itemName, quantity: m.quantityReceived, unit: 'units', lastUpdated: m.arrivalDate, source: p.source }); }
+            if (stockItem) { stockItem.quantity = (stockItem.quantity || 0) + m.quantityReceived; stockItem.lastUpdated = this.localDateStr(); }
+            else if (itemName) { this.stock.push({ name: itemName, quantity: m.quantityReceived, unit: 'units', lastUpdated: this.localDateStr(), source: p.source }); }
             
             const statusLabel = receiveStatus === 'over' ? `OVER by +${varianceQty} (₦${this.formatMoney(Math.abs(varianceAmt))})` : receiveStatus === 'short' ? `SHORT by ${Math.abs(varianceQty)} (₦${this.formatMoney(Math.abs(varianceAmt))})` : 'EXACT';
-            this.notifs.unshift({ title: 'Receiving Recorded', msg: `${p.id}: ${m.quantityReceived} units arrived on ${this.formatDate(m.arrivalDate)} | Received by ${this.session?.fullname} — ${statusLabel}` });
+            this.notifs.unshift({ title: 'Receiving Recorded', msg: `${p.id}: ${m.quantityReceived} units received by ${this.session?.fullname} — ${statusLabel}` });
             m.show = false;
         },
 
