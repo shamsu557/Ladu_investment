@@ -620,7 +620,7 @@ input[type=number].no-spinner {
                 <a href="#" @click.prevent="view = 'dashboard'; sidebarOpen = false" :class="navClass('dashboard')"><i class="fas fa-th-large w-8 text-center"></i> Dashboard</a>
                 <a v-if="['Admin','Store'].includes(session.role)" href="#" @click.prevent="view = 'purchases'; sidebarOpen = false" :class="navClass('purchases')"><i class="fas fa-shopping-bag w-8 text-center"></i> Purchases</a>
                 <a v-if="['Admin','Store'].includes(session.role)" href="#" @click.prevent="view = 'inventory'; sidebarOpen = false" :class="navClass('inventory')"><i class="fas fa-boxes w-8 text-center"></i> Stock</a>
-                <a v-if="['Admin','Sales'].includes(session.role)" href="#" @click.prevent="view = 'sales'; sidebarOpen = false" :class="navClass('sales')"><i class="fas fa-cash-register w-8 text-center"></i> Sales / Point of Sale</a>
+                <a v-if="['Admin','Sales'].includes(session.role)" href="#" @click.prevent="view = 'sales'; sidebarOpen = false" :class="navClass('sales')"><i class="fas fa-shopping-cart w-8 text-center"></i> Sales Orders</a>
                 <a v-if="['Admin','Sales'].includes(session.role)" href="#" @click.prevent="view = 'customers'; sidebarOpen = false" :class="navClass('customers')"><i class="fas fa-address-book w-8 text-center"></i> Customers</a>
                 <a v-if="session.role === 'Admin'" href="#" @click.prevent="view = 'financials'; sidebarOpen = false" :class="navClass('financials')"><i class="fas fa-landmark w-8 text-center"></i> Financial</a>
                 <a v-if="session.role === 'Admin'" href="#" @click.prevent="view = 'suppliers'; sidebarOpen = false" :class="navClass('suppliers')"><i class="fas fa-truck w-8 text-center"></i> Suppliers</a>
@@ -1250,7 +1250,7 @@ input[type=number].no-spinner {
                 <div v-if="view === 'sales'" class="space-y-4">
                     <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
                         <div class="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
-                            <h3 class="font-bold text-gray-700">Sales Orders / Point of Sale Pipeline</h3>
+                            <h3 class="font-bold text-gray-700">Sales Orders Pipeline</h3>
                             <div class="flex gap-2 flex-wrap w-full sm:w-auto">
                                 <div class="relative flex-1 sm:flex-initial">
                                     <i class="fas fa-search absolute left-3 top-2.5 text-gray-400 text-sm"></i>
@@ -1541,9 +1541,7 @@ input[type=number].no-spinner {
                                             <div class="flex justify-center gap-1 flex-wrap">
                                                 <button @click="viewCustomerHistory(c)" class="text-xs bg-[#714B67] hover:bg-[#5a3a52] text-white px-2 py-1 rounded font-bold transition" title="View Account History"><i class="fas fa-eye mr-1"></i>View</button>
                                                 <button @click="openCustomerTxnModal(c)" class="text-xs bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded font-bold transition" title="View All Transactions"><i class="fas fa-history mr-1"></i>Txns</button>
-                                                <button @click="openSaleForCustomer(c)" class="text-xs bg-[#00A09D] hover:bg-teal-700 text-white px-2 py-1 rounded font-bold transition" title="Create New Sale Order for this Customer"><i class="fas fa-cash-register mr-1"></i>New Sale</button>
-                                                <button @click="openPurchaseForCustomer(c)" class="text-xs bg-amber-500 hover:bg-amber-600 text-white px-2 py-1 rounded font-bold transition" title="Create Purchase Order linked to this Customer/Supplier"><i class="fas fa-shopping-bag mr-1"></i>New Purchase</button>
-                                                <button @click="openPayForCustomer(c)" class="text-xs bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded font-bold transition" title="Record Payment for Customer"><i class="fas fa-credit-card mr-1"></i>Pay</button>
+                                                <button @click="openPayForCustomer(c)" class="text-xs bg-[#00A09D] hover:bg-teal-700 text-white px-2 py-1 rounded font-bold transition" title="Record Payment for Customer"><i class="fas fa-credit-card mr-1"></i>Pay</button>
                                                 <button @click="deleteCustomer(c.customerId)" class="text-xs bg-red-50 hover:bg-red-100 text-red-500 px-2 py-1 rounded font-bold transition" title="Delete Customer"><i class="fas fa-trash-alt"></i></button>
                                             </div>
                                         </td>
@@ -2389,7 +2387,7 @@ input[type=number].no-spinner {
                                 class="p-2.5 border rounded-lg text-xs font-bold transition flex items-center justify-center gap-2">
                                 <i class="fas fa-user-check"></i> Registered Customer
                             </button>
-                            <button @click="form.custSelectType = 'walkin'; form.selectedCustomer = null; form.custSearchQuery = ''; form.custSearchOpen = false; form.status = 'confirmed'"
+                            <button @click="form.custSelectType = 'walkin'; form.selectedCustomer = null; form.custSearchQuery = ''; form.custSearchOpen = false"
                                 :class="form.custSelectType === 'walkin' ? 'bg-orange-500 text-white border-orange-500' : 'bg-white text-gray-600 border-gray-300'"
                                 class="p-2.5 border rounded-lg text-xs font-bold transition flex items-center justify-center gap-2">
                                 <i class="fas fa-walking"></i> Walk-in / Temporary
@@ -2532,108 +2530,12 @@ input[type=number].no-spinner {
                         </div>
                     </div>
 
-                    <!-- Status — walk-in is always Confirmed, registered can choose -->
                     <div>
-                        <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Order Status</label>
-                        <div v-if="form.custSelectType === 'walkin'" class="p-3 bg-orange-50 border border-orange-200 rounded-lg flex items-center gap-2">
-                            <i class="fas fa-lock text-orange-400 text-xs"></i>
-                            <span class="text-xs font-bold text-orange-700">Walk-in orders are always <span class="uppercase">Confirmed</span></span>
-                        </div>
-                        <select v-else v-model="form.status" class="w-full border border-gray-300 p-3 rounded-lg bg-gray-50 focus:ring-2 focus:ring-[#00A09D] outline-none text-sm">
+                        <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Initial Status</label>
+                        <select v-model="form.status" class="w-full border border-gray-300 p-3 rounded-lg bg-gray-50 focus:ring-2 focus:ring-[#00A09D] outline-none text-sm">
                             <option value="quotation">Quotation</option>
                             <option value="confirmed">Confirmed</option>
                         </select>
-                    </div>
-
-                    <!-- ── Payment Section — only shown when status = confirmed ── -->
-                    <div v-if="form.status === 'confirmed'" class="border border-gray-200 rounded-lg overflow-hidden">
-                        <button type="button" @click="form.payNow = !form.payNow" class="w-full flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 transition">
-                            <span class="text-xs font-bold text-gray-700 flex items-center gap-2">
-                                <i class="fas fa-credit-card text-[#00A09D]"></i> Record Payment Now (Optional)
-                            </span>
-                            <span class="text-xs font-bold" :class="form.payNow ? 'text-green-600':'text-gray-400'">
-                                {{ form.payNow ? '✓ Payment will be recorded' : 'Click to add payment' }}
-                                <i class="fas ml-1" :class="form.payNow ? 'fa-chevron-up':'fa-chevron-down'"></i>
-                            </span>
-                        </button>
-                        <div v-if="form.payNow" class="p-4 space-y-3 border-t border-gray-200 bg-white">
-                            <!-- Mode buttons -->
-                            <div>
-                                <label class="block text-[10px] font-bold text-gray-500 uppercase mb-2">Payment Mode</label>
-                                <div class="grid grid-cols-4 gap-2">
-                                    <button type="button" @click="form.payMode='bank'; form.payCashAmount=0; form.payBalanceAmount=0"
-                                        :class="form.payMode==='bank'?'bg-[#00A09D] text-white border-[#00A09D]':'bg-white text-gray-600 border-gray-300'"
-                                        class="p-2 border rounded-lg text-xs font-bold transition text-center">
-                                        <i class="fas fa-university block text-sm mb-0.5"></i>Bank
-                                    </button>
-                                    <button type="button" @click="form.payMode='cash'; form.payBankAmount=0; form.payBalanceAmount=0"
-                                        :class="form.payMode==='cash'?'bg-[#00A09D] text-white border-[#00A09D]':'bg-white text-gray-600 border-gray-300'"
-                                        class="p-2 border rounded-lg text-xs font-bold transition text-center">
-                                        <i class="fas fa-money-bill block text-sm mb-0.5"></i>Cash
-                                    </button>
-                                    <button type="button" @click="form.payMode='mixed'"
-                                        :class="form.payMode==='mixed'?'bg-[#00A09D] text-white border-[#00A09D]':'bg-white text-gray-600 border-gray-300'"
-                                        class="p-2 border rounded-lg text-xs font-bold transition text-center">
-                                        <i class="fas fa-layer-group block text-sm mb-0.5"></i>Mixed
-                                    </button>
-                                    <button type="button" @click="form.payMode='balance'; form.payBankAmount=0; form.payCashAmount=0"
-                                        :class="form.payMode==='balance'?'bg-purple-600 text-white border-purple-600':'bg-white text-purple-600 border-purple-300'"
-                                        class="p-2 border rounded-lg text-xs font-bold transition text-center">
-                                        <i class="fas fa-wallet block text-sm mb-0.5"></i>Balance
-                                    </button>
-                                </div>
-                            </div>
-                            <!-- Bank fields -->
-                            <div v-if="form.payMode==='bank'||form.payMode==='mixed'" class="space-y-2">
-                                <div>
-                                    <label class="block text-[9px] font-bold text-gray-400 uppercase mb-1">Our Bank Receiving Payment *</label>
-                                    <select v-model="form.paySelectedBank" class="w-full border border-gray-300 p-2 rounded-lg bg-gray-50 focus:ring-2 focus:ring-[#00A09D] outline-none text-xs">
-                                        <option value="">-- Select bank --</option>
-                                        <option v-for="b in banks" :key="b.name" :value="b.name">{{ b.name }} — {{ b.accountNumber }}</option>
-                                    </select>
-                                </div>
-                                <div class="grid grid-cols-2 gap-2">
-                                    <div>
-                                        <label class="block text-[9px] font-bold text-gray-400 uppercase mb-1">Customer Bank (Sent From)</label>
-                                        <input v-model="form.payBankFrom" type="text" class="w-full border border-gray-200 p-2 rounded text-xs focus:ring-2 focus:ring-[#00A09D] outline-none" placeholder="e.g. GTBank">
-                                    </div>
-                                    <div>
-                                        <label class="block text-[9px] font-bold text-gray-400 uppercase mb-1">Account Name</label>
-                                        <input v-model="form.payAccountName" type="text" class="w-full border border-gray-200 p-2 rounded text-xs focus:ring-2 focus:ring-[#00A09D] outline-none" placeholder="Sender name">
-                                    </div>
-                                </div>
-                            </div>
-                            <!-- Amount fields -->
-                            <div class="grid gap-2" :class="form.payMode==='mixed'?'grid-cols-2':''">
-                                <div v-if="form.payMode==='bank'||form.payMode==='mixed'">
-                                    <label class="block text-[9px] font-bold text-gray-400 uppercase mb-1">Bank Amount (₦)</label>
-                                    <input v-model.number="form.payBankAmount" type="number" min="0" class="w-full border border-gray-200 p-2 rounded text-xs focus:ring-2 focus:ring-[#00A09D] outline-none no-spinner">
-                                </div>
-                                <div v-if="form.payMode==='cash'||form.payMode==='mixed'">
-                                    <label class="block text-[9px] font-bold text-gray-400 uppercase mb-1">Cash Amount (₦)</label>
-                                    <input v-model.number="form.payCashAmount" type="number" min="0" class="w-full border border-gray-200 p-2 rounded text-xs focus:ring-2 focus:ring-[#00A09D] outline-none no-spinner">
-                                </div>
-                                <div v-if="form.payMode==='balance'">
-                                    <label class="block text-[9px] font-bold text-gray-400 uppercase mb-1">Balance Amount (₦)</label>
-                                    <input v-model.number="form.payBalanceAmount" type="number" min="0" class="w-full border border-gray-200 p-2 rounded text-xs focus:ring-2 focus:ring-purple-400 outline-none no-spinner">
-                                </div>
-                            </div>
-                            <!-- Preview -->
-                            <div class="bg-green-50 border border-green-100 rounded-lg p-3 text-xs flex justify-between items-center">
-                                <span class="font-bold text-gray-600">Recording:</span>
-                                <span class="font-black text-green-700 text-base">₦{{ formatMoney((form.payBankAmount||0)+(form.payCashAmount||0)+(form.payBalanceAmount||0)) }}</span>
-                            </div>
-                            <div v-if="orderLinesTotal > 0" class="text-xs text-gray-500 flex justify-between">
-                                <span>Outstanding after payment:</span>
-                                <span class="font-bold" :class="Math.max(0,orderLinesTotal-((form.payBankAmount||0)+(form.payCashAmount||0)+(form.payBalanceAmount||0)))>0?'text-red-600':'text-green-600'">
-                                    ₦{{ formatMoney(Math.max(0,orderLinesTotal-((form.payBankAmount||0)+(form.payCashAmount||0)+(form.payBalanceAmount||0)))) }}
-                                </span>
-                            </div>
-                            <div>
-                                <label class="block text-[9px] font-bold text-gray-400 uppercase mb-1">Reference / Teller No.</label>
-                                <input v-model="form.payReference" type="text" class="w-full border border-gray-200 p-2 rounded text-xs focus:ring-2 focus:ring-[#00A09D] outline-none" placeholder="e.g. TLR2024001">
-                            </div>
-                        </div>
                     </div>
                 </div>
                 <!-- Inventory Form -->
@@ -2738,11 +2640,7 @@ input[type=number].no-spinner {
                 </div>
 
                 <button @click="submitRecord" class="w-full py-3.5 bg-[#00A09D] hover:bg-teal-700 text-white rounded-lg font-bold uppercase tracking-widest shadow-lg shadow-teal-900/20 transition transform active:scale-95 mt-4">
-                    <span v-if="view==='sales' && form.payNow && ((form.payBankAmount||0)+(form.payCashAmount||0)+(form.payBalanceAmount||0)) > 0">
-                        <i class="fas fa-paper-plane mr-2"></i>
-                        Place Order + Record ₦{{ formatMoney((form.payBankAmount||0)+(form.payCashAmount||0)+(form.payBalanceAmount||0)) }} Payment
-                    </span>
-                    <span v-else>{{ modal.isEdit ? 'Update Record' : 'Save Record' }}</span>
+                    {{ modal.isEdit ? 'Update Record' : 'Save Record' }}
                 </button>
             </div>
         </div>
@@ -3714,53 +3612,43 @@ input[type=number].no-spinner {
         </div>
     </div>
 
-    <!-- CUSTOMER ORDER MODAL — Multi-Product Cart + Payment -->
+    <!-- CUSTOMER ORDER MODAL — Multi-Product Cart -->
     <div v-if="custOrderModal.show" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
-        <div class="bg-white w-full max-w-2xl rounded-xl shadow-2xl overflow-hidden animate-fade-in-up flex flex-col max-h-[92vh]">
-            <div class="p-5 bg-[#00A09D] text-white flex justify-between items-center flex-shrink-0">
+        <div class="bg-white w-full max-w-xl rounded-xl shadow-2xl overflow-hidden animate-fade-in-up">
+            <div class="p-5 bg-[#00A09D] text-white flex justify-between items-center">
                 <div>
-                    <h3 class="font-bold text-sm flex items-center gap-2"><i class="fas fa-cash-register"></i> New Sales Order / Point of Sale</h3>
-                    <p class="text-white/70 text-xs mt-0.5">
-                        <span v-if="custOrderModal.forCustomerName">For: <strong>{{ custOrderModal.forCustomerName }}</strong></span>
-                        <span v-else>Add products and record payment</span>
-                    </p>
+                    <h3 class="font-bold text-sm flex items-center gap-2"><i class="fas fa-shopping-bag"></i> Place Order</h3>
+                    <p class="text-white/70 text-xs mt-0.5">Add one or more products to your order</p>
                 </div>
                 <button @click="custOrderModal.show = false" class="text-white/70 hover:text-white"><i class="fas fa-times"></i></button>
             </div>
 
-            <div class="overflow-y-auto flex-1 p-5 space-y-4">
-
-                <!-- Customer selector (shown when opened from admin/staff, not from customer portal) -->
-                <div v-if="['Admin','Sales'].includes(session.role)">
-                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Customer *</label>
-                    <select v-model="custOrderModal.forCustomerId" @change="custOrderModal.forCustomerName = customers.find(c=>c.customerId===custOrderModal.forCustomerId)?.fullname || custOrderModal.forCustomerId" class="w-full border border-gray-300 p-2.5 rounded-lg bg-gray-50 focus:ring-2 focus:ring-[#00A09D] outline-none text-sm">
-                        <option value="">-- Select customer --</option>
-                        <option v-for="c in customers" :key="c.customerId" :value="c.customerId">{{ c.fullname || c.customerName }} — {{ c.phone }}</option>
-                    </select>
-                </div>
+            <div class="p-5 space-y-4 max-h-[80vh] overflow-y-auto">
 
                 <!-- Cart Line Items -->
                 <div>
                     <div class="flex items-center justify-between mb-2">
-                        <label class="text-[10px] font-bold text-gray-500 uppercase">Products</label>
+                        <label class="text-[10px] font-bold text-gray-500 uppercase">Your Cart</label>
                         <button @click="addCustCartLine" class="text-[10px] font-bold text-[#00A09D] hover:underline flex items-center gap-1"><i class="fas fa-plus-circle"></i> Add Product</button>
                     </div>
+
                     <div class="space-y-2">
                         <div v-for="(line, idx) in custOrderModal.cartLines" :key="idx" class="bg-gray-50 border border-gray-200 rounded-lg p-3">
                             <div class="flex items-center justify-between mb-2">
-                                <span class="text-[10px] font-bold text-gray-400 uppercase">Item {{ idx + 1 }}</span>
+                                <span class="text-[10px] font-bold text-gray-400 uppercase">Product {{ idx + 1 }}</span>
                                 <button v-if="custOrderModal.cartLines.length > 1" @click="removeCustCartLine(idx)" class="text-red-400 hover:text-red-600 text-xs"><i class="fas fa-times-circle"></i></button>
                             </div>
                             <select v-model="line.name" @change="autoFillCustLine(line)" class="w-full border border-gray-200 p-2.5 rounded-lg bg-white focus:ring-2 focus:ring-[#00A09D] outline-none text-sm mb-2">
                                 <option value="" disabled>Select a product</option>
                                 <option v-for="p in products" :key="p.name" :value="p.name" :disabled="p.stock < 1 && session.role !== 'Admin'">
-                                    {{ p.name }} — ₦{{ formatMoney(p.price) }}/{{ p.unit }} ({{ p.stock }} available){{ p.stock < 1 && session.role !== 'Admin' ? ' [Out of Stock]' : '' }}
+                                    {{ p.name }} — ₦{{ formatMoney(p.price) }}/{{ p.unit }} ({{ p.stock }} available) {{ p.stock < 1 && session.role !== 'Admin' ? '(Out of Stock)' : '' }}
                                 </option>
                             </select>
+                            <div v-if="products.find(p => p.name === line.name)?.stock < 1 && session.role !== 'Admin'" class="text-[10px] text-red-600 font-bold"><i class="fas fa-exclamation-circle mr-1"></i>This product is out of stock. Only Admin can place special orders.</div>
                             <div class="grid grid-cols-3 gap-2">
                                 <div>
-                                    <label class="block text-[9px] font-bold text-gray-400 uppercase mb-1">Qty</label>
-                                    <input v-model.number="line.qty" @input="recalcCustLine(line)" type="number" min="1" class="w-full border border-gray-200 p-2 rounded-lg bg-white focus:ring-2 focus:ring-[#00A09D] outline-none text-sm">
+                                    <label class="block text-[9px] font-bold text-gray-400 uppercase mb-1">Quantity</label>
+                                    <input v-model.number="line.qty" @input="recalcCustLine(line)" type="number" min="1" class="w-full border border-gray-200 p-2 rounded-lg bg-white focus:ring-2 focus:ring-[#00A09D] outline-none text-sm" placeholder="0">
                                 </div>
                                 <div>
                                     <label class="block text-[9px] font-bold text-gray-400 uppercase mb-1">Unit Price</label>
@@ -3773,21 +3661,25 @@ input[type=number].no-spinner {
                             </div>
                             <div v-if="line.name" class="mt-1.5 text-[10px] text-gray-400 flex items-center gap-1">
                                 <div class="w-1.5 h-1.5 rounded-full" :class="(products.find(p=>p.name===line.name)?.stock||0) < 20 ? 'bg-red-400' : 'bg-green-400'"></div>
-                                {{ products.find(p=>p.name===line.name)?.stock || 0 }} in stock
+                                {{ products.find(p=>p.name===line.name)?.stock || 0 }} {{ products.find(p=>p.name===line.name)?.unit || 'units' }} in stock
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Order Total Summary -->
+                <!-- Order Summary -->
                 <div class="bg-teal-50 border border-teal-200 rounded-lg p-4">
-                    <div class="flex justify-between items-center mb-1">
-                        <span class="text-[10px] font-bold text-teal-700 uppercase">{{ custOrderModal.cartLines.filter(l=>l.name&&l.qty>0).length }} product(s)</span>
-                        <span class="font-black text-2xl text-teal-700">₦{{ formatMoney(custCartTotal) }}</span>
+                    <div class="flex justify-between items-center mb-2">
+                        <label class="text-[10px] font-bold text-teal-700 uppercase">Order Summary</label>
+                        <span class="text-[10px] text-teal-600 font-bold">{{ custOrderModal.cartLines.filter(l=>l.name&&l.qty>0).length }} product(s)</span>
                     </div>
-                    <div v-for="line in custOrderModal.cartLines.filter(l=>l.name&&l.qty>0)" :key="line.name" class="flex justify-between text-xs text-teal-600 py-0.5">
+                    <div v-for="line in custOrderModal.cartLines.filter(l=>l.name&&l.qty>0)" :key="line.name" class="flex justify-between text-xs text-teal-700 py-0.5">
                         <span>{{ line.name }} × {{ line.qty }}</span>
                         <span class="font-bold">₦{{ formatMoney(line.amount) }}</span>
+                    </div>
+                    <div class="border-t border-teal-200 mt-2 pt-2 flex justify-between">
+                        <span class="font-black text-teal-800 text-sm uppercase">Total</span>
+                        <span class="font-black text-2xl text-teal-600">₦{{ formatMoney(custCartTotal) }}</span>
                     </div>
                 </div>
 
@@ -3795,110 +3687,17 @@ input[type=number].no-spinner {
                 <div>
                     <label class="block text-[10px] font-bold text-gray-500 uppercase mb-2">Order Type</label>
                     <div class="grid grid-cols-2 gap-2">
-                        <button @click="custOrderModal.type='quotation'" :class="custOrderModal.type==='quotation'?'bg-[#714B67] text-white border-[#714B67]':'bg-white text-gray-600 border-gray-300'" class="p-3 border rounded-lg text-xs font-bold transition text-center">
+                        <button @click="custOrderModal.type = 'quotation'" :class="custOrderModal.type === 'quotation' ? 'bg-[#714B67] text-white border-[#714B67]' : 'bg-white text-gray-600 border-gray-300'" class="p-3 border rounded-lg text-xs font-bold transition text-center">
                             <i class="fas fa-file-alt block text-lg mb-1"></i>Quotation
                         </button>
-                        <button @click="custOrderModal.type='order'" :class="custOrderModal.type==='order'?'bg-[#00A09D] text-white border-[#00A09D]':'bg-white text-gray-600 border-gray-300'" class="p-3 border rounded-lg text-xs font-bold transition text-center">
+                        <button @click="custOrderModal.type = 'order'" :class="custOrderModal.type === 'order' ? 'bg-[#00A09D] text-white border-[#00A09D]' : 'bg-white text-gray-600 border-gray-300'" class="p-3 border rounded-lg text-xs font-bold transition text-center">
                             <i class="fas fa-shopping-cart block text-lg mb-1"></i>Direct Order
                         </button>
                     </div>
                 </div>
 
-                <!-- Payment Section toggle — only when Direct Order -->
-                <div v-if="custOrderModal.type === 'order'" class="border border-gray-200 rounded-lg overflow-hidden">
-                    <button @click="custOrderModal.payNow = !custOrderModal.payNow" class="w-full flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 transition">
-                        <span class="text-xs font-bold text-gray-700 flex items-center gap-2">
-                            <i class="fas fa-credit-card text-[#00A09D]"></i>
-                            Record Payment Now (Optional)
-                        </span>
-                        <span class="text-xs font-bold" :class="custOrderModal.payNow ? 'text-green-600' : 'text-gray-400'">
-                            {{ custOrderModal.payNow ? '✓ Payment will be recorded' : 'Click to add payment' }}
-                            <i class="fas ml-1" :class="custOrderModal.payNow ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
-                        </span>
-                    </button>
-
-                    <div v-if="custOrderModal.payNow" class="p-4 space-y-4 border-t border-gray-200 bg-white">
-                        <!-- Payment Mode -->
-                        <div>
-                            <label class="block text-[10px] font-bold text-gray-500 uppercase mb-2">Payment Mode</label>
-                            <div class="grid grid-cols-4 gap-2">
-                                <button @click="custOrderModal.payMode='bank'; custOrderModal.cashAmount=0; custOrderModal.balanceAmount=0"
-                                    :class="custOrderModal.payMode==='bank'?'bg-[#00A09D] text-white border-[#00A09D]':'bg-white text-gray-600 border-gray-300'"
-                                    class="p-2 border rounded-lg text-xs font-bold transition text-center">
-                                    <i class="fas fa-university block text-sm mb-1"></i>Bank
-                                </button>
-                                <button @click="custOrderModal.payMode='cash'; custOrderModal.bankAmount=0; custOrderModal.balanceAmount=0"
-                                    :class="custOrderModal.payMode==='cash'?'bg-[#00A09D] text-white border-[#00A09D]':'bg-white text-gray-600 border-gray-300'"
-                                    class="p-2 border rounded-lg text-xs font-bold transition text-center">
-                                    <i class="fas fa-money-bill block text-sm mb-1"></i>Cash
-                                </button>
-                                <button @click="custOrderModal.payMode='mixed'"
-                                    :class="custOrderModal.payMode==='mixed'?'bg-[#00A09D] text-white border-[#00A09D]':'bg-white text-gray-600 border-gray-300'"
-                                    class="p-2 border rounded-lg text-xs font-bold transition text-center">
-                                    <i class="fas fa-layer-group block text-sm mb-1"></i>Mixed
-                                </button>
-                                <button @click="custOrderModal.payMode='balance'; custOrderModal.bankAmount=0; custOrderModal.cashAmount=0"
-                                    :class="custOrderModal.payMode==='balance'?'bg-purple-600 text-white border-purple-600':'bg-white text-purple-600 border-purple-300'"
-                                    class="p-2 border rounded-lg text-xs font-bold transition text-center">
-                                    <i class="fas fa-wallet block text-sm mb-1"></i>Balance
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Bank fields -->
-                        <div v-if="custOrderModal.payMode==='bank'||custOrderModal.payMode==='mixed'" class="space-y-2">
-                            <div>
-                                <label class="block text-[9px] font-bold text-gray-400 uppercase mb-1">Our Bank Receiving Payment *</label>
-                                <select v-model="custOrderModal.selectedBank" class="w-full border border-gray-300 p-2 rounded-lg bg-gray-50 focus:ring-2 focus:ring-[#00A09D] outline-none text-xs">
-                                    <option value="">-- Select bank --</option>
-                                    <option v-for="b in banks" :key="b.name" :value="b.name">{{ b.name }} — {{ b.accountNumber }}</option>
-                                </select>
-                            </div>
-                            <div class="grid grid-cols-2 gap-2">
-                                <div>
-                                    <label class="block text-[9px] font-bold text-gray-400 uppercase mb-1">Customer Bank (Sent From)</label>
-                                    <input v-model="custOrderModal.bankFrom" type="text" class="w-full border border-gray-200 p-2 rounded text-xs focus:ring-2 focus:ring-[#00A09D] outline-none" placeholder="e.g. GTBank">
-                                </div>
-                                <div>
-                                    <label class="block text-[9px] font-bold text-gray-400 uppercase mb-1">Account Name</label>
-                                    <input v-model="custOrderModal.accountName" type="text" class="w-full border border-gray-200 p-2 rounded text-xs focus:ring-2 focus:ring-[#00A09D] outline-none" placeholder="Sender name">
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Amount fields -->
-                        <div class="grid gap-2" :class="custOrderModal.payMode==='mixed'?'grid-cols-2':''">
-                            <div v-if="custOrderModal.payMode==='bank'||custOrderModal.payMode==='mixed'">
-                                <label class="block text-[9px] font-bold text-gray-400 uppercase mb-1">Bank Amount (₦)</label>
-                                <input v-model.number="custOrderModal.bankAmount" type="number" min="0" class="w-full border border-gray-200 p-2 rounded text-xs focus:ring-2 focus:ring-[#00A09D] outline-none no-spinner">
-                            </div>
-                            <div v-if="custOrderModal.payMode==='cash'||custOrderModal.payMode==='mixed'">
-                                <label class="block text-[9px] font-bold text-gray-400 uppercase mb-1">Cash Amount (₦)</label>
-                                <input v-model.number="custOrderModal.cashAmount" type="number" min="0" class="w-full border border-gray-200 p-2 rounded text-xs focus:ring-2 focus:ring-[#00A09D] outline-none no-spinner">
-                            </div>
-                            <div v-if="custOrderModal.payMode==='balance'">
-                                <label class="block text-[9px] font-bold text-gray-400 uppercase mb-1">Balance Amount (₦)</label>
-                                <input v-model.number="custOrderModal.balanceAmount" type="number" min="0" class="w-full border border-gray-200 p-2 rounded text-xs focus:ring-2 focus:ring-purple-400 outline-none no-spinner">
-                            </div>
-                        </div>
-
-                        <!-- Payment preview -->
-                        <div class="bg-green-50 border border-green-100 rounded-lg p-3 text-xs flex justify-between items-center">
-                            <span class="font-bold text-gray-600">Recording:</span>
-                            <span class="font-black text-green-700 text-base">₦{{ formatMoney((custOrderModal.bankAmount||0)+(custOrderModal.cashAmount||0)+(custOrderModal.balanceAmount||0)) }}</span>
-                        </div>
-
-                        <div>
-                            <label class="block text-[9px] font-bold text-gray-400 uppercase mb-1">Reference / Teller No.</label>
-                            <input v-model="custOrderModal.reference" type="text" class="w-full border border-gray-200 p-2 rounded text-xs focus:ring-2 focus:ring-[#00A09D] outline-none" placeholder="e.g. TLR2024001">
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Submit -->
-                <button @click="submitCustomerOrder" class="w-full py-3.5 bg-[#00A09D] hover:bg-teal-700 text-white rounded-lg font-bold transition shadow-lg text-sm">
-                    <i class="fas fa-paper-plane mr-2"></i>
-                    {{ custOrderModal.payNow ? 'Place Order + Record ₦'+formatMoney((custOrderModal.bankAmount||0)+(custOrderModal.cashAmount||0)+(custOrderModal.balanceAmount||0))+' Payment' : 'Place Order — ₦'+formatMoney(custCartTotal) }}
+                <button @click="submitCustomerOrder" class="w-full py-3.5 bg-[#00A09D] hover:bg-teal-700 text-white rounded-lg font-bold transition shadow-lg">
+                    <i class="fas fa-paper-plane mr-2"></i> Submit Order — ₦{{ formatMoney(custCartTotal) }}
                 </button>
             </div>
         </div>
@@ -4458,7 +4257,7 @@ createApp({
             showChat: false,
             newMessage: '',
 
-            viewTitles: { dashboard: 'Dashboard', purchases: 'Purchases', sales: 'Sales Order / Point of Sale', inventory: 'Stock', expenses: 'Expenses', users: 'User Management', customers: 'Customers', payments: 'Payments', reports: 'Reports', financials: 'Financial', suppliers: 'Supplier Management' },
+            viewTitles: { dashboard: 'Dashboard', purchases: 'Purchases', sales: 'Sales Orders', inventory: 'Stock', expenses: 'Expenses', users: 'User Management', customers: 'Customers', payments: 'Payments', reports: 'Reports', financials: 'Financial', suppliers: 'Supplier Management' },
 
             customerTabs: [
                 { key: 'overview', label: 'Overview', icon: 'fas fa-home' },
@@ -4605,7 +4404,7 @@ createApp({
             paymentModal: { show: false, order: null, mode: 'bank', selectedBank: '', bankAmount: 0, cashAmount: 0, reference: '', bankFrom: '', bankTo: '', accountName: '', accountNumber: '' },
             staffPayModal: { show: false, order: null, mode: 'bank', selectedBank: '', bankAmount: 0, cashAmount: 0, reference: '', bankFrom: '', bankTo: '', accountName: '', accountNumber: '' },
             purchaseModal: { show: false, supplier: '', supplierCustom: '', date: '', lines: [{ name: '', customName: '', qty: 1, unitCost: 0, amount: 0 }], bankRows: [{ bankName: '', amount: 0 }], useCash: false, cashAmount: 0, useBalance: false, balanceAmount: 0, reference: '', error: '' },
-            custOrderModal: { show: false, cartLines: [{ name: '', qty: 1, unitPrice: 0, amount: 0 }], type: 'quotation', forCustomerId: '', forCustomerName: '', payNow: false, payMode: 'bank', selectedBank: '', bankAmount: 0, cashAmount: 0, balanceAmount: 0, bankFrom: '', accountName: '', reference: '' },
+            custOrderModal: { show: false, cartLines: [{ name: '', qty: 1, unitPrice: 0, amount: 0 }], type: 'quotation' },
             customerHistoryModal: { show: false, customer: null, orders: [], totalPurchases: 0, totalPaid: 0, outstanding: 0, histFilter: { status: '', dateFrom: '', dateTo: '', sort: 'date_new' } },
             generalHistoryModal: { show: false, search: '', status: '', dateFrom: '', dateTo: '', customer: '', sort: 'date_new' },
             deliveryMenu: { orderId: null },
@@ -5454,22 +5253,13 @@ createApp({
             this.form = {
                 customer: '', status: 'quotation',
                 orderLines: [{ name: '', qty: 1, unitPrice: 0, amount: 0 }],
+                // customer select
                 custSelectType: 'regular',
                 selectedCustomer: null,
                 custSearchQuery: '',
                 custSearchOpen: false,
                 walkinName: '',
                 walkinPhone: '',
-                // payment fields
-                payNow: false,
-                payMode: 'bank',
-                paySelectedBank: this.banks[0]?.name || '',
-                payBankAmount: 0,
-                payCashAmount: 0,
-                payBalanceAmount: 0,
-                payBankFrom: '',
-                payAccountName: '',
-                payReference: '',
                 pName: '', stock: 0, price: 0, pCategory: '', pUnit: '',
                 uFullname: '', uUsername: '', uPassword: '', uRole: 'Sales',
                 expCategory: '', expDescription: '', expAmount: 0, expDate: this.localDateStr(), expPaymentSource: '',
@@ -5629,88 +5419,38 @@ createApp({
             line.amount = (line.qty || 0) * (line.unitPrice || 0);
         },
         submitCustomerOrder() {
-            const m = this.custOrderModal;
-            const validLines = m.cartLines.filter(l => l.name && l.qty > 0);
+            const validLines = this.custOrderModal.cartLines.filter(l => l.name && l.qty > 0);
             if (validLines.length === 0) { alert('Please add at least one product with a valid quantity.'); return; }
 
-            // For admin/sales creating on behalf of a customer
-            const isStaff = ['Admin','Sales'].includes(this.session.role);
-            const custId   = isStaff ? m.forCustomerId   : this.session.customerId;
-            const custName = isStaff ? m.forCustomerName : (this.session.company ? `${this.session.fullname} (${this.session.company})` : this.session.fullname);
-            if (isStaff && !custId) { alert('Please select a customer.'); return; }
-
-            // Stock validation
+            // Validate stock — customers cannot order out-of-stock items
             for (const line of validLines) {
                 const prod = this.products.find(x => x.name === line.name);
                 if (!prod) { alert(`Product "${line.name}" not found.`); return; }
-                if (prod.stock <= 0 && this.session.role !== 'Admin') { alert(`"${line.name}" is out of stock.`); return; }
-                if (line.qty > prod.stock && this.session.role !== 'Admin') { alert(`"${line.name}" only has ${prod.stock} in stock.`); return; }
+                if (prod.stock <= 0) { alert(`"${line.name}" is currently out of stock. Please contact us for more information.`); return; }
+                if (line.qty > prod.stock) { alert(`"${line.name}" only has ${prod.stock} ${prod.unit} in stock.`); return; }
             }
 
-            // Payment
-            const bankAmt = Number(m.bankAmount) || 0;
-            const cashAmt = Number(m.cashAmount) || 0;
-            const balAmt  = Number(m.balanceAmount) || 0;
-            const totalPaying = m.payNow ? (bankAmt + cashAmt + balAmt) : 0;
-            if (m.payNow && (m.payMode === 'bank' || m.payMode === 'mixed') && bankAmt > 0 && !m.selectedBank) { alert('Please select a receiving bank.'); return; }
-
-            const id    = 'SO' + Math.floor(1000 + Math.random() * 9000);
-            const items = validLines.map(l => ({ name: l.name, qty: l.qty, amount: l.amount, unitPrice: l.unitPrice }));
+            const id = 'SO' + Math.floor(1000 + Math.random() * 9000);
+            const items = validLines.map(l => ({ name: l.name, qty: l.qty, amount: l.amount }));
             const total = validLines.reduce((s, l) => s + (l.amount || 0), 0);
-            const date  = this.localDateStr();
 
-            const newOutstanding = Math.max(0, total - totalPaying);
-            let payStatus = 'unpaid';
-            if (m.payNow && totalPaying > 0) payStatus = newOutstanding <= 0.01 ? 'paid' : 'partial';
+            const displayName = this.session.company
+                ? `${this.session.fullname} (${this.session.company})`
+                : this.session.fullname;
 
-            const order = {
-                id, customer: `${custName} — ${custId}`, customerName: custName, customerId: custId,
-                items, total, amountPaid: totalPaying,
-                status: m.type === 'order' ? (payStatus === 'paid' ? 'confirmed' : 'pending') : 'quotation',
-                paymentStatus: payStatus,
-                paymentRef: m.reference || (id + '-PAY'),
-                paymentMethod: m.payNow ? m.payMode : '',
-                bankName: m.payNow && (m.payMode === 'bank' || m.payMode === 'mixed') ? m.selectedBank : '',
-                bankFrom: m.bankFrom || '',
-                bankTo: m.selectedBank || '',
-                accountName: m.accountName || '',
-                paymentDate: m.payNow ? date : '',
-                confirmedBy: m.payNow ? (this.session?.fullname || '') : '',
-                confirmedById: m.payNow ? (this.session?.username || '') : '',
-                created_at: date
-            };
-
-            // Store payment records if payment made now
-            if (m.payNow && totalPaying > 0) {
-                const bankRows = [];
-                if ((m.payMode === 'bank' || m.payMode === 'mixed') && bankAmt > 0) {
-                    bankRows.push({ bankName: m.bankFrom || '?', bankTo: m.selectedBank, accountName: m.accountName || '', amount: bankAmt });
-                }
-                order.paymentRecords = [{
-                    date, time: new Date().toLocaleTimeString(), amount: totalPaying,
-                    method: m.payMode, bankRows,
-                    cashAmount: cashAmt, balanceAmount: balAmt,
-                    reference: m.reference || (id + '-PAY'),
-                    recordedBy: this.session?.fullname || ''
-                }];
-            }
-
-            this.orders.unshift(order);
-
-            // Ledger entries for payment
-            if (m.payNow && totalPaying > 0) {
-                if (bankAmt > 0) this.bankLedger.push({ date, ref: id, customerName: custName, description: 'Sale payment — ' + custName, amount: bankAmt, method: 'bank', bankName: m.selectedBank, bankFrom: m.bankFrom || '', bankTo: m.selectedBank, accountName: m.accountName || '', runningBalance: 0 });
-                if (cashAmt > 0) this.bankLedger.push({ date, ref: id, customerName: custName, description: 'Cash sale — ' + custName, amount: cashAmt, method: 'cash', bankName: '', runningBalance: 0 });
-                if (balAmt > 0)  this.bankLedger.push({ date, ref: id, customerName: custName, description: 'Balance applied — ' + custName, amount: balAmt, method: 'balance', bankName: '', runningBalance: 0 });
-            }
-
-            // Reset modal
-            this.custOrderModal = { show: false, cartLines: [{ name: '', qty: 1, unitPrice: 0, amount: 0 }], type: 'quotation', forCustomerId: '', forCustomerName: '', payNow: false, payMode: 'bank', selectedBank: this.banks[0]?.name || '', bankAmount: 0, cashAmount: 0, balanceAmount: 0, bankFrom: '', accountName: '', reference: '' };
-
-            const payMsg = totalPaying > 0 ? ` | Paid ₦${this.formatMoney(totalPaying)}` + (newOutstanding > 0 ? ` | Bal: ₦${this.formatMoney(newOutstanding)}` : ' — FULLY PAID') : '';
-            this.notifs.unshift({ title: 'Order Created ✓', msg: `${id} for ${custName}${payMsg}` });
-            if (isStaff) { this.view = 'sales'; } else { this.custView = 'orders'; }
-            this.checkStockAlerts();
+            this.orders.unshift({
+                id,
+                customer: `${displayName} — ${this.session.customerId}`,
+                customerName: displayName,
+                customerId: this.session.customerId,
+                items, total,
+                amountPaid: 0,
+                status: 'quotation', paymentStatus: 'unpaid', paymentRef: '', paymentMethod: '', bankName: '', paymentDate: '',
+                created_at: this.localDateStr()
+            });
+            this.custOrderModal.show = false;
+            this.notifs.unshift({ title: 'New Order', msg: `Order ${id} (${items.length} item${items.length > 1 ? 's' : ''}) placed by ${this.session.fullname}` });
+            this.custView = 'orders';
         },
 
         // ---- Customer Payment ----
@@ -6009,60 +5749,19 @@ td{padding:10px 12px;border-bottom:1px solid #f0f0f0;}
                     }
                 }
                 const id = 'SO' + Math.floor(1000 + Math.random() * 9000);
-                const items = validLines.map(l => ({ name: l.name, qty: l.qty, amount: l.amount || 0, unitPrice: l.unitPrice || 0 }));
+                const items = validLines.map(l => ({ name: l.name, qty: l.qty, amount: l.amount || 0 }));
                 const total = items.reduce((s, i) => s + i.amount, 0);
-                const date  = this.localDateStr();
-
-                // Payment
-                const bankAmt = this.form.payNow ? (Number(this.form.payBankAmount) || 0) : 0;
-                const cashAmt = this.form.payNow ? (Number(this.form.payCashAmount) || 0) : 0;
-                const balAmt  = this.form.payNow ? (Number(this.form.payBalanceAmount) || 0) : 0;
-                const totalPaying = bankAmt + cashAmt + balAmt;
-                if (this.form.payNow && (this.form.payMode === 'bank' || this.form.payMode === 'mixed') && bankAmt > 0 && !this.form.paySelectedBank) { alert('Please select a receiving bank.'); return; }
-
-                const newOutstanding = Math.max(0, total - totalPaying);
-                let payStatus = 'unpaid';
-                if (this.form.payNow && totalPaying > 0) payStatus = newOutstanding <= 0.01 ? 'paid' : 'partial';
-
-                const order = {
-                    id, customer: customerDisplay, customerName, customerId, items, total,
-                    amountPaid: totalPaying,
-                    status: this.form.status,
-                    paymentStatus: payStatus,
-                    paymentRef: this.form.payReference || (id + '-PAY'),
-                    paymentMethod: this.form.payNow ? this.form.payMode : '',
-                    bankName: this.form.payNow && (this.form.payMode === 'bank' || this.form.payMode === 'mixed') ? this.form.paySelectedBank : '',
-                    bankFrom: this.form.payBankFrom || '',
-                    bankTo: this.form.paySelectedBank || '',
-                    accountName: this.form.payAccountName || '',
-                    paymentDate: this.form.payNow && totalPaying > 0 ? date : '',
-                    confirmedBy: this.form.payNow ? (this.session?.fullname || '') : '',
-                    confirmedById: this.form.payNow ? (this.session?.username || '') : '',
-                    created_at: date
-                };
-
-                // Save payment records
-                if (this.form.payNow && totalPaying > 0) {
-                    const bankRows = [];
-                    if ((this.form.payMode === 'bank' || this.form.payMode === 'mixed') && bankAmt > 0) {
-                        bankRows.push({ bankName: this.form.payBankFrom || '?', bankTo: this.form.paySelectedBank, accountName: this.form.payAccountName || '', amount: bankAmt });
-                    }
-                    order.paymentRecords = [{
-                        date, time: new Date().toLocaleTimeString(), amount: totalPaying,
-                        method: this.form.payMode, bankRows,
-                        cashAmount: cashAmt, balanceAmount: balAmt,
-                        reference: this.form.payReference || (id + '-PAY'),
-                        recordedBy: this.session?.fullname || ''
-                    }];
-                    // Ledger entries
-                    if (bankAmt > 0) this.bankLedger.push({ date, ref: id, customerName, description: 'Sale payment — '+customerName, amount: bankAmt, method: 'bank', bankName: this.form.paySelectedBank, bankFrom: this.form.payBankFrom||'', bankTo: this.form.paySelectedBank, accountName: this.form.payAccountName||'', runningBalance: 0 });
-                    if (cashAmt > 0) this.bankLedger.push({ date, ref: id, customerName, description: 'Cash sale — '+customerName, amount: cashAmt, method: 'cash', bankName: '', runningBalance: 0 });
-                    if (balAmt > 0)  this.bankLedger.push({ date, ref: id, customerName, description: 'Balance applied — '+customerName, amount: balAmt, method: 'balance', bankName: '', runningBalance: 0 });
-                }
-
-                this.orders.unshift(order);
-                const payMsg = totalPaying > 0 ? ` | Paid ₦${this.formatMoney(totalPaying)}` + (newOutstanding > 0 ? ` | Bal: ₦${this.formatMoney(newOutstanding)}` : ' — FULLY PAID') : '';
-                this.notifs.unshift({ title: 'Order Created ✓', msg: `${id} for ${customerName}${payMsg}` });
+                this.orders.unshift({
+                    id,
+                    customer: customerDisplay,
+                    customerName,
+                    customerId,
+                    items, total,
+                    amountPaid: 0,
+                    status: this.form.status, paymentStatus: 'unpaid', paymentRef: '', paymentMethod: '', bankName: '', paymentDate: '',
+                    created_at: this.localDateStr()
+                });
+                this.notifs.unshift({ title: 'Order Created', msg: `${id} created for ${customerName}` });
             } else if (this.view === 'inventory') {
                 if (!this.form.pName.trim() || this.form.stock === '' || this.form.stock === null || this.form.stock === undefined || !this.form.price) { alert('Fill all required fields'); return; }
                 if (this.modal.isEdit && this.modal.activeIndex !== null) {
@@ -6670,37 +6369,6 @@ ${receivingHistoryHTML}
         // ---- Supplier Transaction Modal ----
         openSupplierTxnModal(supplier) {
             this.supplierTxnModal = { show: true, supplier, dateFrom: '', dateTo: '', search: '', sortBy: 'date_new', statusFilter: '', showAll: false };
-        },
-
-        // ---- Open Sale Order pre-filled for a specific customer ----
-        openSaleForCustomer(customer) {
-            this.custOrderModal = {
-                show: true,
-                cartLines: [{ name: '', qty: 1, unitPrice: 0, amount: 0 }],
-                type: 'order',
-                forCustomerId: customer.customerId,
-                forCustomerName: customer.fullname || customer.customerName,
-                payNow: false, payMode: 'bank',
-                selectedBank: this.banks[0]?.name || '',
-                bankAmount: 0, cashAmount: 0, balanceAmount: 0,
-                bankFrom: '', accountName: '', reference: ''
-            };
-        },
-
-        // ---- Open Purchase Order pre-filled linked to a customer/supplier ----
-        openPurchaseForCustomer(customer) {
-            // Pre-fill the purchase modal with this customer as the supplier source
-            this.purchaseModal = {
-                show: true,
-                id: 'PO' + Math.floor(1000 + Math.random() * 9000),
-                source: customer.fullname || customer.customerName,
-                items: [{ name: '', qty: 1, price: 0, total: 0 }],
-                paymentMode: 'credit',
-                bankRows: [{ bankName: '', bankTo: '', accountName: '', accountNumber: '', amount: 0 }],
-                cashAmount: 0, balanceAmount: 0,
-                date: this.localDateStr(),
-                notes: ''
-            };
         },
 
         // ---- Customer Transaction Modal ----
